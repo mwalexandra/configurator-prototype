@@ -3,12 +3,12 @@
 
   <p>Product ID: {{ productId }}</p>
   <p>KB ID: {{ kbId }}</p>
-  <p>Status: {{ status }}</p>
-  <p>Config ID: {{ configId ?? '-' }}</p>
+  <p>Status: {{ status() }}</p>
+  <p>Config ID: {{ configId() }}</p>
 
-  <button (click)="startConfiguration()" [disabled]="status === 'loading'">
-    {{ status === 'loading' ? 'Starting...' : 'Start configuration' }}
+  <button (click)="startConfiguration()" [disabled]="status() === 'loading'">
+    {{ status() === 'loading' ? 'Starting...' : 'Start configuration' }}
   </button>
 
-  <p *ngIf="errorMessage">{{ errorMessage }}</p>
+  <p *ngIf="errorMessage()">{{ errorMessage() }}</p>
 </div>

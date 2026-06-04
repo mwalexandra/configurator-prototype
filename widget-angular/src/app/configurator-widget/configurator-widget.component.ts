@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ConfigurationApiService } from '../services/configuration-api.service';
 
@@ -15,15 +15,15 @@ export class ConfiguratorWidgetComponent {
   @Input() kbId!: string;
   @Input() locale: string = 'de';
 
-  configId: string | null = null;
-  status: 'idle' | 'loading' | 'started' | 'error' = 'idle';
-  errorMessage: string | null = null;
+  configId = signal<string | null>(null);
+  status = signal<'idle' | 'loading' | 'started' | 'error'>('idle');
+  errorMessage = signal<string | null>(null);
 
   constructor(private configurationApi: ConfigurationApiService) {}
 
   startConfiguration(): void {
-    this.status = 'loading';
-    this.errorMessage = null;
+    this.status.set('loading');
+    this.errorMessage.set(null);
 
     this.configurationApi.createConfiguration({
       productId: this.productId,
@@ -31,14 +31,15 @@ export class ConfiguratorWidgetComponent {
       locale: this.locale
     }).subscribe({
       next: (response) => {
-        this.configId = response.configId;
-        this.status = 'started';
+        this.configId.set(response.configId);
+        this.status.set('started');
 
         console.log('onConfigurationStarted', response.configId);
       },
       error: () => {
-        this.status = 'error';
-        this.errorMessage = 'Failed to start configuration';
+        this.status.set('error');
+        this.errorMessage.set('Failed to start configuration');
+        console.error(this.errorMessage);
       }
     });
   }
