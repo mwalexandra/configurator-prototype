@@ -1,0 +1,14 @@
+<div class="widget">
+  <h2>Configurator Widget</h2>
+
+  <p>Product ID: {{ productId }}</p>
+  <p>KB ID: {{ kbId }}</p>
+  <p>Status: {{ status }}</p>
+  <p>Config ID: {{ configId ?? '-' }}</p>
+
+  <button (click)="startConfiguration()" [disabled]="status === 'loading'">
+    {{ status === 'loading' ? 'Starting...' : 'Start configuration' }}
+  </button>
+
+  <p *ngIf="errorMessage">{{ errorMessage }}</p>
+</div>
