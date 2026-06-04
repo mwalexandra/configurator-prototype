@@ -1,4 +1,4 @@
-package api_service_java;
+package com.example.apiservicejava;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
