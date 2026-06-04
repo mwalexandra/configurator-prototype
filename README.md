@@ -1,0 +1,2 @@
+# configurator-prototype
+Bachelorarbeit Projekt
