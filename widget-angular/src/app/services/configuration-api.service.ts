@@ -1,0 +1,24 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import {
+  CreateConfigurationRequest,
+  CreateConfigurationResponse
+} from '../models/configuration.models';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ConfigurationApiService {
+  private http = inject(HttpClient);
+  private apiBaseUrl = 'https://reimagined-couscous-6wgjqrp6p99h6rg-8080.app.github.dev';
+
+  createConfiguration(
+    payload: CreateConfigurationRequest
+  ): Observable<CreateConfigurationResponse> {
+    return this.http.post<CreateConfigurationResponse>(
+      `${this.apiBaseUrl}/configurations`,
+      payload
+    );
+  }
+}
