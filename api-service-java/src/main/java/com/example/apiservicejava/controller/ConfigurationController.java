@@ -16,10 +16,10 @@ public class ConfigurationController {
         this.configurationService = configurationService;
     }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping                                               // POST endpoint
+    @ResponseStatus(HttpStatus.CREATED)                        // 201 Created
     public CreateConfigurationResponse createConfiguration(
-            @RequestBody 
+            @RequestBody                                       // deserialisation of JSON to Java-Model
             CreateConfigurationRequest request
     ) {
         return configurationService.createConfiguration(request);
