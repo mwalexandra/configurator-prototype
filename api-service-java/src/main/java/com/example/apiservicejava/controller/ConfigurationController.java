@@ -19,7 +19,7 @@ public class ConfigurationController {
     @PostMapping                                               // POST endpoint
     @ResponseStatus(HttpStatus.CREATED)                        // 201 Created
     public CreateConfigurationResponse createConfiguration(
-            @RequestBody                                       // deserialisation of JSON to Java-Model
+            @RequestBody                                       // Deserialization from JSON to Java-Model
             CreateConfigurationRequest request
     ) {
         return configurationService.createConfiguration(request);
