@@ -25,4 +25,13 @@ public class ConfigurationController {
     ) {
         return configurationService.createConfiguration(request);
     }
+
+    @PatchMapping("/{configId}")                                // PATCH endpoint
+    @ResponseStatus(HttpStatus.OK)
+    public PatchConfigurationResponse patchConfiguration(
+            @PathVariable String configId,
+            @RequestBody PatchConfigurationRequest request
+    ) {
+        return new PatchConfigurationResponse(configId, "UPDATED");
+    }
 }
