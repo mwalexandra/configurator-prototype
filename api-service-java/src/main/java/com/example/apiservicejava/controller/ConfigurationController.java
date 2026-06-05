@@ -2,6 +2,9 @@ package com.example.apiservicejava.controller;
 
 import com.example.apiservicejava.model.CreateConfigurationRequest;
 import com.example.apiservicejava.model.CreateConfigurationResponse;
+import com.example.apiservicejava.model.PatchConfigurationRequest;
+import com.example.apiservicejava.model.PatchConfigurationResponse;
+
 import com.example.apiservicejava.service.ConfigurationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +35,6 @@ public class ConfigurationController {
             @PathVariable String configId,
             @RequestBody PatchConfigurationRequest request
     ) {
-        return new PatchConfigurationResponse(configId, "UPDATED");
+        return configurationService.patchConfiguration(configId, request);
     }
 }
