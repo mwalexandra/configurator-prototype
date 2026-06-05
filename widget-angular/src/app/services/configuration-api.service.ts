@@ -11,7 +11,7 @@ import {
 })
 export class ConfigurationApiService {
   private http = inject(HttpClient);
-  private apiBaseUrl = 'https://reimagined-couscous-6wgjqrp6p99h6rg-8080.app.github.dev';
+  private apiBaseUrl = 'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev';
 
   createConfiguration(
     payload: CreateConfigurationRequest

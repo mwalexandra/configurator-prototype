@@ -1,10 +1,11 @@
 import { Component, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ConfiguratorWidgetComponent } from './configurator-widget/configurator-widget.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [ConfiguratorWidgetComponent],
+  imports: [CommonModule, ConfiguratorWidgetComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
