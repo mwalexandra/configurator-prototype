@@ -20,7 +20,7 @@ export class ConfiguratorWidgetComponent {
   errorOccurred = output<{ errorCode: string; message: string }>();
 
   configId = signal<string | null>(null);
-  status = signal<'idle' | 'loading' | 'started' | 'error' | 'updating' | 'updated'>('idle');
+  status = signal<'idle' | 'loading' | 'started' | 'error' | 'updating' | 'completed'>('idle');
   errorMessage = signal<string | null>(null);
   selectedColor = signal<string>('RED');
 
@@ -49,8 +49,6 @@ export class ConfiguratorWidgetComponent {
           errorCode: 'CONFIG_START_FAILED',
           message: 'Failed to start configuration'
         });
-
-        console.error(this.errorMessage);
       }
     });
   }
@@ -71,7 +69,7 @@ export class ConfiguratorWidgetComponent {
       value
     }).subscribe({
       next: () => {
-        this.status.set('updated');
+        this.status.set('completed');
       },
       error: (error) => {
         this.status.set('error');
@@ -82,6 +80,17 @@ export class ConfiguratorWidgetComponent {
         });
         console.error(error);
       }
+    });
+  }
+
+  completeConfiguration(summary: unknown): void {
+    const currentConfigId = this.configId();
+    if (!currentConfigId) return;
+
+    this.status.set('completed');
+    this.configurationCompleted.emit({
+      configId: currentConfigId,
+      summary
     });
   }
 }
