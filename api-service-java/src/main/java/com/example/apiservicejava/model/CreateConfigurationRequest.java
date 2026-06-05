@@ -26,7 +26,7 @@ public class CreateConfigurationRequest {
         return local;
     }
 
-    public void setLocale(String local) {
+    public void setlocal(String local) {
         this.local = local;
     }
 }

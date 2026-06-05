@@ -1,7 +1,7 @@
 export interface CreateConfigurationRequest {
   productId: string;
   kbId: string;
-  locale?: string;
+  local?: string;
 }
 
 export interface CreateConfigurationResponse {

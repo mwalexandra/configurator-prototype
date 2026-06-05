@@ -32,7 +32,7 @@ export class ConfiguratorWidgetComponent {
     this.configurationApi.createConfiguration({
       productId: this.productId,
       kbId: this.kbId,
-      locale: this.local
+      local: this.local
     }).subscribe({
       next: (response) => {
         this.configId.set(response.configId);
