@@ -1,5 +1,16 @@
+<h1>Host Frontend</h1>
+
+<p>Host status: {{ hostStatus() }}</p>
+<p>Host config ID: {{ hostConfigId() }}</p>
+<p *ngIf="hostError()">Host error: {{ hostError() }}</p>
+
+<hr />
+
 <app-configurator-widget
   [productId]="'PRODUCT-123'"
   [kbId]="'KB-001'"
-  [local]="'de'">
+  [local]="'de'"
+  (configurationStarted)="onConfigurationStarted($event)"
+  (configurationCompleted)="onConfigurationCompleted($event)"
+  (errorOccurred)="onError($event)">
 </app-configurator-widget>
