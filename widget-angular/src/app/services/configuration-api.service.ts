@@ -21,4 +21,14 @@ export class ConfigurationApiService {
       payload
     );
   }
+
+  patchConfiguration(
+    configId: string,
+    payload: { characteristic: string; value: string }
+  ): Observable<{ configId: string; status: string }> {
+    return this.http.patch<{ configId: string; status: string }>(
+      `${this.apiBaseUrl}/configurations/${configId}`,
+      payload
+    );
+  }
 }

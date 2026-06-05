@@ -10,5 +10,21 @@
     {{ status() === 'loading' ? 'Starting...' : 'Start configuration' }}
   </button>
 
+  <div *ngIf="configId()">
+    <h3>Characteristic: Color</h3>
+
+    <label for="color-select">Color</label>
+    <select
+      id="color-select"
+      [value]="selectedColor()"
+      (change)="updateColor($any($event.target).value)">
+      <option value="RED">Red</option>
+      <option value="BLUE">Blue</option>
+      <option value="BLACK">Black</option>
+    </select>
+
+    <p>Selected color: {{ selectedColor() }}</p>
+  </div>
+
   <p *ngIf="errorMessage()">{{ errorMessage() }}</p>
 </div>

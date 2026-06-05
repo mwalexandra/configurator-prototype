@@ -20,8 +20,9 @@ export class ConfiguratorWidgetComponent {
   errorOccurred = output<{ errorCode: string; message: string }>();
 
   configId = signal<string | null>(null);
-  status = signal<'idle' | 'loading' | 'started' | 'error'>('idle');
+  status = signal<'idle' | 'loading' | 'started' | 'error' | 'updating' | 'updated'>('idle');
   errorMessage = signal<string | null>(null);
+  selectedColor = signal<string>('RED');
 
   constructor(private configurationApi: ConfigurationApiService) {}
 
@@ -50,6 +51,36 @@ export class ConfiguratorWidgetComponent {
         });
 
         console.error(this.errorMessage);
+      }
+    });
+  }
+
+  updateColor(value: string): void {
+    this.selectedColor.set(value);
+
+    const currentConfigId = this.configId();
+    if (!currentConfigId) {
+      return;
+    }
+
+    this.status.set('updating');
+    this.errorMessage.set(null);
+
+    this.configurationApi.patchConfiguration(currentConfigId, {
+      characteristic: 'color',
+      value
+    }).subscribe({
+      next: () => {
+        this.status.set('updated');
+      },
+      error: (error) => {
+        this.status.set('error');
+        this.errorMessage.set('Failed to update configuration');
+        this.errorOccurred.emit({
+          errorCode: 'CONFIG_PATCH_FAILED',
+          message: 'Failed to update configuration'
+        });
+        console.error(error);
       }
     });
   }
