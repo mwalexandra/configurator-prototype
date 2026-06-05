@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/configurations")
-@CrossOrigin(origins = "*")
 public class ConfigurationController {
 
     private final ConfigurationService configurationService;
