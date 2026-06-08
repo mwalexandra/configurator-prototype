@@ -63,4 +63,28 @@ public class SapCpsClient {
             throw e;
         }
     }
+
+    public String getConfiguration(String configurationId) {
+        String url = baseUrl + "/api/v2/configurations/" + configurationId;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("APIKey", apiKey);
+
+        HttpEntity<Void> request = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    request,
+                    String.class
+            );
+
+            return response.getBody();
+        } catch (HttpStatusCodeException e) {
+            System.out.println("SAP CPS status: " + e.getStatusCode());
+            System.out.println("SAP CPS response: " + e.getResponseBodyAsString());
+            throw e;
+        }
+    }
 }
