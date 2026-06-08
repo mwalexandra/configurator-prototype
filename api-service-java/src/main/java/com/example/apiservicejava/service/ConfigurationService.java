@@ -12,15 +12,25 @@ import java.util.UUID;
 @Service
 public class ConfigurationService {
 
-    public CreateConfigurationResponse createConfiguration(CreateConfigurationRequest request) {
-        String configId = UUID.randomUUID().toString();
+    private final SapCpsClient sapCpsClient;
 
-        return new CreateConfigurationResponse(configId, "STARTED");
+    public ConfigurationService(SapCpsClient sapCpsClient){
+        this.sapCpsClient = sapCpsClient;
+    }
+
+    public CreateConfigurationResponse createConfiguration(CreateConfigurationRequest request) {
+        String sapResponse = sapCpsClient.createConfiguration(
+            request.getProductId(),
+            request.getKbId(),
+            request.getLocal()
+        );
+
+        return new CreateConfigurationResponse(sapResponse, "STARTED");
     }
 
     public PatchConfigurationResponse patchConfiguration(
-            String configId,
-            PatchConfigurationRequest request
+        String configId,
+        PatchConfigurationRequest request
     ) {
         return new PatchConfigurationResponse(configId, "UPDATED");
     }
