@@ -53,7 +53,7 @@ export class ConfiguratorWidgetComponent {
     });
   }
 
-  updateColor(value: string): void {
+  updateConfiguration(value: string): void {
     this.selectedColor.set(value);
 
     const currentConfigId = this.configId();

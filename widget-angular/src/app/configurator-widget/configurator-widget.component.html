@@ -17,7 +17,7 @@
     <select
       id="color-select"
       [value]="selectedColor()"
-      (change)="updateColor($any($event.target).value)">
+      (change)="updateConfiguration($any($event.target).value)">
       <option value="RED">Red</option>
       <option value="BLUE">Blue</option>
       <option value="BLACK">Black</option>
