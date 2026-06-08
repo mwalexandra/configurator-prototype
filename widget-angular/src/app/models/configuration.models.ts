@@ -7,6 +7,6 @@ export interface CreateConfigurationRequest {
 export interface CreateConfigurationResponse {
   configId: string;
   status: string;
-  configuration: string;
+  configuration: string;                         // raw response-data
   responseTimeMs: number;
 }

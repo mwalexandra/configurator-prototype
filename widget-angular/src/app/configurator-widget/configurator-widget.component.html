@@ -1,21 +1,41 @@
 <div class="widget">
-  <h2>Configurator Widget</h2>
+  <h2 class="widget__title">Configurator Widget</h2>
 
-  <p>Product ID: {{ productId }}</p>
-  <p>KB ID: {{ kbId }}</p>
-  <p>Status: {{ status() }}</p>
-  <p>Config ID: {{ configId() }}</p>
-  <p *ngIf="responseTimeMs() !== null">Response time: {{ responseTimeMs() }} ms</p>
+  <div class="card">
+    <h3 class="card__title">Configuration info</h3>
+    <div class="info-grid">
+      <p><span>Product ID:</span> {{ productId }}</p>
+      <p><span>KB ID:</span> {{ kbId }}</p>
+      <p><span>Status:</span> {{ status() }}</p>
+      <p><span>Config ID:</span> {{ configId() }}</p>
+      <p *ngIf="responseTimeMs() !== null">
+        <span>Response time:</span> {{ responseTimeMs() }} ms
+      </p>
+    </div>
 
-  <button (click)="startConfiguration()" [disabled]="status() === 'loading'">
-    {{ status() === 'loading' ? 'Starting...' : 'Start configuration' }}
-  </button>
+    <button class="btn btn--primary"
+      (click)="startConfiguration()"
+      [disabled]="status() === 'loading'">
+      {{ status() === 'loading' ? 'Starting...' : 'Start configuration' }}
+    </button>
+  </div>
 
-  <div *ngIf="configId()">
-    <h3>Characteristic: Color</h3>
+  <div class="card" *ngIf="configurationData()">
+    <h3 class="card__title">SAP response summary</h3>
+    <div class="info-grid">
+      <p><span>Consistent:</span> {{ configurationData()?.consistent }}</p>
+      <p><span>Complete:</span> {{ configurationData()?.complete }}</p>
+      <p><span>Root item:</span> {{ configurationData()?.rootItem?.key }}</p>
+      <p><span>KB Build:</span> {{ configurationData()?.kbBuild }}</p>
+    </div>
+  </div>
 
-    <label for="color-select">Color</label>
+  <div class="card" *ngIf="configId()">
+    <h3 class="card__title">Characteristic</h3>
+
+    <label class="field-label" for="color-select">Color</label>
     <select
+      class="select"
       id="color-select"
       [value]="selectedColor()"
       (change)="updateConfiguration($any($event.target).value)">
@@ -24,13 +44,17 @@
       <option value="BLACK">Black</option>
     </select>
 
-    <p>Selected color: {{ selectedColor() }}</p>
+    <p class="selected-value">
+      <span>Selected color:</span> {{ selectedColor() }}
+    </p>
   </div>
 
-  <p *ngIf="errorMessage()">{{ errorMessage() }}</p>
+  <p class="error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
 
-  <button (click)="completeConfiguration()" [disabled]="!configId()">
+  <button
+    class="btn btn--secondary btn--full"
+    (click)="completeConfiguration()"
+    [disabled]="!configId()">
     Complete configuration
   </button>
-
 </div>
