@@ -30,6 +30,8 @@ export class ConfiguratorWidgetComponent {
   responseTimeMs = signal<number | null>(null);
   configurationData = signal<any | null>(null);                                                // raw response-data
   configId = signal<string | null>(null);
+  characteristics = signal<any[]>([]);                                                         // characteristics
+
   status = signal<'idle' | 'loading' | 'started' | 'error' | 'updating' | 'completed'>('idle');
   errorMessage = signal<string | null>(null);
   selectedColor = signal<string>('RED');
@@ -47,6 +49,10 @@ export class ConfiguratorWidgetComponent {
     }).subscribe({
       next: (response) => {
         this.configurationData.set(JSON.parse(response.configuration));
+        this.characteristics.set(                                                              // characteristics
+          this.configurationData()?.rootItem?.characteristics ?? []
+        );
+
         this.configId.set(response.configId);
         this.responseTimeMs.set(response.responseTimeMs);
         this.status.set('started');

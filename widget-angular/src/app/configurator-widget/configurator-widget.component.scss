@@ -63,6 +63,27 @@
   color: #111827;
 }
 
+.characteristics-list {
+  display: grid;
+  gap: 12px;
+}
+
+.characteristic-item {
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f9fafb;
+}
+
+.characteristic-item p {
+  margin: 4px 0;
+}
+
+.characteristic-item span {
+  font-weight: 600;
+  color: #111827;
+}
+
 .select {
   width: 100%;
   max-width: 280px;

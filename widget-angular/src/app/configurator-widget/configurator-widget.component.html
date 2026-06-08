@@ -30,23 +30,17 @@
     </div>
   </div>
 
-  <div class="card" *ngIf="configId()">
-    <h3 class="card__title">Characteristic</h3>
+  <div class="card" *ngIf="characteristics().length">
+    <h3 class="card__title">Characteristics</h3>
 
-    <label class="field-label" for="color-select">Color</label>
-    <select
-      class="select"
-      id="color-select"
-      [value]="selectedColor()"
-      (change)="updateConfiguration($any($event.target).value)">
-      <option value="RED">Red</option>
-      <option value="BLUE">Blue</option>
-      <option value="BLACK">Black</option>
-    </select>
-
-    <p class="selected-value">
-      <span>Selected color:</span> {{ selectedColor() }}
-    </p>
+    <div class="characteristics-list">
+      <div class="characteristic-item" *ngFor="let char of characteristics()">
+        <p><span>ID:</span> {{ char.id }}</p>
+        <p><span>Required:</span> {{ char.required }}</p>
+        <p><span>Complete:</span> {{ char.complete }}</p>
+        <p><span>Value:</span> {{ char.values?.[0]?.value || '—' }}</p>
+      </div>
+    </div>
   </div>
 
   <p class="error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
