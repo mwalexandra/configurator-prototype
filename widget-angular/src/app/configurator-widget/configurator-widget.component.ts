@@ -27,6 +27,7 @@ export class ConfiguratorWidgetComponent {
   configurationCompleted = output<ConfigurationSummary>();
   errorOccurred = output<{ errorCode: string; message: string }>();
 
+  responseTimeMs = signal<number | null>(null);
   configId = signal<string | null>(null);
   status = signal<'idle' | 'loading' | 'started' | 'error' | 'updating' | 'completed'>('idle');
   errorMessage = signal<string | null>(null);
@@ -45,6 +46,7 @@ export class ConfiguratorWidgetComponent {
     }).subscribe({
       next: (response) => {
         this.configId.set(response.configId);
+        this.responseTimeMs.set(response.responseTimeMs);
         this.status.set('started');
 
         this.configurationStarted.emit(response.configId);

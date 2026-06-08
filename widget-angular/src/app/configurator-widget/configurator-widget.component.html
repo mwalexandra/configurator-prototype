@@ -5,6 +5,7 @@
   <p>KB ID: {{ kbId }}</p>
   <p>Status: {{ status() }}</p>
   <p>Config ID: {{ configId() }}</p>
+  <p *ngIf="responseTimeMs() !== null">Response time: {{ responseTimeMs() }} ms</p>
 
   <button (click)="startConfiguration()" [disabled]="status() === 'loading'">
     {{ status() === 'loading' ? 'Starting...' : 'Start configuration' }}
