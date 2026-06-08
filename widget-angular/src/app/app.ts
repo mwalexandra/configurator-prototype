@@ -16,6 +16,7 @@ export class App {
   hostConfigId = signal<string | null>(null);
   hostStatus = signal<'idle' | 'started' | 'completed' | 'error'>('idle');
   hostError = signal<string | null>(null);
+  hostAcceptedSummary = signal(false);
   completionSummary = signal<ConfigurationSummary | null>(null);
 
   onConfigurationStarted(configId: string): void {
@@ -27,6 +28,7 @@ export class App {
   onConfigurationCompleted(summary: ConfigurationSummary ): void {
     this.hostConfigId.set(summary.configId);
     this.hostStatus.set('completed');
+    this.hostAcceptedSummary.set(true);
     this.completionSummary.set(summary);
     this.hostError.set(null);
   }
