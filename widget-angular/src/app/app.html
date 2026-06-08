@@ -1,8 +1,9 @@
 <h1>Host Frontend</h1>
 
 <p>Host status: {{ hostStatus() }}</p>
-<p>Host config ID: {{ hostConfigId() }}</p>
+<p>Host config ID: {{ hostConfigId() ?? '' }}</p>
 <p *ngIf="hostError()">Host error: {{ hostError() }}</p>
+
 
 <hr />
 
@@ -14,3 +15,15 @@
   (configurationCompleted)="onConfigurationCompleted($event)"
   (errorOccurred)="onError($event)">
 </app-configurator-widget>
+
+<p *ngIf="hostStatus() === 'started'">
+  Configuration was started successfully.
+</p>
+
+<div *ngIf="hostStatus() === 'completed' && completionSummary() as summary">
+  <p>Configuration completed successfully.</p>
+  <p>Product ID: {{ summary.productId }}</p>
+  <p>KB ID: {{ summary.kbId }}</p>
+  <p>Config ID: {{ summary.configId }}</p>
+  <p>Selected color: {{ summary.selectedColor }}</p>
+</div>

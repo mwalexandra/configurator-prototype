@@ -2,6 +2,14 @@ import { Component, Input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ConfigurationApiService } from '../services/configuration-api.service';
 
+export interface ConfigurationSummary {
+  productId: string;
+  kbId: string;
+  configId: string;
+  selectedColor: string;
+  status: 'completed';
+}
+
 @Component({
   selector: 'app-configurator-widget',
   standalone: true,
@@ -16,7 +24,7 @@ export class ConfiguratorWidgetComponent {
   @Input() local: string = 'de';
 
   configurationStarted = output<string>();
-  configurationCompleted = output<{ configId: string; summary: unknown }>();
+  configurationCompleted = output<ConfigurationSummary>();
   errorOccurred = output<{ errorCode: string; message: string }>();
 
   configId = signal<string | null>(null);
@@ -71,26 +79,31 @@ export class ConfiguratorWidgetComponent {
       next: () => {
         this.status.set('completed');
       },
-      error: (error) => {
+      error: () => {
         this.status.set('error');
         this.errorMessage.set('Failed to update configuration');
         this.errorOccurred.emit({
           errorCode: 'CONFIG_PATCH_FAILED',
           message: 'Failed to update configuration'
         });
-        console.error(error);
+        console.error(this.errorMessage());
       }
     });
   }
 
-  completeConfiguration(summary: unknown): void {
+  completeConfiguration(): void {
     const currentConfigId = this.configId();
     if (!currentConfigId) return;
 
-    this.status.set('completed');
-    this.configurationCompleted.emit({
+    const summary: ConfigurationSummary = {
+      productId: this.productId,
+      kbId: this.kbId,
       configId: currentConfigId,
-      summary
-    });
+      selectedColor: this.selectedColor(),
+      status: 'completed'
+    };
+
+    this.status.set('completed');
+    this.configurationCompleted.emit(summary);
   }
 }

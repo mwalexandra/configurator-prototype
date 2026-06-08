@@ -27,4 +27,9 @@
   </div>
 
   <p *ngIf="errorMessage()">{{ errorMessage() }}</p>
+
+  <button (click)="completeConfiguration()" [disabled]="!configId()">
+    Complete configuration
+  </button>
+
 </div>

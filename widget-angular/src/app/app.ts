@@ -1,6 +1,9 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ConfiguratorWidgetComponent } from './configurator-widget/configurator-widget.component';
+import { 
+  ConfiguratorWidgetComponent,
+  ConfigurationSummary
+ } from './configurator-widget/configurator-widget.component';
 
 @Component({
   selector: 'app-root',
@@ -11,18 +14,21 @@ import { ConfiguratorWidgetComponent } from './configurator-widget/configurator-
 })
 export class App {
   hostConfigId = signal<string | null>(null);
-  hostStatus = signal<'idle' | 'running' | 'completed' | 'error'>('idle');
+  hostStatus = signal<'idle' | 'started' | 'completed' | 'error'>('idle');
   hostError = signal<string | null>(null);
+  completionSummary = signal<ConfigurationSummary | null>(null);
 
   onConfigurationStarted(configId: string): void {
     this.hostConfigId.set(configId);
-    this.hostStatus.set('running');
+    this.hostStatus.set('started');
     this.hostError.set(null);
   }
 
-  onConfigurationCompleted(event: { configId: string; summary: unknown }): void {
-    this.hostConfigId.set(event.configId);
+  onConfigurationCompleted(summary: ConfigurationSummary ): void {
+    this.hostConfigId.set(summary.configId);
     this.hostStatus.set('completed');
+    this.completionSummary.set(summary);
+    this.hostError.set(null);
   }
 
   onError(event: { errorCode: string; message: string }): void {
