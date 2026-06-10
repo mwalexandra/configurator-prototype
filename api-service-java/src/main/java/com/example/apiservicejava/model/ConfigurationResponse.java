@@ -14,6 +14,8 @@ public class ConfigurationResponse {
     private List<CharacteristicGroup> groups = new ArrayList<>();
     private List<ConfigurationMessage> messages = new ArrayList<>();
 
+    private Long backendProcessingTimeMs;
+
     public ConfigurationResponse() {
     }
 
@@ -79,5 +81,13 @@ public class ConfigurationResponse {
 
     public void setMessages(List<ConfigurationMessage> messages) {
         this.messages = messages;
+    }
+
+    public Long getBackendProcessingTimeMs() {
+        return backendProcessingTimeMs;
+    }
+
+    public void setBackendProcessingTimeMs(Long backendProcessingTimeMs) {
+        this.backendProcessingTimeMs = backendProcessingTimeMs;
     }
 }

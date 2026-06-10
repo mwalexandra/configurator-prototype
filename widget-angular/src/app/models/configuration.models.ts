@@ -55,6 +55,7 @@ export interface ConfigurationResponse {
   rootItem: ConfigurationItem;
   groups: CharacteristicGroup[]; // from SAP characteristicGroups[]
   messages: ConfigurationMessage[];
+  backendProcessingTimeMs?: number; // optional field for performance measurement
 }
 
 export interface CharacteristicGroup {

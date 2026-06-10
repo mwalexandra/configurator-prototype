@@ -25,6 +25,8 @@ public class ConfigurationService {
     }
 
     public ConfigurationResponse createConfiguration(CreateConfigurationRequest request) {
+        long start = System.currentTimeMillis();
+
         SapRuntimeConfigurationResponse runtimeResponse = sapCpsClient.createConfiguration(
                 request.getProductId(),
                 request.getKbId(),
@@ -37,10 +39,14 @@ public class ConfigurationService {
 
         SapKbResponse kbResponse = sapKbClient.getKnowledgeBase(kbId);
 
-        return configurationMapper.toWidgetResponse(runtimeResponse, kbResponse);
+        ConfigurationResponse response = configurationMapper.toWidgetResponse(runtimeResponse, kbResponse);
+        response.setBackendProcessingTimeMs(System.currentTimeMillis() - start);
+        return response;
     }
 
     public ConfigurationResponse getConfiguration(String configId) {
+        long start = System.currentTimeMillis();
+        
         SapRuntimeConfigurationResponse runtimeResponse = sapCpsClient.getConfiguration(configId);
 
         String kbId = runtimeResponse.getKbId() != null
@@ -49,13 +55,16 @@ public class ConfigurationService {
 
         SapKbResponse kbResponse = sapKbClient.getKnowledgeBase(kbId);
 
-        return configurationMapper.toWidgetResponse(runtimeResponse, kbResponse);
+        ConfigurationResponse response = configurationMapper.toWidgetResponse(runtimeResponse, kbResponse);
+        response.setBackendProcessingTimeMs(System.currentTimeMillis() - start);
+        return response;
     }
 
     public ConfigurationResponse patchConfiguration(
             String configId,
             PatchConfigurationRequest request
     ) {
+        long start = System.currentTimeMillis();
         SapRuntimeConfigurationResponse currentRuntime = sapCpsClient.getConfiguration(configId);
 
         String itemId = currentRuntime.getRootItem() != null
@@ -79,6 +88,8 @@ public class ConfigurationService {
 
         SapKbResponse kbResponse = sapKbClient.getKnowledgeBase(kbId);
 
-        return configurationMapper.toWidgetResponse(updatedRuntime, kbResponse);
+        ConfigurationResponse response = configurationMapper.toWidgetResponse(updatedRuntime, kbResponse);
+        response.setBackendProcessingTimeMs(System.currentTimeMillis() - start);
+        return response;
     }
 }
