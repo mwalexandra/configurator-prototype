@@ -1,67 +1,35 @@
 package com.example.apiservicejava.service;
 
+import com.example.apiservicejava.model.sapruntime.SapCreateRequest;
 import com.example.apiservicejava.model.sapruntime.SapRuntimeConfigurationResponse;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.LocalDate;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class SapCpsClient {
 
-    @Value("${sap.cps.base-url}")
-    private String baseUrl;
+    private final RestTemplate restTemplate;
+    private final String baseUrl;
+    private final String apiKey;
 
-    @Value("${sap.cps.api-key}")
-    private String apiKey;
-
-    private final RestTemplate restTemplate = new RestTemplate();
-
-    public SapRuntimeConfigurationResponse createConfiguration(String productId, String kbId, String locale) {
-        String url = baseUrl + "/api/v2/configurations";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("APIKey", apiKey);
-
-        Map<String, Object> source = new HashMap<>();
-        source.put("application", "cpq");
-        source.put("type", "quote_item");
-        source.put("id", "10");
-
-        Map<String, Object> contextEntry = new HashMap<>();
-        contextEntry.put("name", "VBAP-VRKME");
-        contextEntry.put("value", "EA");
-
-        List<Map<String, Object>> context = new ArrayList<>();
-        context.add(contextEntry);
-
-        Map<String, Object> body = new HashMap<>();
-        body.put("context", context);
-        body.put("date", LocalDate.now().toString());
-        body.put("kbId", Integer.valueOf(kbId));
-        body.put("productKey", productId);
-        body.put("source", source);
-
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
-
-        try {
-            ResponseEntity<SapRuntimeConfigurationResponse> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.POST,
-                    request,
-                    SapRuntimeConfigurationResponse.class
-            );
-            return response.getBody();
-        } catch (HttpStatusCodeException e) {
-            System.out.println("SAP CPS status: " + e.getStatusCode());
-            System.out.println("SAP CPS response: " + e.getResponseBodyAsString());
-            throw e;
-        }
+    public SapCpsClient(
+            RestTemplate restTemplate,
+            @Value("${sap.cps.base-url}") String baseUrl,
+            @Value("${sap.cps.api-key}") String apiKey
+    ) {
+        this.restTemplate = restTemplate;
+        this.baseUrl = baseUrl;
+        this.apiKey = apiKey;
     }
 
     public SapRuntimeConfigurationResponse getConfiguration(String configurationId) {
@@ -70,28 +38,64 @@ public class SapCpsClient {
         HttpHeaders headers = new HttpHeaders();
         headers.set("APIKey", apiKey);
 
-        HttpEntity<Void> request = new HttpEntity<>(headers);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-        try {
-            ResponseEntity<SapRuntimeConfigurationResponse> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.GET,
-                    request,
-                    SapRuntimeConfigurationResponse.class
-            );
-            return response.getBody();
-        } catch (HttpStatusCodeException e) {
-            System.out.println("SAP CPS status: " + e.getStatusCode());
-            System.out.println("SAP CPS response: " + e.getResponseBodyAsString());
-            throw e;
-        }
+        ResponseEntity<SapRuntimeConfigurationResponse> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                SapRuntimeConfigurationResponse.class
+        );
+
+        return response.getBody();
+    }
+
+    public SapGetConfigurationResult getConfigurationWithEtag(String configurationId) {
+        String url = baseUrl + "/api/v2/configurations/" + configurationId;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("APIKey", apiKey);
+
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<SapRuntimeConfigurationResponse> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                SapRuntimeConfigurationResponse.class
+        );
+
+        SapGetConfigurationResult result = new SapGetConfigurationResult();
+        result.setBody(response.getBody());
+        result.setEtag(response.getHeaders().getETag());
+        return result;
+    }
+
+    public SapRuntimeConfigurationResponse createConfiguration(SapCreateRequest request) {
+        String url = baseUrl + "/api/v2/configurations";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("APIKey", apiKey);
+
+        HttpEntity<SapCreateRequest> entity = new HttpEntity<>(request, headers);
+
+        ResponseEntity<SapRuntimeConfigurationResponse> response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                entity,
+                SapRuntimeConfigurationResponse.class
+        );
+
+        return response.getBody();
     }
 
     public SapRuntimeConfigurationResponse patchConfiguration(
             String configurationId,
             String itemId,
             String characteristicId,
-            String value
+            String value,
+            String etag
     ) {
         String url = baseUrl + "/api/v2/configurations/" + configurationId
                 + "/items/" + itemId
@@ -100,31 +104,24 @@ public class SapCpsClient {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("APIKey", apiKey);
+        headers.setIfMatch(etag);
+
+        Map<String, Object> valueInput = new HashMap<>();
+        valueInput.put("value", value);
+        valueInput.put("selected", true);
 
         Map<String, Object> body = new HashMap<>();
+        body.put("values", List.of(valueInput));
 
-        List<Map<String, Object>> values = new ArrayList<>();
-        if (value != null && !value.isBlank()) {
-            Map<String, Object> valueEntry = new HashMap<>();
-            valueEntry.put("value", value);
-            values.add(valueEntry);
-        }
-        body.put("values", values);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+        ResponseEntity<SapRuntimeConfigurationResponse> response = restTemplate.exchange(
+                url,
+                HttpMethod.PATCH,
+                entity,
+                SapRuntimeConfigurationResponse.class
+        );
 
-        try {
-            ResponseEntity<SapRuntimeConfigurationResponse> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.PATCH,
-                    request,
-                    SapRuntimeConfigurationResponse.class
-            );
-            return response.getBody();
-        } catch (HttpStatusCodeException e) {
-            System.out.println("SAP CPS PATCH status: " + e.getStatusCode());
-            System.out.println("SAP CPS PATCH response: " + e.getResponseBodyAsString());
-            throw e;
-        }
+        return response.getBody();
     }
 }

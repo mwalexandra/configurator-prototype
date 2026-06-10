@@ -16,7 +16,11 @@ public class SapKbClient {
     @Value("${sap.cps.api-key}")
     private String apiKey;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+
+    public SapKbClient(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     public SapKbResponse getKnowledgeBase(String kbId) {
         if (kbId == null || kbId.isBlank()) {
