@@ -5,13 +5,15 @@
     <h3 class="card__title">Configuration info</h3>
 
     <div class="info-grid">
-      <p><span>Product ID:</span> {{ productId }}</p>
-      <p><span>KB ID:</span> {{ kbId }}</p>
+      <p><span>Mode:</span> {{ config.mode }}</p>
+      <p><span>Product ID:</span> {{ config.productId || '—' }}</p>
+      <p><span>KB ID:</span> {{ config.kbId || '—' }}</p>
       <p><span>Status:</span> {{ status() }}</p>
       <p><span>Config ID:</span> {{ configId() || '—' }}</p>
     </div>
 
     <button
+      *ngIf="config.mode === 'create'"
       class="btn btn--primary"
       (click)="startConfiguration()"
       [disabled]="status() === 'loading' || status() === 'updating'">

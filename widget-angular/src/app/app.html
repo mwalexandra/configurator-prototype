@@ -1,27 +1,34 @@
-<h1>Host Frontend</h1>
+<div class="app-shell">
+  <h1>Configurator Prototype</h1>
 
-<div *ngIf="startedConfigId() as configId">
-  <p>Started configuration: {{ configId }}</p>
+  <div class="host-controls">
+    <button type="button" (click)="switchToCreateMode()">Create mode</button>
+    <button type="button" (click)="switchToResumeMode()">Resume mode</button>
+  </div>
+
+  <div class="host-summary">
+    <p><strong>Current mode:</strong> {{ widgetConfig.mode }}</p>
+    <p><strong>Started config ID:</strong> {{ startedConfigId() || '—' }}</p>
+  </div>
+
+  <app-configurator-widget
+    [config]="widgetConfig"
+    (configurationStarted)="onConfigurationStarted($event)"
+    (configurationCompleted)="onConfigurationCompleted($event)"
+    (errorOccurred)="onError($event)">
+  </app-configurator-widget>
+
+  <div class="host-events" *ngIf="completedSnapshot() as snapshot">
+    <h3>Completed Snapshot</h3>
+    <p><strong>Configuration ID:</strong> {{ snapshot.configurationId }}</p>
+    <p><strong>Product ID:</strong> {{ snapshot.productId }}</p>
+    <p><strong>KB ID:</strong> {{ snapshot.kbId }}</p>
+    <p><strong>Saved At:</strong> {{ snapshot.savedAt }}</p>
+    <p><strong>Complete:</strong> {{ snapshot.complete }}</p>
+    <p><strong>Consistent:</strong> {{ snapshot.consistent }}</p>
+  </div>
+
+  <div class="host-error" *ngIf="lastError() as error">
+    <p><strong>Error:</strong> {{ error }}</p>
+  </div>
 </div>
-<div *ngIf="lastError() as error">
-  <p>{{ error }}</p>
-</div>
-
-<div *ngIf="completedSnapshot() as snapshot">
-  <p>Completed configuration: {{ snapshot.configurationId }}</p>
-  <p>Product: {{ snapshot.productId }}</p>
-  <p>Saved at: {{ snapshot.savedAt }}</p>
-</div>
-
-<hr />
-
-<app-configurator-widget
-  [productId]="'CPS_BURGER'"
-  [kbId]="'80'"
-  [locale]="'de'"
-  (configurationStarted)="onConfigurationStarted($event)"
-  (configurationCompleted)="onConfigurationCompleted($event)"
-  (errorOccurred)="onError($event)">
-</app-configurator-widget>
-
-<hr />

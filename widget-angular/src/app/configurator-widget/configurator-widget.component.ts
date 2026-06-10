@@ -1,4 +1,4 @@
-import { Component, Input, output, signal, computed } from '@angular/core';
+import { Component, Input, OnInit, output, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ConfigurationApiService } from '../services/configuration-api.service';
@@ -8,6 +8,7 @@ import {
   ConfigurationSnapshot,
   CreateConfigurationRequest,
   UpdateCharacteristicRequest,
+  WidgetInputConfig,
   WidgetState
 } from '../models/configuration.models';
 
@@ -18,10 +19,8 @@ import {
   templateUrl: './configurator-widget.component.html',
   styleUrl: './configurator-widget.component.scss'
 })
-export class ConfiguratorWidgetComponent {
-  @Input() productId!: string;
-  @Input() kbId!: string;
-  @Input() locale: string = 'de';
+export class ConfiguratorWidgetComponent implements OnInit {
+  @Input({ required: true }) config!: WidgetInputConfig;
 
   configurationStarted = output<string>();
   configurationCompleted = output<ConfigurationSnapshot>();
@@ -38,11 +37,29 @@ export class ConfiguratorWidgetComponent {
 
   constructor(private configurationApi: ConfigurationApiService) {}
 
+  ngOnInit(): void {
+    this.configurationApi.setApiBaseUrl(this.config.apiBaseUrl);
+
+    if (this.config.mode === 'resume' && this.config.configurationId) {
+      this.loadConfiguration(this.config.configurationId);
+    }
+  }
+
   startConfiguration(): void {
+    if (this.config.mode !== 'create') {
+      return;
+    }
+
+    if (!this.config.productId || !this.config.kbId) {
+      this.status.set('error');
+      this.errorMessage.set('Missing productId or kbId for create mode');
+      return;
+    }
+
     const payload: CreateConfigurationRequest = {
-      productId: this.productId,
-      kbId: this.kbId,
-      locale: this.locale
+      productId: this.config.productId,
+      kbId: this.config.kbId,
+      locale: this.config.locale
     };
 
     this.status.set('loading');
@@ -61,6 +78,27 @@ export class ConfiguratorWidgetComponent {
         this.errorOccurred.emit({
           errorCode: 'CONFIG_START_FAILED',
           message: 'Failed to start configuration'
+        });
+      }
+    });
+  }
+
+  loadConfiguration(configurationId: string): void {
+    this.status.set('loading');
+    this.errorMessage.set(null);
+
+    this.configurationApi.getConfiguration(configurationId).subscribe({
+      next: (response) => {
+        this.configuration.set(response);
+        this.configId.set(response.configurationId);
+        this.status.set('loaded');
+      },
+      error: () => {
+        this.status.set('error');
+        this.errorMessage.set('Failed to load configuration');
+        this.errorOccurred.emit({
+          errorCode: 'CONFIG_LOAD_FAILED',
+          message: 'Failed to load configuration'
         });
       }
     });
