@@ -2,15 +2,18 @@ package com.example.apiservicejava.model;
 
 public class PatchConfigurationRequest {
 
-    private String characteristic;
+    private String characteristicId;
     private String value;
 
-    public String getCharacteristic() {
-        return characteristic;
+    public PatchConfigurationRequest() {
     }
 
-    public void setCharacteristic(String characteristic) {
-        this.characteristic = characteristic;
+    public String getCharacteristicId() {
+        return characteristicId;
+    }
+
+    public void setCharacteristicId(String characteristicId) {
+        this.characteristicId = characteristicId;
     }
 
     public String getValue() {

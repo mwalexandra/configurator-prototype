@@ -1,16 +1,15 @@
 package com.example.apiservicejava.controller;
 
 import com.example.apiservicejava.model.CreateConfigurationRequest;
-import com.example.apiservicejava.model.CreateConfigurationResponse;
+import com.example.apiservicejava.model.ConfigurationResponse;
 import com.example.apiservicejava.model.PatchConfigurationRequest;
-import com.example.apiservicejava.model.PatchConfigurationResponse;
-
 import com.example.apiservicejava.service.ConfigurationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/configurations")
+@CrossOrigin(origins = "*")
 public class ConfigurationController {
 
     private final ConfigurationService configurationService;
@@ -19,18 +18,21 @@ public class ConfigurationController {
         this.configurationService = configurationService;
     }
 
-    @PostMapping                                               // POST endpoint
-    @ResponseStatus(HttpStatus.CREATED)                        // 201 Created
-    public CreateConfigurationResponse createConfiguration(
-            @RequestBody                                       // Deserialization from JSON to Java-Model
-            CreateConfigurationRequest request
-    ) {
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public ConfigurationResponse createConfiguration(@RequestBody CreateConfigurationRequest request) {
         return configurationService.createConfiguration(request);
     }
 
-    @PatchMapping("/{configId}")                                // PATCH endpoint
+    @GetMapping("/{configId}")
     @ResponseStatus(HttpStatus.OK)
-    public PatchConfigurationResponse patchConfiguration(
+    public ConfigurationResponse getConfiguration(@PathVariable String configId) {
+        return configurationService.getConfiguration(configId);
+    }
+
+    @PatchMapping("/{configId}")
+    @ResponseStatus(HttpStatus.OK)
+    public ConfigurationResponse patchConfiguration(
             @PathVariable String configId,
             @RequestBody PatchConfigurationRequest request
     ) {
