@@ -11,7 +11,7 @@ public class ConfigurationResponse {
     private boolean complete;
     private boolean consistent;
     private ConfigurationItem rootItem;
-    private List<CharacteristicGroupDto> groups = new ArrayList<>();
+    private List<CharacteristicGroup> groups = new ArrayList<>();
     private List<ConfigurationMessage> messages = new ArrayList<>();
 
     public ConfigurationResponse() {
@@ -65,11 +65,11 @@ public class ConfigurationResponse {
         this.rootItem = rootItem;
     }
 
-    public List<CharacteristicGroupDto> getGroups() {
+    public List<CharacteristicGroup> getGroups() {
         return groups;
     }
 
-    public void setGroups(List<CharacteristicGroupDto> groups) {
+    public void setGroups(List<CharacteristicGroup> groups) {
         this.groups = groups;
     }
 

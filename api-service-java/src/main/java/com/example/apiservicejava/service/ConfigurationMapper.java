@@ -175,7 +175,7 @@ public class ConfigurationMapper {
         return value.getValueLow();
     }
 
-    private List<CharacteristicGroupDto> mapGroups(
+    private List<CharacteristicGroup> mapGroups(
             SapRuntimeConfigurationResponse runtime,
             SapKbResponse kb
     ) {
@@ -198,7 +198,7 @@ public class ConfigurationMapper {
 
         return runtime.getRootItem().getCharacteristicGroups().stream()
                 .map(g -> {
-                    CharacteristicGroupDto dto = new CharacteristicGroupDto();
+                    CharacteristicGroup dto = new CharacteristicGroup();
                     dto.setId(g.getId());
                     dto.setName(groupNames.getOrDefault(g.getId(), g.getId()));
                     dto.setComplete(g.isComplete());
