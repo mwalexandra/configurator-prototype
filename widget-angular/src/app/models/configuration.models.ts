@@ -1,5 +1,9 @@
 // widget-angular/src/app/models/configuration.models.ts
 
+// ──────────────────────────────
+// Modes & widget state
+// ──────────────────────────────
+
 export type ConfiguratorMode = 'create' | 'resume';
 
 export type WidgetState =
@@ -12,11 +16,12 @@ export type WidgetState =
   | 'completed';
 
 // ──────────────────────────────
-// Widget Input (Host → Widget)
+// Host → Widget
 // ──────────────────────────────
+
 export interface WidgetInputConfig {
   apiBaseUrl: string;
-  mode: ConfiguratorMode;                      // create mode
+  mode: ConfiguratorMode;
 
   // create mode
   productId?: string;
@@ -30,12 +35,19 @@ export interface WidgetInputConfig {
 export interface ResumeInput {
   configurationId?: string;
   snapshot?: ConfigurationSnapshot;
-  sourceContext?: 'commerce' | 'erp' | 'salesforce' | 'generic';
+  sourceContext?: ResumeSourceContext;
 }
 
+export type ResumeSourceContext =
+  | 'commerce'
+  | 'erp'
+  | 'salesforce'
+  | 'generic';
+
 // ──────────────────────────────
-// Requests (Widget → API-Service)
+// Widget → API-Service
 // ──────────────────────────────
+
 export interface CreateConfigurationRequest {
   productId: string;
   kbId?: string;
@@ -45,32 +57,18 @@ export interface CreateConfigurationRequest {
 export interface UpdateCharacteristicRequest {
   configurationId: string;
   characteristicId: string;
-  // value = SAP internal key (valueLow), null = deselect
   value: string | null;
 }
 
-// ──────────────────────────────
-// Normalized Response (API-Service → Widget)
-// ──────────────────────────────
-export interface ConfigurationResponse {
-  configurationId: string;     // mapped from SAP "id"
-  productId: string;           // mapped from SAP "kbKey.name"
-  kbId?: string;               // mapped from SAP "kbId" (number → string)
-  complete: boolean;
-  consistent: boolean;
-  rootItem: ConfigurationItem;
-  groups: CharacteristicGroup[]; // from SAP characteristicGroups[]
-  messages: ConfigurationMessage[];
-  backendProcessingTimeMs?: number; // optional field for performance measurement
+export interface ResumeConfigurationRequest {
+  configurationId?: string;
+  snapshot?: ConfigurationSnapshot;
+  sourceContext?: ResumeSourceContext;
 }
 
-export interface CharacteristicGroup {
-  id: string;
-  name: string;
-  complete: boolean;
-  consistent: boolean;
-  visible: boolean;
-}
+// ──────────────────────────────
+// Shared configuration domain
+// ──────────────────────────────
 
 export interface ConfigurationItem {
   id: string;
@@ -81,11 +79,25 @@ export interface ConfigurationItem {
   subItems?: ConfigurationItem[];
 }
 
+export interface CharacteristicGroup {
+  id: string;
+  name: string;
+  complete: boolean;
+  consistent: boolean;
+  visible: boolean;
+}
+
+export type CharacteristicValueType =
+  | 'SINGLE'
+  | 'MULTI'
+  | 'FREE_TEXT'
+  | 'NUMERIC';
+
 export interface Characteristic {
   id: string;
   name: string;
   description?: string;
-  valueType: 'SINGLE' | 'MULTI' | 'FREE_TEXT' | 'NUMERIC';
+  valueType: CharacteristicValueType;
   required: boolean;
   visible: boolean;
   readOnly: boolean;
@@ -98,22 +110,34 @@ export interface Characteristic {
   possibleValues: CharacteristicValue[];
 }
 
+export type CharacteristicValueAuthor =
+  | 'Default'
+  | 'System'
+  | 'User'
+  | string;
+
 export interface CharacteristicValue {
   id: string;
   name: string;
   description?: string;
-  author?: 'Default' | 'System' | 'User';
+  author?: CharacteristicValueAuthor;
 }
 
+export type MessageSeverity =
+  | 'INFO'
+  | 'WARNING'
+  | 'ERROR';
+
 export interface ConfigurationMessage {
-  severity: 'INFO' | 'WARNING' | 'ERROR';
+  severity: MessageSeverity;
   text: string;
   characteristicId?: string;
 }
 
 // ──────────────────────────────
-// Snapshot (save/restore)
+// Snapshot / save-restore
 // ──────────────────────────────
+
 export interface ConfigurationSnapshot {
   configurationId?: string;
   productId: string;
@@ -128,13 +152,56 @@ export interface ConfigurationSnapshot {
   messages?: ConfigurationMessage[];
 
   metadata?: SnapshotMetadata;
-  sourceContext?: string;
 }
 
 export interface SnapshotMetadata {
-  sourceContext?: string;
+  sourceContext?: ResumeSourceContext | string;
   hostEntityType?: string;
   hostEntityId?: string;
   version?: string;
   locale?: string;
+}
+
+// ──────────────────────────────
+// Restore metadata
+// ──────────────────────────────
+
+export type ResumeStrategy =
+  | 'LIVE_CONFIGURATION'
+  | 'SNAPSHOT_FALLBACK'
+  | 'READ_ONLY_SNAPSHOT';
+
+export type ResumeStatus =
+  | 'RESUMED'
+  | 'FALLBACK_APPLIED'
+  | 'FAILED';
+
+export interface RestoreInfo {
+  mode: ConfiguratorMode;
+  status: ResumeStatus;
+  strategy?: ResumeStrategy;
+  liveSessionAvailable: boolean;
+  snapshotUsed: boolean;
+  readOnly: boolean;
+  message?: string;
+}
+
+// ──────────────────────────────
+// API-Service → Widget
+// ──────────────────────────────
+
+export interface ConfigurationResponse {
+  configurationId: string;
+  productId: string;
+  kbId?: string;
+
+  complete: boolean;
+  consistent: boolean;
+
+  rootItem: ConfigurationItem;
+  groups: CharacteristicGroup[];
+  messages: ConfigurationMessage[];
+
+  backendProcessingTimeMs?: number;
+  restoreInfo?: RestoreInfo;
 }

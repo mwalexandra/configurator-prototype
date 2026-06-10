@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import {
   CreateConfigurationRequest,
   ConfigurationResponse,
+  ResumeConfigurationRequest,
   UpdateCharacteristicRequest
 } from '../models/configuration.models';
 
@@ -12,7 +13,9 @@ import {
 })
 export class ConfigurationApiService {
   private http = inject(HttpClient);
-  private apiBaseUrl = '';
+
+  // fallback for local prototype runs; host config should override this
+  private apiBaseUrl = 'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev';
 
   setApiBaseUrl(apiBaseUrl: string): void {
     this.apiBaseUrl = apiBaseUrl.replace(/\/$/, '');
@@ -45,6 +48,15 @@ export class ConfigurationApiService {
         characteristicId: payload.characteristicId,
         value: payload.value
       }
+    );
+  }
+
+  resumeConfiguration(
+    payload: ResumeConfigurationRequest
+  ): Observable<ConfigurationResponse> {
+    return this.http.post<ConfigurationResponse>(
+      `${this.apiBaseUrl}/configurations/resume`,
+      payload
     );
   }
 }

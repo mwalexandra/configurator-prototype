@@ -60,7 +60,10 @@ export class App {
     this.widgetConfig = {
       apiBaseUrl: this.widgetConfig.apiBaseUrl,
       mode: 'resume',
-      configurationId: this.startedConfigId()!
+      resume: {
+        configurationId: this.startedConfigId()!,
+        sourceContext: 'generic'
+      }
     };
     this.completedSnapshot.set(null);
     this.lastError.set(null);

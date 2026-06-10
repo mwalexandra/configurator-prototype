@@ -1,4 +1,11 @@
-import { Component, Input, OnInit, output, signal, computed } from '@angular/core';
+import {
+  Component,
+  Input,
+  OnInit,
+  computed,
+  output,
+  signal
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ConfigurationApiService } from '../services/configuration-api.service';
@@ -7,7 +14,7 @@ import {
   ConfigurationResponse,
   ConfigurationSnapshot,
   CreateConfigurationRequest,
-  UpdateCharacteristicRequest,
+  ResumeConfigurationRequest,
   WidgetInputConfig,
   WidgetState
 } from '../models/configuration.models';
@@ -40,8 +47,8 @@ export class ConfiguratorWidgetComponent implements OnInit {
   ngOnInit(): void {
     this.configurationApi.setApiBaseUrl(this.config.apiBaseUrl);
 
-    if (this.config.mode === 'resume' && this.config.configurationId) {
-      this.loadConfiguration(this.config.configurationId);
+    if (this.config.mode === 'resume') {
+      this.resumeConfiguration();
     }
   }
 
@@ -53,6 +60,10 @@ export class ConfiguratorWidgetComponent implements OnInit {
     if (!this.config.productId || !this.config.kbId) {
       this.status.set('error');
       this.errorMessage.set('Missing productId or kbId for create mode');
+      this.errorOccurred.emit({
+        errorCode: 'CONFIG_INPUT_INVALID',
+        message: 'Missing productId or kbId for create mode'
+      });
       return;
     }
 
@@ -67,9 +78,7 @@ export class ConfiguratorWidgetComponent implements OnInit {
 
     this.configurationApi.createConfiguration(payload).subscribe({
       next: (response) => {
-        this.configuration.set(response);
-        this.configId.set(response.configurationId);
-        this.status.set('loaded');
+        this.applyConfiguration(response);
         this.configurationStarted.emit(response.configurationId);
       },
       error: () => {
@@ -83,22 +92,57 @@ export class ConfiguratorWidgetComponent implements OnInit {
     });
   }
 
-  loadConfiguration(configurationId: string): void {
+  resumeConfiguration(): void {
+    const resume = this.config.resume;
+
+    if (!resume || (!resume.configurationId && !resume.snapshot)) {
+      this.status.set('error');
+      this.errorMessage.set('Resume mode requires configurationId or snapshot');
+      this.errorOccurred.emit({
+        errorCode: 'CONFIG_RESUME_INPUT_INVALID',
+        message: 'Resume mode requires configurationId or snapshot'
+      });
+      return;
+    }
+
+    const payload: ResumeConfigurationRequest = {
+      configurationId: resume.configurationId,
+      snapshot: resume.snapshot,
+      sourceContext: resume.sourceContext
+    };
+
     this.status.set('loading');
     this.errorMessage.set(null);
 
-    this.configurationApi.getConfiguration(configurationId).subscribe({
+    // phase 1: if backend resume endpoint is not ready yet,
+    // prefer direct load by configurationId
+    if (resume.configurationId && !resume.snapshot) {
+      this.configurationApi.getConfiguration(resume.configurationId).subscribe({
+        next: (response) => {
+          this.applyConfiguration(response);
+        },
+        error: () => {
+          this.status.set('error');
+          this.errorMessage.set('Failed to load configuration');
+          this.errorOccurred.emit({
+            errorCode: 'CONFIG_LOAD_FAILED',
+            message: 'Failed to load configuration'
+          });
+        }
+      });
+      return;
+    }
+
+    this.configurationApi.resumeConfiguration(payload).subscribe({
       next: (response) => {
-        this.configuration.set(response);
-        this.configId.set(response.configurationId);
-        this.status.set('loaded');
+        this.applyConfiguration(response);
       },
       error: () => {
         this.status.set('error');
-        this.errorMessage.set('Failed to load configuration');
+        this.errorMessage.set('Failed to resume configuration');
         this.errorOccurred.emit({
-          errorCode: 'CONFIG_LOAD_FAILED',
-          message: 'Failed to load configuration'
+          errorCode: 'CONFIG_RESUME_FAILED',
+          message: 'Failed to resume configuration'
         });
       }
     });
@@ -110,19 +154,16 @@ export class ConfiguratorWidgetComponent implements OnInit {
       return;
     }
 
-    const payload: UpdateCharacteristicRequest = {
-      configurationId: currentConfigId,
-      characteristicId,
-      value
-    };
-
     this.status.set('updating');
     this.errorMessage.set(null);
 
-    this.configurationApi.patchConfiguration(currentConfigId, payload).subscribe({
+    this.configurationApi.patchConfiguration(currentConfigId, {
+      configurationId: currentConfigId,
+      characteristicId,
+      value
+    }).subscribe({
       next: (response) => {
-        this.configuration.set(response);
-        this.status.set('loaded');
+        this.applyConfiguration(response, false);
       },
       error: () => {
         this.status.set('error');
@@ -151,7 +192,11 @@ export class ConfiguratorWidgetComponent implements OnInit {
       rootItem: current.rootItem,
       groups: current.groups,
       messages: current.messages,
-      sourceContext: 'generic'
+      metadata: {
+        sourceContext: this.config.resume?.sourceContext ?? 'generic',
+        locale: this.config.locale,
+        version: '1'
+      }
     };
 
     this.status.set('completed');
@@ -164,5 +209,18 @@ export class ConfiguratorWidgetComponent implements OnInit {
 
   trackByCharacteristicId(_: number, char: Characteristic): string {
     return char.id;
+  }
+
+  private applyConfiguration(
+    response: ConfigurationResponse,
+    emitStartedEvent = false
+  ): void {
+    this.configuration.set(response);
+    this.configId.set(response.configurationId);
+    this.status.set('loaded');
+
+    if (emitStartedEvent) {
+      this.configurationStarted.emit(response.configurationId);
+    }
   }
 }

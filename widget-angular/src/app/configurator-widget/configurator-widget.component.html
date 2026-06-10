@@ -6,10 +6,10 @@
 
     <div class="info-grid">
       <p><span>Mode:</span> {{ config.mode }}</p>
-      <p><span>Product ID:</span> {{ config.productId || '—' }}</p>
-      <p><span>KB ID:</span> {{ config.kbId || '—' }}</p>
+      <p><span>Product ID:</span> {{ config.productId || config.resume?.snapshot?.productId || '—' }}</p>
+      <p><span>KB ID:</span> {{ config.kbId || config.resume?.snapshot?.kbId || '—' }}</p>
       <p><span>Status:</span> {{ status() }}</p>
-      <p><span>Config ID:</span> {{ configId() || '—' }}</p>
+      <p><span>Config ID:</span> {{ configId() || config.resume?.configurationId || '—' }}</p>
     </div>
 
     <button
@@ -21,22 +21,38 @@
     </button>
   </div>
 
-  <div class="card" *ngIf="configuration() as config">
+  <div class="card" *ngIf="configuration() as currentConfig">
     <h3 class="card__title">Configuration summary</h3>
 
     <div class="info-grid">
-      <p><span>Consistent:</span> {{ config.consistent }}</p>
-      <p><span>Complete:</span> {{ config.complete }}</p>
-      <p><span>Root item:</span> {{ config.rootItem.key }}</p>
-      <p><span>Groups:</span> {{ config.groups.length }}</p>
-      <p><span>Backend time:</span> {{ config.backendProcessingTimeMs ?? '—' }} ms</p>
+      <p><span>Consistent:</span> {{ currentConfig.consistent }}</p>
+      <p><span>Complete:</span> {{ currentConfig.complete }}</p>
+      <p><span>Root item:</span> {{ currentConfig.rootItem.key }}</p>
+      <p><span>Groups:</span> {{ currentConfig.groups.length }}</p>
+      <p><span>Backend time:</span> {{ currentConfig.backendProcessingTimeMs ?? '—' }} ms</p>
     </div>
+
+    <div class="info-grid" *ngIf="currentConfig.restoreInfo as restoreInfo">
+      <p><span>Restore mode:</span> {{ restoreInfo.mode }}</p>
+      <p><span>Restore status:</span> {{ restoreInfo.status }}</p>
+      <p><span>Strategy:</span> {{ restoreInfo.strategy || '—' }}</p>
+      <p><span>Live session:</span> {{ restoreInfo.liveSessionAvailable }}</p>
+      <p><span>Snapshot used:</span> {{ restoreInfo.snapshotUsed }}</p>
+      <p><span>Read only:</span> {{ restoreInfo.readOnly }}</p>
+    </div>
+
+    <p *ngIf="currentConfig.restoreInfo?.message">
+      <span>Restore message:</span> {{ currentConfig.restoreInfo?.message }}
+    </p>
   </div>
 
-  <div class="card" *ngIf="configuration() as config">
+  <div class="card" *ngIf="configuration() as currentConfig">
     <h3 class="card__title">Characteristics</h3>
 
-    <div class="characteristics-list" *ngIf="visibleCharacteristics().length; else noCharacteristics">
+    <div
+      class="characteristics-list"
+      *ngIf="visibleCharacteristics().length; else noCharacteristics">
+
       <div
         class="characteristic-item"
         *ngFor="let char of visibleCharacteristics(); trackBy: trackByCharacteristicId">
@@ -52,7 +68,7 @@
         <div *ngIf="char.valueType === 'SINGLE'" class="field-block">
           <label>Select value</label>
           <select
-            [disabled]="char.readOnly || status() === 'updating'"
+            [disabled]="char.readOnly || currentConfig.restoreInfo?.readOnly || status() === 'updating'"
             [value]="getSingleSelectedValueId(char)"
             (change)="updateCharacteristic(char.id, $any($event.target).value || null)">
             <option value="">-- Select --</option>
@@ -71,12 +87,14 @@
               class="chip"
               *ngFor="let option of char.possibleValues"
               [class.chip--selected]="char.values?.some(v => v.id === option.id)"
-              [disabled]="char.readOnly || status() === 'updating'"
+              [disabled]="char.readOnly || currentConfig.restoreInfo?.readOnly || status() === 'updating'"
               (click)="updateCharacteristic(char.id, option.id)">
               {{ option.name }}
             </button>
           </div>
-          <small>Current backend patch flow is still single-value oriented; multi-select will need backend extension.</small>
+          <small>
+            Current backend patch flow is still single-value oriented; multi-select will need backend extension.
+          </small>
         </div>
 
         <!-- FREE_TEXT -->
@@ -84,7 +102,7 @@
           <label>Text value</label>
           <input
             type="text"
-            [disabled]="char.readOnly || status() === 'updating'"
+            [disabled]="char.readOnly || currentConfig.restoreInfo?.readOnly || status() === 'updating'"
             [value]="getSingleSelectedValueId(char)"
             #textInput
             (blur)="updateCharacteristic(char.id, textInput.value || null)" />
@@ -95,7 +113,7 @@
           <label>Numeric value</label>
           <input
             type="number"
-            [disabled]="char.readOnly || status() === 'updating'"
+            [disabled]="char.readOnly || currentConfig.restoreInfo?.readOnly || status() === 'updating'"
             [value]="getSingleSelectedValueId(char)"
             #numberInput
             (blur)="updateCharacteristic(char.id, numberInput.value || null)" />
@@ -105,7 +123,8 @@
           <p><span>Selected:</span></p>
           <ul>
             <li *ngFor="let value of char.values">
-              {{ value.name }} <small *ngIf="value.author">({{ value.author }})</small>
+              {{ value.name }}
+              <small *ngIf="value.author">({{ value.author }})</small>
             </li>
           </ul>
         </div>
@@ -131,7 +150,12 @@
   <button
     class="btn btn--secondary btn--full"
     (click)="completeConfiguration()"
-    [disabled]="!configId() || status() === 'loading' || status() === 'updating'">
+    [disabled]="
+      !configId() ||
+      status() === 'loading' ||
+      status() === 'updating' ||
+      configuration()?.restoreInfo?.readOnly
+    ">
     Complete configuration
   </button>
 </div>
