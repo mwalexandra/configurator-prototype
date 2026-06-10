@@ -61,7 +61,7 @@ public class ConfigurationMapper {
     }
 
     private List<CharacteristicDto> mapCharacteristics(SapRuntimeRootItem runtimeRoot, SapKbResponse kb) {
-        Map<String, SapKbCharacteristic> kbCharacteristics = Collections.emptyMap();
+        final Map<String, SapKbCharacteristic> kbCharacteristics;
 
         if (kb != null && kb.getCharacteristics() != null) {
             kbCharacteristics = kb.getCharacteristics()
@@ -73,6 +73,8 @@ public class ConfigurationMapper {
                             Function.identity(),
                             (a, b) -> a
                     ));
+        } else {
+            kbCharacteristics = Collections.emptyMap();
         }
 
         if (runtimeRoot.getCharacteristics() == null) {
