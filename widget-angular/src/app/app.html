@@ -1,22 +1,16 @@
 <h1>Host Frontend</h1>
 
-<p>Host status: {{ hostStatus() }}</p>
-<p>Host config ID: {{ hostConfigId() ?? '' }}</p>
-<p *ngIf="hostError()">Host error: {{ hostError() }}</p>
+<div *ngIf="startedConfigId() as configId">
+  <p>Started configuration: {{ configId }}</p>
+</div>
+<div *ngIf="lastError() as error">
+  <p>{{ error }}</p>
+</div>
 
-<p *ngIf="hostAcceptedSummary()" style="font-weight: bold;">
-  Summary accepted by host.
-</p>
-
-<div *ngIf="completionSummary() as summary">
-  <p>Host received summary:</p>
-  <ol>
-    <li>Product ID: {{ summary.productId }}</li>
-    <li>KB ID: {{ summary.kbId }}</li>
-    <li>Config ID: {{ summary.configId }}</li>
-    <li>Selected color: {{ summary.selectedColor }}</li>
-    <li>Status from widget: {{ summary.status }}</li>
-  </ol>
+<div *ngIf="completedSnapshot() as snapshot">
+  <p>Completed configuration: {{ snapshot.configurationId }}</p>
+  <p>Product: {{ snapshot.productId }}</p>
+  <p>Saved at: {{ snapshot.savedAt }}</p>
 </div>
 
 <hr />
@@ -24,7 +18,7 @@
 <app-configurator-widget
   [productId]="'CPS_BURGER'"
   [kbId]="'80'"
-  [local]="'de'"
+  [locale]="'de'"
   (configurationStarted)="onConfigurationStarted($event)"
   (configurationCompleted)="onConfigurationCompleted($event)"
   (errorOccurred)="onError($event)">

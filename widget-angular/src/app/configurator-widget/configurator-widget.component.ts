@@ -1,68 +1,63 @@
-import { Component, Input, output, signal } from '@angular/core';
+import { Component, Input, output, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ConfigurationApiService } from '../services/configuration-api.service';
-
-export interface ConfigurationSummary {
-  productId: string;
-  kbId: string;
-  configId: string;
-  selectedColor: string;
-  status: 'completed';
-}
+import {
+  Characteristic,
+  ConfigurationResponse,
+  ConfigurationSnapshot,
+  CreateConfigurationRequest,
+  UpdateCharacteristicRequest,
+  WidgetState
+} from '../models/configuration.models';
 
 @Component({
   selector: 'app-configurator-widget',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './configurator-widget.component.html',
   styleUrl: './configurator-widget.component.scss'
 })
-
 export class ConfiguratorWidgetComponent {
   @Input() productId!: string;
   @Input() kbId!: string;
-  @Input() local: string = 'de';
+  @Input() locale: string = 'de';
 
   configurationStarted = output<string>();
-  configurationCompleted = output<ConfigurationSummary>();
+  configurationCompleted = output<ConfigurationSnapshot>();
   errorOccurred = output<{ errorCode: string; message: string }>();
 
-  responseTimeMs = signal<number | null>(null);
-  configurationData = signal<any | null>(null);                                                // raw response-data
+  configuration = signal<ConfigurationResponse | null>(null);
   configId = signal<string | null>(null);
-  characteristics = signal<any[]>([]);                                                         // characteristics
-
-  status = signal<'idle' | 'loading' | 'started' | 'error' | 'updating' | 'completed'>('idle');
+  status = signal<WidgetState>('idle');
   errorMessage = signal<string | null>(null);
-  selectedColor = signal<string>('RED');
+
+  visibleCharacteristics = computed(() =>
+    this.configuration()?.rootItem?.characteristics?.filter(c => c.visible) ?? []
+  );
 
   constructor(private configurationApi: ConfigurationApiService) {}
 
   startConfiguration(): void {
+    const payload: CreateConfigurationRequest = {
+      productId: this.productId,
+      kbId: this.kbId,
+      locale: this.locale
+    };
+
     this.status.set('loading');
     this.errorMessage.set(null);
 
-    this.configurationApi.createConfiguration({
-      productId: this.productId,
-      kbId: this.kbId,
-      local: this.local
-    }).subscribe({
+    this.configurationApi.createConfiguration(payload).subscribe({
       next: (response) => {
-        this.configurationData.set(JSON.parse(response.configuration));
-        this.characteristics.set(                                                              // characteristics
-          this.configurationData()?.rootItem?.characteristics ?? []
-        );
-
-        this.configId.set(response.configId);
-        this.responseTimeMs.set(response.responseTimeMs);
-        this.status.set('started');
-
-        this.configurationStarted.emit(response.configId);
+        this.configuration.set(response);
+        this.configId.set(response.configurationId);
+        this.status.set('loaded');
+        this.configurationStarted.emit(response.configurationId);
       },
       error: () => {
         this.status.set('error');
         this.errorMessage.set('Failed to start configuration');
-
         this.errorOccurred.emit({
           errorCode: 'CONFIG_START_FAILED',
           message: 'Failed to start configuration'
@@ -71,23 +66,25 @@ export class ConfiguratorWidgetComponent {
     });
   }
 
-  updateConfiguration(value: string): void {
-    this.selectedColor.set(value);
-
+  updateCharacteristic(characteristicId: string, value: string | null): void {
     const currentConfigId = this.configId();
     if (!currentConfigId) {
       return;
     }
 
+    const payload: UpdateCharacteristicRequest = {
+      configurationId: currentConfigId,
+      characteristicId,
+      value
+    };
+
     this.status.set('updating');
     this.errorMessage.set(null);
 
-    this.configurationApi.patchConfiguration(currentConfigId, {
-      characteristic: 'color',
-      value
-    }).subscribe({
-      next: () => {
-        this.status.set('completed');
+    this.configurationApi.patchConfiguration(currentConfigId, payload).subscribe({
+      next: (response) => {
+        this.configuration.set(response);
+        this.status.set('loaded');
       },
       error: () => {
         this.status.set('error');
@@ -96,24 +93,38 @@ export class ConfiguratorWidgetComponent {
           errorCode: 'CONFIG_PATCH_FAILED',
           message: 'Failed to update configuration'
         });
-        console.error(this.errorMessage());
       }
     });
   }
 
   completeConfiguration(): void {
-    const currentConfigId = this.configId();
-    if (!currentConfigId) return;
+    const current = this.configuration();
+    if (!current) {
+      return;
+    }
 
-    const summary: ConfigurationSummary = {
-      productId: this.productId,
-      kbId: this.kbId,
-      configId: currentConfigId,
-      selectedColor: this.selectedColor(),
-      status: 'completed'
+    const snapshot: ConfigurationSnapshot = {
+      configurationId: current.configurationId,
+      productId: current.productId,
+      kbId: current.kbId,
+      savedAt: new Date().toISOString(),
+      complete: current.complete,
+      consistent: current.consistent,
+      rootItem: current.rootItem,
+      groups: current.groups,
+      messages: current.messages,
+      sourceContext: 'generic'
     };
 
     this.status.set('completed');
-    this.configurationCompleted.emit(summary);
+    this.configurationCompleted.emit(snapshot);
+  }
+
+  getSingleSelectedValueId(char: Characteristic): string {
+    return char.values?.[0]?.id ?? '';
+  }
+
+  trackByCharacteristicId(_: number, char: Characteristic): string {
+    return char.id;
   }
 }

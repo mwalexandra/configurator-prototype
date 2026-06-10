@@ -3,43 +3,123 @@
 
   <div class="card">
     <h3 class="card__title">Configuration info</h3>
+
     <div class="info-grid">
       <p><span>Product ID:</span> {{ productId }}</p>
       <p><span>KB ID:</span> {{ kbId }}</p>
       <p><span>Status:</span> {{ status() }}</p>
-      <p><span>Config ID:</span> {{ configId() }}</p>
-      <p *ngIf="responseTimeMs() !== null">
-        <span>Response time:</span> {{ responseTimeMs() }} ms
-      </p>
+      <p><span>Config ID:</span> {{ configId() || '—' }}</p>
     </div>
 
-    <button class="btn btn--primary"
+    <button
+      class="btn btn--primary"
       (click)="startConfiguration()"
-      [disabled]="status() === 'loading'">
+      [disabled]="status() === 'loading' || status() === 'updating'">
       {{ status() === 'loading' ? 'Starting...' : 'Start configuration' }}
     </button>
   </div>
 
-  <div class="card" *ngIf="configurationData()">
-    <h3 class="card__title">SAP response summary</h3>
+  <div class="card" *ngIf="configuration() as config">
+    <h3 class="card__title">Configuration summary</h3>
+
     <div class="info-grid">
-      <p><span>Consistent:</span> {{ configurationData()?.consistent }}</p>
-      <p><span>Complete:</span> {{ configurationData()?.complete }}</p>
-      <p><span>Root item:</span> {{ configurationData()?.rootItem?.key }}</p>
-      <p><span>KB Build:</span> {{ configurationData()?.kbBuild }}</p>
+      <p><span>Consistent:</span> {{ config.consistent }}</p>
+      <p><span>Complete:</span> {{ config.complete }}</p>
+      <p><span>Root item:</span> {{ config.rootItem.key }}</p>
+      <p><span>Groups:</span> {{ config.groups.length }}</p>
     </div>
   </div>
 
-  <div class="card" *ngIf="characteristics().length">
+  <div class="card" *ngIf="configuration() as config">
     <h3 class="card__title">Characteristics</h3>
 
-    <div class="characteristics-list">
-      <div class="characteristic-item" *ngFor="let char of characteristics()">
+    <div class="characteristics-list" *ngIf="visibleCharacteristics().length; else noCharacteristics">
+      <div
+        class="characteristic-item"
+        *ngFor="let char of visibleCharacteristics(); trackBy: trackByCharacteristicId">
+
+        <p><span>Name:</span> {{ char.name || char.id }}</p>
         <p><span>ID:</span> {{ char.id }}</p>
+        <p><span>Type:</span> {{ char.valueType }}</p>
         <p><span>Required:</span> {{ char.required }}</p>
         <p><span>Complete:</span> {{ char.complete }}</p>
-        <p><span>Value:</span> {{ char.values?.[0]?.value || '—' }}</p>
+        <p><span>Read only:</span> {{ char.readOnly }}</p>
+
+        <!-- SINGLE -->
+        <div *ngIf="char.valueType === 'SINGLE'" class="field-block">
+          <label>Select value</label>
+          <select
+            [disabled]="char.readOnly || status() === 'updating'"
+            [value]="getSingleSelectedValueId(char)"
+            (change)="updateCharacteristic(char.id, $any($event.target).value || null)">
+            <option value="">-- Select --</option>
+            <option *ngFor="let option of char.possibleValues" [value]="option.id">
+              {{ option.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- MULTI -->
+        <div *ngIf="char.valueType === 'MULTI'" class="field-block">
+          <label>Possible values</label>
+          <div class="multi-values">
+            <button
+              type="button"
+              class="chip"
+              *ngFor="let option of char.possibleValues"
+              [class.chip--selected]="char.values?.some(v => v.id === option.id)"
+              [disabled]="char.readOnly || status() === 'updating'"
+              (click)="updateCharacteristic(char.id, option.id)">
+              {{ option.name }}
+            </button>
+          </div>
+          <small>Current backend patch flow is still single-value oriented; multi-select will need backend extension.</small>
+        </div>
+
+        <!-- FREE_TEXT -->
+        <div *ngIf="char.valueType === 'FREE_TEXT'" class="field-block">
+          <label>Text value</label>
+          <input
+            type="text"
+            [disabled]="char.readOnly || status() === 'updating'"
+            [value]="getSingleSelectedValueId(char)"
+            #textInput
+            (blur)="updateCharacteristic(char.id, textInput.value || null)" />
+        </div>
+
+        <!-- NUMERIC -->
+        <div *ngIf="char.valueType === 'NUMERIC'" class="field-block">
+          <label>Numeric value</label>
+          <input
+            type="number"
+            [disabled]="char.readOnly || status() === 'updating'"
+            [value]="getSingleSelectedValueId(char)"
+            #numberInput
+            (blur)="updateCharacteristic(char.id, numberInput.value || null)" />
+        </div>
+
+        <div class="current-values" *ngIf="char.values?.length">
+          <p><span>Selected:</span></p>
+          <ul>
+            <li *ngFor="let value of char.values">
+              {{ value.name }} <small *ngIf="value.author">({{ value.author }})</small>
+            </li>
+          </ul>
+        </div>
       </div>
+    </div>
+
+    <ng-template #noCharacteristics>
+      <p>No visible characteristics returned by api-service.</p>
+    </ng-template>
+  </div>
+
+  <div class="card" *ngIf="configuration()?.messages?.length">
+    <h3 class="card__title">Messages</h3>
+    <div class="message-list">
+      <p *ngFor="let msg of configuration()?.messages">
+        <strong>{{ msg.severity }}:</strong> {{ msg.text }}
+      </p>
     </div>
   </div>
 
@@ -48,7 +128,7 @@
   <button
     class="btn btn--secondary btn--full"
     (click)="completeConfiguration()"
-    [disabled]="!configId()">
+    [disabled]="!configId() || status() === 'loading' || status() === 'updating'">
     Complete configuration
   </button>
 </div>

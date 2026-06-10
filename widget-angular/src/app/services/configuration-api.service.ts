@@ -3,7 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   CreateConfigurationRequest,
-  CreateConfigurationResponse
+  ConfigurationResponse,
+  UpdateCharacteristicRequest
 } from '../models/configuration.models';
 
 @Injectable({
@@ -15,20 +16,31 @@ export class ConfigurationApiService {
 
   createConfiguration(
     payload: CreateConfigurationRequest
-  ): Observable<CreateConfigurationResponse> {
-    return this.http.post<CreateConfigurationResponse>(
+  ): Observable<ConfigurationResponse> {
+    return this.http.post<ConfigurationResponse>(
       `${this.apiBaseUrl}/configurations`,
       payload
     );
   }
 
+  getConfiguration(
+    configurationId: string
+  ): Observable<ConfigurationResponse> {
+    return this.http.get<ConfigurationResponse>(
+      `${this.apiBaseUrl}/configurations/${configurationId}`
+    );
+  }
+
   patchConfiguration(
-    configId: string,
-    payload: { characteristic: string; value: string }
-  ): Observable<{ configId: string; status: string }> {
-    return this.http.patch<{ configId: string; status: string }>(
-      `${this.apiBaseUrl}/configurations/${configId}`,
-      payload
+    configurationId: string,
+    payload: UpdateCharacteristicRequest
+  ): Observable<ConfigurationResponse> {
+    return this.http.patch<ConfigurationResponse>(
+      `${this.apiBaseUrl}/configurations/${configurationId}`,
+      {
+        characteristicId: payload.characteristicId,
+        value: payload.value
+      }
     );
   }
 }

@@ -1,9 +1,9 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { 
-  ConfiguratorWidgetComponent,
-  ConfigurationSummary
+  ConfiguratorWidgetComponent
  } from './configurator-widget/configurator-widget.component';
+import { ConfigurationSnapshot } from './models/configuration.models';
 
 @Component({
   selector: 'app-root',
@@ -13,28 +13,19 @@ import {
   styleUrl: './app.scss'
 })
 export class App {
-  hostConfigId = signal<string | null>(null);
-  hostStatus = signal<'idle' | 'started' | 'completed' | 'error'>('idle');
-  hostError = signal<string | null>(null);
-  hostAcceptedSummary = signal(false);
-  completionSummary = signal<ConfigurationSummary | null>(null);
+  startedConfigId = signal<string | null>(null);
+  completedSnapshot = signal<ConfigurationSnapshot | null>(null);
+  lastError = signal<string | null>(null);
 
   onConfigurationStarted(configId: string): void {
-    this.hostConfigId.set(configId);
-    this.hostStatus.set('started');
-    this.hostError.set(null);
+    this.startedConfigId.set(configId);
   }
 
-  onConfigurationCompleted(summary: ConfigurationSummary ): void {
-    this.hostConfigId.set(summary.configId);
-    this.hostStatus.set('completed');
-    this.hostAcceptedSummary.set(true);
-    this.completionSummary.set(summary);
-    this.hostError.set(null);
+  onConfigurationCompleted(snapshot: ConfigurationSnapshot): void {
+    this.completedSnapshot.set(snapshot);
   }
 
   onError(event: { errorCode: string; message: string }): void {
-    this.hostStatus.set('error');
-    this.hostError.set(`${event.errorCode}: ${event.message}`);
+    this.lastError.set(`${event.errorCode}: ${event.message}`);
   }
 }

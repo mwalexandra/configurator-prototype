@@ -59,6 +59,7 @@ export interface ConfigurationResponse {
 
 export interface CharacteristicGroup {
   id: string;
+  name: string;
   complete: boolean;
   consistent: boolean;
   visible: boolean;
@@ -75,26 +76,25 @@ export interface ConfigurationItem {
 
 export interface Characteristic {
   id: string;
-  // valueType определяется маппером из intervalType
+  name: string;
+  description?: string;
   valueType: 'SINGLE' | 'MULTI' | 'FREE_TEXT' | 'NUMERIC';
   required: boolean;
   visible: boolean;
   readOnly: boolean;
   complete: boolean;
   consistent: boolean;
-  // текущие выбранные значения
+  length?: number;
+  numberDecimals?: number;
+  entryFieldMask?: string;
   values: CharacteristicValue[];
-  // допустимые значения (только selectable: true)
   possibleValues: CharacteristicValue[];
 }
 
 export interface CharacteristicValue {
-  // mapped from SAP possibleValues[].valueLow  OR  values[].value
   id: string;
-  // human-readable name: если SAP KB содержит описание — маппер подставит
-  // иначе api-service возвращает id как name (fallback)
   name: string;
-  // mapped from values[].author
+  description?: string;
   author?: 'Default' | 'System' | 'User';
 }
 
