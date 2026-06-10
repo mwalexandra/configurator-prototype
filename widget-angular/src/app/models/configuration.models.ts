@@ -16,15 +16,21 @@ export type WidgetState =
 // ──────────────────────────────
 export interface WidgetInputConfig {
   apiBaseUrl: string;
-  mode: ConfiguratorMode;
+  mode: ConfiguratorMode;                      // create mode
+
   // create mode
   productId?: string;
   kbId?: string;
   locale?: string;
+
   // resume mode
+  resume?: ResumeInput;
+}
+
+export interface ResumeInput {
   configurationId?: string;
-  // optional snapshot fallback
   snapshot?: ConfigurationSnapshot;
+  sourceContext?: 'commerce' | 'erp' | 'salesforce' | 'generic';
 }
 
 // ──────────────────────────────
@@ -113,10 +119,22 @@ export interface ConfigurationSnapshot {
   productId: string;
   kbId?: string;
   savedAt: string;
+
   complete: boolean;
   consistent: boolean;
+
   rootItem: ConfigurationItem;
   groups?: CharacteristicGroup[];
   messages?: ConfigurationMessage[];
+
+  metadata?: SnapshotMetadata;
   sourceContext?: string;
+}
+
+export interface SnapshotMetadata {
+  sourceContext?: string;
+  hostEntityType?: string;
+  hostEntityId?: string;
+  version?: string;
+  locale?: string;
 }
