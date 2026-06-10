@@ -16,13 +16,21 @@ public class ConfigurationMapper {
             SapRuntimeConfigurationResponse runtime,
             SapKbResponse kb
     ) {
+        if (runtime == null) {
+            throw new IllegalArgumentException("runtime configuration must not be null");
+        }
+
         ConfigurationResponse response = new ConfigurationResponse();
         response.setConfigurationId(runtime.getId());
         response.setKbId(runtime.getKbId() != null ? runtime.getKbId().toString() : null);
         response.setProductId(resolveProductId(runtime, kb));
         response.setComplete(runtime.isComplete());
         response.setConsistent(runtime.isConsistent());
-        response.setRootItem(mapRootItem(runtime.getRootItem(), kb));
+
+        if (runtime.getRootItem() != null) {
+            response.setRootItem(mapRootItem(runtime.getRootItem(), kb));
+        }
+
         response.setGroups(mapGroups(runtime, kb));
         response.setMessages(mapMessages(runtime));
         return response;
@@ -35,7 +43,7 @@ public class ConfigurationMapper {
         if (runtime.getProductKey() != null) {
             return runtime.getProductKey();
         }
-        if (kb.getHeaderInfo() != null && kb.getHeaderInfo().getKey() != null) {
+        if (kb != null && kb.getHeaderInfo() != null && kb.getHeaderInfo().getKey() != null) {
             return kb.getHeaderInfo().getKey().getName();
         }
         return null;
@@ -53,12 +61,27 @@ public class ConfigurationMapper {
     }
 
     private List<CharacteristicDto> mapCharacteristics(SapRuntimeRootItem runtimeRoot, SapKbResponse kb) {
-        Map<String, SapKbCharacteristic> kbCharacteristics = kb.getCharacteristics()
-                .stream()
-                .collect(Collectors.toMap(SapKbCharacteristic::getId, Function.identity(), (a, b) -> a));
+        Map<String, SapKbCharacteristic> kbCharacteristics = Collections.emptyMap();
+
+        if (kb != null && kb.getCharacteristics() != null) {
+            kbCharacteristics = kb.getCharacteristics()
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .filter(c -> c.getId() != null)
+                    .collect(Collectors.toMap(
+                            SapKbCharacteristic::getId,
+                            Function.identity(),
+                            (a, b) -> a
+                    ));
+        }
+
+        if (runtimeRoot.getCharacteristics() == null) {
+            return Collections.emptyList();
+        }
 
         return runtimeRoot.getCharacteristics()
                 .stream()
+                .filter(Objects::nonNull)
                 .map(runtimeChar -> mapCharacteristic(runtimeChar, kbCharacteristics.get(runtimeChar.getId())))
                 .collect(Collectors.toList());
     }
@@ -69,7 +92,7 @@ public class ConfigurationMapper {
     ) {
         CharacteristicDto dto = new CharacteristicDto();
         dto.setId(runtimeChar.getId());
-        dto.setName(kbChar != null ? kbChar.getName() : runtimeChar.getId());
+        dto.setName(kbChar != null && kbChar.getName() != null ? kbChar.getName() : runtimeChar.getId());
         dto.setDescription(kbChar != null ? kbChar.getDescription() : null);
         dto.setValueType(resolveValueType(runtimeChar, kbChar));
         dto.setRequired(runtimeChar.isRequired());
@@ -77,6 +100,12 @@ public class ConfigurationMapper {
         dto.setReadOnly(runtimeChar.isReadOnly());
         dto.setComplete(runtimeChar.isComplete());
         dto.setConsistent(runtimeChar.isConsistent());
+
+        if (kbChar != null) {
+            dto.setLength(kbChar.getLength());
+            dto.setNumberDecimals(kbChar.getNumberDecimals());
+            dto.setEntryFieldMask(kbChar.getEntryFieldMask());
+        }
 
         dto.setValues(mapSelectedValues(runtimeChar, kbChar));
         dto.setPossibleValues(mapPossibleValues(runtimeChar, kbChar));
@@ -86,16 +115,19 @@ public class ConfigurationMapper {
 
     private String resolveValueType(SapRuntimeCharacteristic runtimeChar, SapKbCharacteristic kbChar) {
         if (kbChar != null) {
-            if ("float".equalsIgnoreCase(kbChar.getType())) {
+            if ("float".equalsIgnoreCase(kbChar.getType()) || "integer".equalsIgnoreCase(kbChar.getType())) {
                 return "NUMERIC";
             }
-            if ("string".equalsIgnoreCase(kbChar.getType()) && Boolean.TRUE.equals(kbChar.getMultiValued())) {
+
+            if (Boolean.TRUE.equals(kbChar.getMultiValued())) {
                 return "MULTI";
             }
-            if ("string".equalsIgnoreCase(kbChar.getType())
-                    && (kbChar.getPossibleValues() == null || kbChar.getPossibleValues().isEmpty())) {
+
+            boolean kbFreeText = kbChar.getPossibleValues() == null || kbChar.getPossibleValues().isEmpty();
+            if ("string".equalsIgnoreCase(kbChar.getType()) && kbFreeText) {
                 return "FREE_TEXT";
             }
+
             return "SINGLE";
         }
 
@@ -110,17 +142,22 @@ public class ConfigurationMapper {
             SapRuntimeCharacteristic runtimeChar,
             SapKbCharacteristic kbChar
     ) {
-        Map<String, String> valueNames = extractKbValueNames(kbChar);
+        Map<String, SapKbPossibleValue> kbValues = extractKbValues(kbChar);
 
         if (runtimeChar.getValues() == null) {
             return Collections.emptyList();
         }
 
         return runtimeChar.getValues().stream()
+                .filter(Objects::nonNull)
                 .map(v -> {
                     CharacteristicValueDto dto = new CharacteristicValueDto();
                     dto.setId(v.getValue());
-                    dto.setName(valueNames.getOrDefault(v.getValue(), v.getValue()));
+
+                    SapKbPossibleValue kbValue = kbValues.get(v.getValue());
+                    dto.setName(kbValue != null && kbValue.getName() != null ? kbValue.getName() : v.getValue());
+                    dto.setDescription(kbValue != null ? kbValue.getDescription() : null);
+
                     dto.setSelected(true);
                     dto.setAuthor(v.getAuthor());
                     return dto;
@@ -132,22 +169,28 @@ public class ConfigurationMapper {
             SapRuntimeCharacteristic runtimeChar,
             SapKbCharacteristic kbChar
     ) {
-        Map<String, String> valueNames = extractKbValueNames(kbChar);
+        Map<String, SapKbPossibleValue> kbValues = extractKbValues(kbChar);
 
         if (runtimeChar.getPossibleValues() == null) {
             return Collections.emptyList();
         }
 
         return runtimeChar.getPossibleValues().stream()
-                .filter(v -> v.isSelectable())
+                .filter(Objects::nonNull)
+                .filter(SapRuntimePossibleValue::isSelectable)
                 .map(v -> {
                     String id = v.getValueLow();
                     if (id == null) {
                         return null;
                     }
+
                     CharacteristicValueDto dto = new CharacteristicValueDto();
                     dto.setId(id);
-                    dto.setName(valueNames.getOrDefault(id, id));
+
+                    SapKbPossibleValue kbValue = kbValues.get(id);
+                    dto.setName(kbValue != null && kbValue.getName() != null ? kbValue.getName() : id);
+                    dto.setDescription(kbValue != null ? kbValue.getDescription() : null);
+
                     dto.setSelected(false);
                     return dto;
                 })
@@ -155,15 +198,17 @@ public class ConfigurationMapper {
                 .collect(Collectors.toList());
     }
 
-    private Map<String, String> extractKbValueNames(SapKbCharacteristic kbChar) {
+    private Map<String, SapKbPossibleValue> extractKbValues(SapKbCharacteristic kbChar) {
         if (kbChar == null || kbChar.getPossibleValues() == null) {
             return Collections.emptyMap();
         }
 
         return kbChar.getPossibleValues().stream()
+                .filter(Objects::nonNull)
+                .filter(v -> resolveKbValueId(v) != null)
                 .collect(Collectors.toMap(
                         this::resolveKbValueId,
-                        v -> v.getName() != null ? v.getName() : resolveKbValueId(v),
+                        Function.identity(),
                         (a, b) -> a
                 ));
     }
@@ -181,13 +226,16 @@ public class ConfigurationMapper {
     ) {
         Map<String, String> groupNames = new HashMap<>();
 
-        if (kb.getProducts() != null) {
+        if (kb != null && kb.getProducts() != null) {
             kb.getProducts().stream()
+                    .filter(Objects::nonNull)
                     .filter(p -> Boolean.TRUE.equals(p.getIsRoot()))
                     .findFirst()
                     .ifPresent(rootProduct -> {
                         if (rootProduct.getCharacteristicGroups() != null) {
-                            rootProduct.getCharacteristicGroups().forEach(g -> groupNames.put(g.getId(), g.getName()));
+                            rootProduct.getCharacteristicGroups().stream()
+                                    .filter(Objects::nonNull)
+                                    .forEach(g -> groupNames.put(g.getId(), g.getName()));
                         }
                     });
         }
@@ -197,6 +245,7 @@ public class ConfigurationMapper {
         }
 
         return runtime.getRootItem().getCharacteristicGroups().stream()
+                .filter(Objects::nonNull)
                 .map(g -> {
                     CharacteristicGroup dto = new CharacteristicGroup();
                     dto.setId(g.getId());
@@ -215,10 +264,12 @@ public class ConfigurationMapper {
         }
 
         return runtime.getConflicts().stream()
+                .filter(Objects::nonNull)
                 .map(conflict -> {
                     ConfigurationMessage msg = new ConfigurationMessage();
                     msg.setSeverity("ERROR");
                     msg.setText(conflict.getMessage() != null ? conflict.getMessage() : "Configuration conflict");
+                    msg.setCharacteristicId(conflict.getId());
                     return msg;
                 })
                 .collect(Collectors.toList());
