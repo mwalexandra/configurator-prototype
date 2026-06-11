@@ -1,17 +1,19 @@
 package com.example.apiservicejava.service;
 
 import com.example.apiservicejava.model.ConfigurationResponse;
+import com.example.apiservicejava.model.ConfigurationSnapshot;
 import com.example.apiservicejava.model.CreateConfigurationRequest;
 import com.example.apiservicejava.model.PatchConfigurationRequest;
-import com.example.apiservicejava.model.sapkb.SapKbResponse;
-import com.example.apiservicejava.model.sapruntime.SapRuntimeConfigurationResponse;
-import com.example.apiservicejava.model.ConfigurationSnapshot;
 import com.example.apiservicejava.model.RestoreInfo;
 import com.example.apiservicejava.model.ResumeConfigurationRequest;
-import org.springframework.stereotype.Service;
-
+import com.example.apiservicejava.model.sapkb.SapKbResponse;
 import com.example.apiservicejava.model.sapruntime.SapCreateRequest;
+import com.example.apiservicejava.model.sapruntime.SapRuntimeConfigurationResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -21,7 +23,9 @@ public class ConfigurationService {
     private final SapCpsClient sapCpsClient;
     private final SapKbClient sapKbClient;
     private final ConfigurationMapper configurationMapper;
+
     private final Map<String, String> etagByConfigurationId = new ConcurrentHashMap<>();
+    private final Map<String, Boolean> readOnlyByConfigurationId = new ConcurrentHashMap<>();
 
     public ConfigurationService(
             SapCpsClient sapCpsClient,
@@ -36,7 +40,6 @@ public class ConfigurationService {
     public ConfigurationResponse createConfiguration(CreateConfigurationRequest request) {
         long start = System.currentTimeMillis();
 
-        // create SAP runtime configuration
         SapCreateRequest sapRequest = new SapCreateRequest();
         sapRequest.setProductKey(request.getProductId());
 
@@ -45,7 +48,7 @@ public class ConfigurationService {
         }
 
         sapRequest.setDate("2018-08-09");
-        sapRequest.setContext(java.util.List.of(
+        sapRequest.setContext(List.of(
                 new SapCreateRequest.SapContextEntry("VBAP-VRKME", "EA")
         ));
         sapRequest.setSource(
@@ -53,6 +56,14 @@ public class ConfigurationService {
         );
 
         SapRuntimeConfigurationResponse runtimeResponse = sapCpsClient.createConfiguration(sapRequest);
+
+        if (runtimeResponse == null) {
+            throw new IllegalStateException("SAP CPS returned null body for createConfiguration");
+        }
+
+        if (runtimeResponse.getId() != null) {
+            readOnlyByConfigurationId.put(runtimeResponse.getId(), false);
+        }
 
         String kbId = runtimeResponse.getKbId() != null
                 ? runtimeResponse.getKbId().toString()
@@ -75,7 +86,7 @@ public class ConfigurationService {
             throw new IllegalStateException("SAP CPS returned null configuration body for configId=" + configId);
         }
 
-        if (runtimeResponse != null && runtimeResponse.getId() != null && runtimeResult.getEtag() != null) {
+        if (runtimeResponse.getId() != null && runtimeResult.getEtag() != null) {
             etagByConfigurationId.put(runtimeResponse.getId(), runtimeResult.getEtag());
         }
 
@@ -96,8 +107,15 @@ public class ConfigurationService {
     ) {
         long start = System.currentTimeMillis();
 
+        if (Boolean.TRUE.equals(readOnlyByConfigurationId.get(configId))) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Configuration is read-only after snapshot restore"
+            );
+        }
+
         String etag = etagByConfigurationId.get(configId);
-        SapRuntimeConfigurationResponse currentRuntime = null;
+        SapRuntimeConfigurationResponse currentRuntime;
 
         if (etag == null) {
             SapGetConfigurationResult runtimeResult = sapCpsClient.getConfigurationWithEtag(configId);
@@ -136,8 +154,10 @@ public class ConfigurationService {
 
         if (updatedRuntime == null) {
             throw new IllegalStateException(
-                    "SAP CPS patchConfiguration returned null body for configurationId=" + configId
-                            + ", characteristicId=" + request.getCharacteristicId()
+                    "SAP CPS patchConfiguration returned null body for configurationId="
+                            + configId
+                            + ", characteristicId="
+                            + request.getCharacteristicId()
             );
         }
 
@@ -176,6 +196,10 @@ public class ConfigurationService {
                 restoreInfo.setMessage("Configuration restored from live CPS runtime");
 
                 liveResponse.setRestoreInfo(restoreInfo);
+                if (liveResponse.getConfigurationId() != null) {
+                    readOnlyByConfigurationId.put(liveResponse.getConfigurationId(), false);
+                }
+
                 liveResponse.setBackendProcessingTimeMs(System.currentTimeMillis() - start);
                 return liveResponse;
             } catch (Exception ex) {
@@ -195,8 +219,8 @@ public class ConfigurationService {
             response.setComplete(snapshot.isComplete());
             response.setConsistent(snapshot.isConsistent());
             response.setRootItem(snapshot.getRootItem());
-            response.setGroups(snapshot.getGroups() != null ? snapshot.getGroups() : java.util.List.of());
-            response.setMessages(snapshot.getMessages() != null ? snapshot.getMessages() : java.util.List.of());
+            response.setGroups(snapshot.getGroups() != null ? snapshot.getGroups() : List.of());
+            response.setMessages(snapshot.getMessages() != null ? snapshot.getMessages() : List.of());
 
             RestoreInfo restoreInfo = new RestoreInfo();
             restoreInfo.setMode("resume");
@@ -208,6 +232,11 @@ public class ConfigurationService {
             restoreInfo.setMessage("Configuration restored from snapshot fallback");
 
             response.setRestoreInfo(restoreInfo);
+
+            if (snapshot.getConfigurationId() != null && !snapshot.getConfigurationId().isBlank()) {
+                readOnlyByConfigurationId.put(snapshot.getConfigurationId(), true);
+            }
+
             response.setBackendProcessingTimeMs(System.currentTimeMillis() - start);
             return response;
         }
