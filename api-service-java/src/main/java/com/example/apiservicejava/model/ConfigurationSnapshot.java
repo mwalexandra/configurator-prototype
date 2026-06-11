@@ -1,24 +1,22 @@
 package com.example.apiservicejava.model;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class ConfigurationResponse {
+public class ConfigurationSnapshot {
 
     private String configurationId;
     private String productId;
     private String kbId;
+    private String savedAt;
+
     private boolean complete;
     private boolean consistent;
+
     private ConfigurationItem rootItem;
-    private List<CharacteristicGroup> groups = new ArrayList<>();
-    private List<ConfigurationMessage> messages = new ArrayList<>();
-    private RestoreInfo restoreInfo;
+    private List<CharacteristicGroup> groups;
+    private List<ConfigurationMessage> messages;
 
-    private Long backendProcessingTimeMs;
-
-    public ConfigurationResponse() {
-    }
+    private SnapshotMetadata metadata;
 
     public String getConfigurationId() {
         return configurationId;
@@ -42,6 +40,14 @@ public class ConfigurationResponse {
 
     public void setKbId(String kbId) {
         this.kbId = kbId;
+    }
+
+    public String getSavedAt() {
+        return savedAt;
+    }
+
+    public void setSavedAt(String savedAt) {
+        this.savedAt = savedAt;
     }
 
     public boolean isComplete() {
@@ -84,19 +90,11 @@ public class ConfigurationResponse {
         this.messages = messages;
     }
 
-    public Long getBackendProcessingTimeMs() {
-        return backendProcessingTimeMs;
+    public SnapshotMetadata getMetadata() {
+        return metadata;
     }
 
-    public void setBackendProcessingTimeMs(Long backendProcessingTimeMs) {
-        this.backendProcessingTimeMs = backendProcessingTimeMs;
-    }
-
-    public RestoreInfo getRestoreInfo() {
-        return restoreInfo;
-    }
-
-    public void setRestoreInfo(RestoreInfo restoreInfo) {
-        this.restoreInfo = restoreInfo;
+    public void setMetadata(SnapshotMetadata metadata) {
+        this.metadata = metadata;
     }
 }

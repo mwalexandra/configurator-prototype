@@ -3,6 +3,7 @@ package com.example.apiservicejava.controller;
 import com.example.apiservicejava.model.CreateConfigurationRequest;
 import com.example.apiservicejava.model.ConfigurationResponse;
 import com.example.apiservicejava.model.PatchConfigurationRequest;
+import com.example.apiservicejava.model.ResumeConfigurationRequest;
 import com.example.apiservicejava.service.ConfigurationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,11 @@ public class ConfigurationController {
     @ResponseStatus(HttpStatus.CREATED)
     public ConfigurationResponse createConfiguration(@RequestBody CreateConfigurationRequest request) {
         return configurationService.createConfiguration(request);
+    }
+
+    @PostMapping("/resume")
+    public ConfigurationResponse resumeConfiguration(@RequestBody ResumeConfigurationRequest request) {
+        return configurationService.resumeConfiguration(request);
     }
 
     @GetMapping("/{configId}")

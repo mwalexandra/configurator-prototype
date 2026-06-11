@@ -149,4 +149,61 @@ public class ConfigurationService {
         response.setBackendProcessingTimeMs(System.currentTimeMillis() - start);
         return response;
     }
+
+    public ConfigurationResponse resumeConfiguration(ResumeConfigurationRequest request) {
+        long start = System.currentTimeMillis();
+
+        if (request.getConfigurationId() != null && !request.getConfigurationId().isBlank()) {
+            try {
+                ConfigurationResponse liveResponse = getConfiguration(request.getConfigurationId());
+
+                RestoreInfo restoreInfo = new RestoreInfo();
+                restoreInfo.setMode("resume");
+                restoreInfo.setStatus("RESUMED");
+                restoreInfo.setStrategy("LIVE_CONFIGURATION");
+                restoreInfo.setLiveSessionAvailable(true);
+                restoreInfo.setSnapshotUsed(false);
+                restoreInfo.setReadOnly(false);
+                restoreInfo.setMessage("Configuration restored from live CPS runtime");
+
+                liveResponse.setRestoreInfo(restoreInfo);
+                liveResponse.setBackendProcessingTimeMs(System.currentTimeMillis() - start);
+                return liveResponse;
+            } catch (Exception ex) {
+                if (request.getSnapshot() == null) {
+                    throw ex;
+                }
+            }
+        }
+
+        if (request.getSnapshot() != null) {
+            ConfigurationSnapshot snapshot = request.getSnapshot();
+
+            ConfigurationResponse response = new ConfigurationResponse();
+            response.setConfigurationId(snapshot.getConfigurationId());
+            response.setProductId(snapshot.getProductId());
+            response.setKbId(snapshot.getKbId());
+            response.setComplete(snapshot.isComplete());
+            response.setConsistent(snapshot.isConsistent());
+            response.setRootItem(snapshot.getRootItem());
+            response.setGroups(snapshot.getGroups() != null ? snapshot.getGroups() : java.util.List.of());
+            response.setMessages(snapshot.getMessages() != null ? snapshot.getMessages() : java.util.List.of());
+
+            RestoreInfo restoreInfo = new RestoreInfo();
+            restoreInfo.setMode("resume");
+            restoreInfo.setStatus("FALLBACK_APPLIED");
+            restoreInfo.setStrategy("READ_ONLY_SNAPSHOT");
+            restoreInfo.setLiveSessionAvailable(false);
+            restoreInfo.setSnapshotUsed(true);
+            restoreInfo.setReadOnly(true);
+            restoreInfo.setMessage("Configuration restored from snapshot fallback");
+
+            response.setRestoreInfo(restoreInfo);
+            response.setBackendProcessingTimeMs(System.currentTimeMillis() - start);
+
+            return response;
+        }
+
+        throw new IllegalArgumentException("Resume requires configurationId or snapshot");
+    }
 }
