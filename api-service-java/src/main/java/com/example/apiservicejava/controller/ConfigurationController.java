@@ -26,6 +26,7 @@ public class ConfigurationController {
     }
 
     @PostMapping("/resume")
+    @ResponseStatus(HttpStatus.OK)
     public ConfigurationResponse resumeConfiguration(@RequestBody ResumeConfigurationRequest request) {
         return configurationService.resumeConfiguration(request);
     }

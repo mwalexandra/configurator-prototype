@@ -166,7 +166,7 @@ public class ConfigurationService {
                 RestoreInfo restoreInfo = new RestoreInfo();
                 restoreInfo.setMode("resume");
                 restoreInfo.setStatus("RESUMED");
-                restoreInfo.setStrategy("LIVE_CONFIGURATION");
+                restoreInfo.setStrategy("LIVECONFIGURATION");
                 restoreInfo.setLiveSessionAvailable(true);
                 restoreInfo.setSnapshotUsed(false);
                 restoreInfo.setReadOnly(false);
@@ -198,7 +198,7 @@ public class ConfigurationService {
             RestoreInfo restoreInfo = new RestoreInfo();
             restoreInfo.setMode("resume");
             restoreInfo.setStatus("FALLBACK_APPLIED");
-            restoreInfo.setStrategy("READ_ONLY_SNAPSHOT");
+            restoreInfo.setStrategy("SNAPSHOTFALLBACK");
             restoreInfo.setLiveSessionAvailable(false);
             restoreInfo.setSnapshotUsed(true);
             restoreInfo.setReadOnly(true);
