@@ -159,7 +159,10 @@ public class ConfigurationService {
     public ConfigurationResponse resumeConfiguration(ResumeConfigurationRequest request) {
         long start = System.currentTimeMillis();
 
-        if (request.getConfigurationId() != null && !request.getConfigurationId().isBlank()) {
+        boolean liveRequested =
+                request.getConfigurationId() != null && !request.getConfigurationId().isBlank();
+
+        if (liveRequested) {
             try {
                 ConfigurationResponse liveResponse = getConfiguration(request.getConfigurationId());
 
@@ -197,8 +200,8 @@ public class ConfigurationService {
 
             RestoreInfo restoreInfo = new RestoreInfo();
             restoreInfo.setMode("resume");
-            restoreInfo.setStatus("FALLBACK_APPLIED");
-            restoreInfo.setStrategy("SNAPSHOTFALLBACK");
+            restoreInfo.setStatus("FALLBACKAPPLIED");
+            restoreInfo.setStrategy(liveRequested ? "SNAPSHOTFALLBACK" : "READONLYSNAPSHOT");
             restoreInfo.setLiveSessionAvailable(false);
             restoreInfo.setSnapshotUsed(true);
             restoreInfo.setReadOnly(true);
@@ -206,7 +209,6 @@ public class ConfigurationService {
 
             response.setRestoreInfo(restoreInfo);
             response.setBackendProcessingTimeMs(System.currentTimeMillis() - start);
-
             return response;
         }
 
