@@ -1,8 +1,9 @@
-package com.example.apiservicejava.service;
+package com.example.apiservicejava.mapper;
 
-import com.example.apiservicejava.model.*;
+import com.example.apiservicejava.model.api.*;
 import com.example.apiservicejava.model.sapkb.*;
 import com.example.apiservicejava.model.sapruntime.*;
+import com.example.apiservicejava.service.sap.support.SapGetConfigurationResult;
 import org.springframework.stereotype.Service;
 
 import java.util.*;

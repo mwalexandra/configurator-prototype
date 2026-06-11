@@ -1,4 +1,4 @@
-package com.example.apiservicejava.service;
+package com.example.apiservicejava.service.sap.support;
 
 public class SapConfigurationContext {
     private String configurationId;

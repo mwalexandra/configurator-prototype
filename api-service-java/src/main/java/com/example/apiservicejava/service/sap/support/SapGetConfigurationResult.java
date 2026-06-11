@@ -1,4 +1,4 @@
-package com.example.apiservicejava.service;
+package com.example.apiservicejava.service.sap.support;
 
 import com.example.apiservicejava.model.sapruntime.SapRuntimeConfigurationResponse;
 

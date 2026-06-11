@@ -1,14 +1,17 @@
 package com.example.apiservicejava.service;
 
-import com.example.apiservicejava.model.ConfigurationResponse;
-import com.example.apiservicejava.model.ConfigurationSnapshot;
-import com.example.apiservicejava.model.CreateConfigurationRequest;
-import com.example.apiservicejava.model.PatchConfigurationRequest;
-import com.example.apiservicejava.model.RestoreInfo;
-import com.example.apiservicejava.model.ResumeConfigurationRequest;
+import com.example.apiservicejava.mapper.ConfigurationMapper;
+import com.example.apiservicejava.model.api.ConfigurationResponse;
+import com.example.apiservicejava.model.api.ConfigurationSnapshot;
+import com.example.apiservicejava.model.api.CreateConfigurationRequest;
+import com.example.apiservicejava.model.api.PatchConfigurationRequest;
+import com.example.apiservicejava.model.api.RestoreInfo;
+import com.example.apiservicejava.model.api.ResumeConfigurationRequest;
 import com.example.apiservicejava.model.sapkb.SapKbResponse;
 import com.example.apiservicejava.model.sapruntime.SapCreateRequest;
 import com.example.apiservicejava.model.sapruntime.SapRuntimeConfigurationResponse;
+import com.example.apiservicejava.service.sap.SapCpsClient;
+import com.example.apiservicejava.service.sap.support.SapGetConfigurationResult;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;

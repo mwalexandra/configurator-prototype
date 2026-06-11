@@ -1,4 +1,4 @@
-package com.example.apiservicejava.model;
+package com.example.apiservicejava.model.api;
 
 public class CharacteristicGroup {
 

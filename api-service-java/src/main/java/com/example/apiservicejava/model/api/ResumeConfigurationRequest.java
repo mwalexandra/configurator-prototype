@@ -1,4 +1,6 @@
-package com.example.apiservicejava.model;
+package com.example.apiservicejava.model.api;
+
+import com.example.apiservicejava.model.api.ConfigurationSnapshot;
 
 public class ResumeConfigurationRequest {
 
