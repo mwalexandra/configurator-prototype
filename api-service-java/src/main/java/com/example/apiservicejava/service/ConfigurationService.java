@@ -5,6 +5,9 @@ import com.example.apiservicejava.model.CreateConfigurationRequest;
 import com.example.apiservicejava.model.PatchConfigurationRequest;
 import com.example.apiservicejava.model.sapkb.SapKbResponse;
 import com.example.apiservicejava.model.sapruntime.SapRuntimeConfigurationResponse;
+import com.example.apiservicejava.model.ConfigurationSnapshot;
+import com.example.apiservicejava.model.RestoreInfo;
+import com.example.apiservicejava.model.ResumeConfigurationRequest;
 import org.springframework.stereotype.Service;
 
 import com.example.apiservicejava.model.sapruntime.SapCreateRequest;
@@ -68,6 +71,10 @@ public class ConfigurationService {
         SapGetConfigurationResult runtimeResult = sapCpsClient.getConfigurationWithEtag(configId);
         SapRuntimeConfigurationResponse runtimeResponse = runtimeResult.getBody();
 
+        if (runtimeResponse == null) {
+            throw new IllegalStateException("SAP CPS returned null configuration body for configId=" + configId);
+        }
+
         if (runtimeResponse != null && runtimeResponse.getId() != null && runtimeResult.getEtag() != null) {
             etagByConfigurationId.put(runtimeResponse.getId(), runtimeResult.getEtag());
         }
@@ -90,7 +97,7 @@ public class ConfigurationService {
         long start = System.currentTimeMillis();
 
         String etag = etagByConfigurationId.get(configId);
-        SapRuntimeConfigurationResponse currentRuntime;
+        SapRuntimeConfigurationResponse currentRuntime = null;
 
         if (etag == null) {
             SapGetConfigurationResult runtimeResult = sapCpsClient.getConfigurationWithEtag(configId);
@@ -102,6 +109,10 @@ public class ConfigurationService {
             }
         } else {
             currentRuntime = sapCpsClient.getConfiguration(configId);
+        }
+
+        if (currentRuntime == null) {
+            throw new IllegalStateException("SAP CPS returned null configuration body for configId=" + configId);
         }
 
         String itemId = currentRuntime.getRootItem() != null
@@ -130,13 +141,8 @@ public class ConfigurationService {
             );
         }
 
-        if (refreshedRuntimeResult.getBody() != null
-                && refreshedRuntimeResult.getBody().getId() != null
-                && refreshedRuntimeResult.getEtag() != null) {
-            etagByConfigurationId.put(
-                    refreshedRuntimeResult.getBody().getId(),
-                    refreshedRuntimeResult.getEtag()
-            );
+        if (updatedRuntime.getId() != null && refreshedRuntimeResult.getEtag() != null) {
+            etagByConfigurationId.put(updatedRuntime.getId(), refreshedRuntimeResult.getEtag());
         }
 
         String kbId = updatedRuntime.getKbId() != null
