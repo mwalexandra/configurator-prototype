@@ -15,6 +15,11 @@ export type WidgetState =
   | 'completing'
   | 'completed';
 
+export type CharacteristicValueType = 'SINGLE' | 'MULTI' | 'FREETEXT' | 'NUMERIC';
+export type ResumeStrategy = 'LIVECONFIGURATION' | 'SNAPSHOTFALLBACK' | 'READONLYSNAPSHOT';
+export type ResumeStatus = 'RESUMED' | 'FALLBACKAPPLIED' | 'FAILED';
+
+
 // ──────────────────────────────
 // Host → Widget
 // ──────────────────────────────
@@ -81,17 +86,11 @@ export interface ConfigurationItem {
 
 export interface CharacteristicGroup {
   id: string;
-  name: string;
+  name?: string;
   complete: boolean;
   consistent: boolean;
   visible: boolean;
 }
-
-export type CharacteristicValueType =
-  | 'SINGLE'
-  | 'MULTI'
-  | 'FREE_TEXT'
-  | 'NUMERIC';
 
 export interface Characteristic {
   id: string;
@@ -152,6 +151,7 @@ export interface ConfigurationSnapshot {
   messages?: ConfigurationMessage[];
 
   metadata?: SnapshotMetadata;
+  sourceContext?: string;
 }
 
 export interface SnapshotMetadata {
@@ -165,16 +165,6 @@ export interface SnapshotMetadata {
 // ──────────────────────────────
 // Restore metadata
 // ──────────────────────────────
-
-export type ResumeStrategy =
-  | 'LIVE_CONFIGURATION'
-  | 'SNAPSHOT_FALLBACK'
-  | 'READ_ONLY_SNAPSHOT';
-
-export type ResumeStatus =
-  | 'RESUMED'
-  | 'FALLBACK_APPLIED'
-  | 'FAILED';
 
 export interface RestoreInfo {
   mode: ConfiguratorMode;

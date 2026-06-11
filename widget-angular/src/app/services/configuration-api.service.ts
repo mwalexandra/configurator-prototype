@@ -51,6 +51,15 @@ export class ConfigurationApiService {
     );
   }
 
+  completeConfiguration(
+    configurationId: string
+  ): Observable<ConfigurationResponse> {
+    return this.http.post<ConfigurationResponse>(
+      `${this.apiBaseUrl}/configurations/${configurationId}/complete`,
+      {}
+    );
+  }
+
   resumeConfiguration(
     payload: ResumeConfigurationRequest
   ): Observable<ConfigurationResponse> {

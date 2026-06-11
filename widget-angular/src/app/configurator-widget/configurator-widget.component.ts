@@ -14,7 +14,6 @@ import {
   ConfigurationResponse,
   ConfigurationSnapshot,
   CreateConfigurationRequest,
-  ResumeConfigurationRequest,
   WidgetInputConfig,
   WidgetState
 } from '../models/configuration.models';
@@ -77,7 +76,7 @@ export class ConfiguratorWidgetComponent implements OnInit {
     this.errorMessage.set(null);
 
     this.configurationApi.createConfiguration(payload).subscribe({
-      next: (response) => {
+      next: response => {
         this.applyConfiguration(response);
         this.configurationStarted.emit(response.configurationId);
       },
@@ -105,23 +104,20 @@ export class ConfiguratorWidgetComponent implements OnInit {
       return;
     }
 
-    const payload: ResumeConfigurationRequest = {
-      configurationId: resume.configurationId,
-      snapshot: resume.snapshot,
-      sourceContext: resume.sourceContext
-    };
-
     this.status.set('loading');
     this.errorMessage.set(null);
 
-    // phase 1: if backend resume endpoint is not ready yet,
-    // prefer direct load by configurationId
-    if (resume.configurationId && !resume.snapshot) {
+    if (resume.configurationId) {
       this.configurationApi.getConfiguration(resume.configurationId).subscribe({
-        next: (response) => {
+        next: response => {
           this.applyConfiguration(response);
         },
         error: () => {
+          if (resume.snapshot) {
+            this.applySnapshotFallback(resume.snapshot);
+            return;
+          }
+
           this.status.set('error');
           this.errorMessage.set('Failed to load configuration');
           this.errorOccurred.emit({
@@ -133,24 +129,16 @@ export class ConfiguratorWidgetComponent implements OnInit {
       return;
     }
 
-    this.configurationApi.resumeConfiguration(payload).subscribe({
-      next: (response) => {
-        this.applyConfiguration(response);
-      },
-      error: () => {
-        this.status.set('error');
-        this.errorMessage.set('Failed to resume configuration');
-        this.errorOccurred.emit({
-          errorCode: 'CONFIG_RESUME_FAILED',
-          message: 'Failed to resume configuration'
-        });
-      }
-    });
+    if (resume.snapshot) {
+      this.applySnapshotFallback(resume.snapshot);
+    }
   }
 
   updateCharacteristic(characteristicId: string, value: string | null): void {
     const currentConfigId = this.configId();
-    if (!currentConfigId) {
+    const current = this.configuration();
+
+    if (!currentConfigId || !current || current.restoreInfo?.readOnly) {
       return;
     }
 
@@ -162,8 +150,8 @@ export class ConfiguratorWidgetComponent implements OnInit {
       characteristicId,
       value
     }).subscribe({
-      next: (response) => {
-        this.applyConfiguration(response, false);
+      next: response => {
+        this.applyConfiguration(response);
       },
       error: () => {
         this.status.set('error');
@@ -177,30 +165,31 @@ export class ConfiguratorWidgetComponent implements OnInit {
   }
 
   completeConfiguration(): void {
+    const currentConfigId = this.configId();
     const current = this.configuration();
-    if (!current) {
+
+    if (!currentConfigId || !current || current.restoreInfo?.readOnly) {
       return;
     }
 
-    const snapshot: ConfigurationSnapshot = {
-      configurationId: current.configurationId,
-      productId: current.productId,
-      kbId: current.kbId,
-      savedAt: new Date().toISOString(),
-      complete: current.complete,
-      consistent: current.consistent,
-      rootItem: current.rootItem,
-      groups: current.groups,
-      messages: current.messages,
-      metadata: {
-        sourceContext: this.config.resume?.sourceContext ?? 'generic',
-        locale: this.config.locale,
-        version: '1'
-      }
-    };
+    this.status.set('completing');
+    this.errorMessage.set(null);
 
-    this.status.set('completed');
-    this.configurationCompleted.emit(snapshot);
+    this.configurationApi.completeConfiguration(currentConfigId).subscribe({
+      next: response => {
+        this.applyConfiguration(response);
+        this.status.set('completed');
+        this.configurationCompleted.emit(this.buildSnapshot(response));
+      },
+      error: () => {
+        this.status.set('error');
+        this.errorMessage.set('Failed to complete configuration');
+        this.errorOccurred.emit({
+          errorCode: 'CONFIG_COMPLETE_FAILED',
+          message: 'Failed to complete configuration'
+        });
+      }
+    });
   }
 
   getSingleSelectedValueId(char: Characteristic): string {
@@ -211,16 +200,55 @@ export class ConfiguratorWidgetComponent implements OnInit {
     return char.id;
   }
 
-  private applyConfiguration(
-    response: ConfigurationResponse,
-    emitStartedEvent = false
-  ): void {
+  private applyConfiguration(response: ConfigurationResponse): void {
     this.configuration.set(response);
     this.configId.set(response.configurationId);
     this.status.set('loaded');
+  }
 
-    if (emitStartedEvent) {
-      this.configurationStarted.emit(response.configurationId);
-    }
+  private applySnapshotFallback(snapshot: ConfigurationSnapshot): void {
+    this.configuration.set({
+      configurationId: snapshot.configurationId ?? 'snapshot-only',
+      productId: snapshot.productId,
+      kbId: snapshot.kbId,
+      complete: snapshot.complete,
+      consistent: snapshot.consistent,
+      rootItem: snapshot.rootItem,
+      groups: snapshot.groups ?? [],
+      messages: snapshot.messages ?? [],
+      restoreInfo: {
+        mode: 'resume',
+        status: 'FALLBACKAPPLIED',
+        strategy: 'READONLYSNAPSHOT',
+        liveSessionAvailable: false,
+        snapshotUsed: true,
+        readOnly: true,
+        message: 'Live configuration could not be restored. Snapshot fallback is shown in read-only mode.'
+      }
+    });
+
+    this.configId.set(snapshot.configurationId ?? null);
+    this.status.set('loaded');
+    this.errorMessage.set(null);
+  }
+
+  private buildSnapshot(current: ConfigurationResponse): ConfigurationSnapshot {
+    return {
+      configurationId: current.configurationId,
+      productId: current.productId,
+      kbId: current.kbId,
+      savedAt: new Date().toISOString(),
+      complete: current.complete,
+      consistent: current.consistent,
+      rootItem: current.rootItem,
+      groups: current.groups,
+      messages: current.messages,
+      sourceContext: this.config.resume?.sourceContext ?? 'generic',
+      metadata: {
+        sourceContext: this.config.resume?.sourceContext ?? 'generic',
+        locale: this.config.locale,
+        version: '1'
+      }
+    };
   }
 }
