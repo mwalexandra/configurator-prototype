@@ -246,4 +246,41 @@ public class ConfigurationService {
 
         throw new IllegalArgumentException("Resume requires configurationId or snapshot");
     }
+
+    public ConfigurationResponse completeConfiguration(String configId) {
+        long start = System.currentTimeMillis();
+
+        if (Boolean.TRUE.equals(readOnlyByConfigurationId.get(configId))) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Configuration is read-only after snapshot restore"
+            );
+        }
+
+        SapRuntimeConfigurationResponse completedRuntime = sapCpsClient.completeConfiguration(configId);
+
+        if (completedRuntime == null) {
+            SapGetConfigurationResult refreshedRuntimeResult = sapCpsClient.getConfigurationWithEtag(configId);
+            completedRuntime = refreshedRuntimeResult.getBody();
+
+            if (completedRuntime != null && refreshedRuntimeResult.getEtag() != null) {
+                etagByConfigurationId.put(configId, refreshedRuntimeResult.getEtag());
+            }
+        }
+
+        if (completedRuntime == null) {
+            throw new IllegalStateException("SAP CPS returned null body for completeConfiguration configId=" + configId);
+        }
+
+        String kbId = completedRuntime.getKbId() != null
+                ? completedRuntime.getKbId().toString()
+                : null;
+
+        SapKbResponse kbResponse = sapKbClient.getKnowledgeBase(kbId);
+
+        ConfigurationResponse response = configurationMapper.toWidgetResponse(completedRuntime, kbResponse);
+        response.setBackendProcessingTimeMs(System.currentTimeMillis() - start);
+        return response;
+    }
+
 }

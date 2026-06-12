@@ -45,4 +45,10 @@ public class ConfigurationController {
     ) {
         return configurationService.patchConfiguration(configId, request);
     }
+
+    @PostMapping("/{configId}/complete")
+    @ResponseStatus(HttpStatus.OK)
+    public ConfigurationResponse completeConfiguration(@PathVariable String configId) {
+        return configurationService.completeConfiguration(configId);
+    }
 }
