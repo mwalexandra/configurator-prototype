@@ -150,11 +150,10 @@ export interface ConfigurationSnapshot {
   messages?: ConfigurationMessage[];
 
   metadata?: SnapshotMetadata;
-  sourceContext?: ResumeSourceContext | string;
 }
 
 export interface SnapshotMetadata {
-  sourceContext?: ResumeSourceContext | string;
+  sourceContext?: ResumeSourceContext;
   hostEntityType?: string;
   hostEntityId?: string;
   version?: string;

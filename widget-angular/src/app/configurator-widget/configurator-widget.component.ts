@@ -258,11 +258,10 @@ export class ConfiguratorWidgetComponent implements OnInit {
       rootItem: current.rootItem,
       groups: current.groups,
       messages: current.messages,
-      sourceContext: this.config.resume?.sourceContext ?? 'generic',
       metadata: {
-        sourceContext: this.config.resume?.sourceContext ?? 'generic',
         locale: this.config.locale,
-        version: '1'
+        version: '1',
+        sourceContext: this.config.resume?.sourceContext ?? 'generic',
       }
     };
   }
