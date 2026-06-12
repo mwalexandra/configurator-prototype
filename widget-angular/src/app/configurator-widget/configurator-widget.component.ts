@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { ConfigurationApiService } from '../services/configuration-api.service';
 import {
   Characteristic,
+  ConfigurationMessage,
   ConfigurationResponse,
   ConfigurationSnapshot,
   CreateConfigurationRequest,
@@ -264,5 +265,21 @@ export class ConfiguratorWidgetComponent implements OnInit {
         version: '1'
       }
     };
+  }
+
+  getGlobalMessages(): ConfigurationMessage[] {
+    return (this.configuration()?.messages ?? []).filter(msg => !msg.characteristicId);
+  }
+
+  getMessagesForCharacteristic(characteristicId: string): ConfigurationMessage[] {
+    return (this.configuration()?.messages ?? []).filter(
+      msg => msg.characteristicId === characteristicId
+    );
+  }
+
+  hasCharacteristicError(characteristicId: string): boolean {
+    return this.getMessagesForCharacteristic(characteristicId).some(
+      msg => msg.severity === 'ERROR'
+    );
   }
 }
