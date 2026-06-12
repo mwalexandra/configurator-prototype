@@ -16,6 +16,7 @@ import {
 export class App {
   startedConfigId = signal<string | null>(null);
   completedSnapshot = signal<ConfigurationSnapshot | null>(null);
+  finalSnapshot = signal<ConfigurationSnapshot | null>(null);
   lastError = signal<string | null>(null);
 
   widgetConfig: WidgetInputConfig = {
@@ -34,6 +35,11 @@ export class App {
     this.completedSnapshot.set(snapshot);
   }
 
+  onAddedToCart(snapshot: ConfigurationSnapshot): void {
+    this.finalSnapshot.set(snapshot);
+    this.lastError.set(null);
+  }
+
   onError(event: { errorCode: string; message: string }): void {
     this.lastError.set(`${event.errorCode}: ${event.message}`);
   }
@@ -48,23 +54,29 @@ export class App {
     };
     this.startedConfigId.set(null);
     this.completedSnapshot.set(null);
+    this.finalSnapshot.set(null);
     this.lastError.set(null);
   }
 
   switchToResumeMode(): void {
-    if (!this.startedConfigId()) {
-      this.lastError.set('No configurationId available yet for resume mode');
+    const snapshot = this.finalSnapshot();
+
+    if (!snapshot) {
+      this.lastError.set('No final snapshot available yet for resume mode');
       return;
     }
 
     this.widgetConfig = {
       apiBaseUrl: this.widgetConfig.apiBaseUrl,
       mode: 'resume',
+      locale: 'de',
       resume: {
-        configurationId: this.startedConfigId()!,
+        configurationId: snapshot.configurationId,
+        snapshot,
         sourceContext: 'generic'
       }
     };
+
     this.completedSnapshot.set(null);
     this.lastError.set(null);
   }

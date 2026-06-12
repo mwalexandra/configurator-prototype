@@ -30,6 +30,7 @@ export class ConfiguratorWidgetComponent implements OnInit {
 
   configurationStarted = output<string>();
   configurationCompleted = output<ConfigurationSnapshot>();
+  addedToCart = output<ConfigurationSnapshot>();
   errorOccurred = output<{ errorCode: string; message: string }>();
 
   configuration = signal<ConfigurationResponse | null>(null);
@@ -77,8 +78,7 @@ export class ConfiguratorWidgetComponent implements OnInit {
 
     this.configurationApi.createConfiguration(payload).subscribe({
       next: response => {
-        this.applyConfiguration(response);
-        this.configurationStarted.emit(response.configurationId);
+        this.applyConfiguration(response, true);
       },
       error: () => {
         this.status.set('error');
@@ -177,9 +177,12 @@ export class ConfiguratorWidgetComponent implements OnInit {
 
     this.configurationApi.completeConfiguration(currentConfigId).subscribe({
       next: response => {
-        this.applyConfiguration(response);
+        this.configuration.set(response);
+        this.configId.set(response.configurationId);
         this.status.set('completed');
-        this.configurationCompleted.emit(this.buildSnapshot(response));
+
+        const snapshot = this.buildSnapshot(response);
+        this.configurationCompleted.emit(snapshot);
       },
       error: () => {
         this.status.set('error');
@@ -192,6 +195,13 @@ export class ConfiguratorWidgetComponent implements OnInit {
     });
   }
 
+  addToCart(): void {
+    const current = this.configuration();
+    if (!current) return;
+
+    this.addedToCart.emit(this.buildSnapshot(current));
+  }
+
   getSingleSelectedValueId(char: Characteristic): string {
     return char.values?.[0]?.id ?? '';
   }
@@ -200,10 +210,14 @@ export class ConfiguratorWidgetComponent implements OnInit {
     return char.id;
   }
 
-  private applyConfiguration(response: ConfigurationResponse): void {
+  private applyConfiguration(response: ConfigurationResponse, emitStartedEvent = false): void {
     this.configuration.set(response);
     this.configId.set(response.configurationId);
     this.status.set('loaded');
+
+    if (emitStartedEvent) {
+      this.configurationStarted.emit(response.configurationId);
+    }
   }
 
   private applySnapshotFallback(snapshot: ConfigurationSnapshot): void {

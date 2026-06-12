@@ -5,18 +5,18 @@
     <h3 class="card__title">Configuration info</h3>
 
     <div class="info-grid">
-      <p><span>Mode:</span> {{ config.mode }}</p>
-      <p><span>Product ID:</span> {{ config.productId || config.resume?.snapshot?.productId || '—' }}</p>
-      <p><span>KB ID:</span> {{ config.kbId || config.resume?.snapshot?.kbId || '—' }}</p>
-      <p><span>Status:</span> {{ status() }}</p>
-      <p><span>Config ID:</span> {{ configId() || config.resume?.configurationId || '—' }}</p>
+      <p><span>Mode</span>{{ config.mode }}</p>
+      <p><span>Product ID</span>{{ config.productId ?? config.resume?.snapshot?.productId }}</p>
+      <p><span>KB ID</span>{{ config.kbId ?? config.resume?.snapshot?.kbId }}</p>
+      <p><span>Status</span>{{ status() }}</p>
+      <p><span>Config ID</span>{{ configId() ?? config.resume?.configurationId }}</p>
     </div>
 
     <button
-      *ngIf="config.mode === 'create'"
+      *ngIf="config.mode === 'create' && !configuration()"
       class="btn btn--primary"
       (click)="startConfiguration()"
-      [disabled]="status() === 'loading' || status() === 'updating'">
+      [disabled]="status() === 'loading' || status() === 'updating' || status() === 'completing'">
       {{ status() === 'loading' ? 'Starting...' : 'Start configuration' }}
     </button>
   </div>
@@ -25,137 +25,105 @@
     <h3 class="card__title">Configuration summary</h3>
 
     <div class="info-grid">
-      <p><span>Consistent:</span> {{ currentConfig.consistent }}</p>
-      <p><span>Complete:</span> {{ currentConfig.complete }}</p>
-      <p><span>Root item:</span> {{ currentConfig.rootItem.key }}</p>
-      <p><span>Groups:</span> {{ currentConfig.groups.length }}</p>
-      <p><span>Backend time:</span> {{ currentConfig.backendProcessingTimeMs ?? '—' }} ms</p>
+      <p><span>Consistent</span>{{ currentConfig.consistent }}</p>
+      <p><span>Complete</span>{{ currentConfig.complete }}</p>
+      <p><span>Root item</span>{{ currentConfig.rootItem.key }}</p>
+      <p><span>Groups</span>{{ currentConfig.groups.length }}</p>
+      <p><span>Backend time</span>{{ currentConfig.backendProcessingTimeMs ?? 0 }} ms</p>
     </div>
 
     <div class="info-grid" *ngIf="currentConfig.restoreInfo as restoreInfo">
-      <p><span>Restore mode:</span> {{ restoreInfo.mode }}</p>
-      <p><span>Restore status:</span> {{ restoreInfo.status }}</p>
-      <p><span>Strategy:</span> {{ restoreInfo.strategy || '—' }}</p>
-      <p><span>Live session:</span> {{ restoreInfo.liveSessionAvailable }}</p>
-      <p><span>Snapshot used:</span> {{ restoreInfo.snapshotUsed }}</p>
-      <p><span>Read only:</span> {{ restoreInfo.readOnly }}</p>
+      <p><span>Restore mode</span>{{ restoreInfo.mode }}</p>
+      <p><span>Restore status</span>{{ restoreInfo.status }}</p>
+      <p><span>Strategy</span>{{ restoreInfo.strategy }}</p>
+      <p><span>Live session</span>{{ restoreInfo.liveSessionAvailable }}</p>
+      <p><span>Snapshot used</span>{{ restoreInfo.snapshotUsed }}</p>
+      <p><span>Read only</span>{{ restoreInfo.readOnly }}</p>
     </div>
-
-    <p *ngIf="currentConfig.restoreInfo?.message">
-      <span>Restore message:</span> {{ currentConfig.restoreInfo?.message }}
-    </p>
   </div>
 
   <div class="card" *ngIf="configuration() as currentConfig">
-    <h3 class="card__title">Characteristics</h3>
+    <h3 class="card__title">
+      {{ status() === 'completed' ? 'Final configuration' : 'Characteristics' }}
+    </h3>
 
-    <div
-      class="characteristics-list"
-      *ngIf="visibleCharacteristics().length; else noCharacteristics">
-
+    <div class="characteristics-list" *ngIf="visibleCharacteristics().length; else noCharacteristics">
       <div
         class="characteristic-item"
         *ngFor="let char of visibleCharacteristics(); trackBy: trackByCharacteristicId">
 
-        <p><span>Name:</span> {{ char.name || char.id }}</p>
-        <p><span>ID:</span> {{ char.id }}</p>
-        <p><span>Type:</span> {{ char.valueType }}</p>
-        <p><span>Required:</span> {{ char.required }}</p>
-        <p><span>Complete:</span> {{ char.complete }}</p>
-        <p><span>Read only:</span> {{ char.readOnly }}</p>
+        <p><span>Name</span>{{ char.name || char.id }}</p>
+        <p><span>ID</span>{{ char.id }}</p>
+        <p><span>Type</span>{{ char.valueType }}</p>
+        <p><span>Required</span>{{ char.required }}</p>
+        <p><span>Complete</span>{{ char.complete }}</p>
+        <p><span>Read only</span>{{ char.readOnly || status() === 'completed' }}</p>
 
-        <!-- SINGLE -->
-        <div *ngIf="char.valueType === 'SINGLE'" class="field-block">
-          <label>Select value</label>
+        <ng-container [ngSwitch]="char.valueType">
           <select
-            [disabled]="char.readOnly || currentConfig.restoreInfo?.readOnly || status() === 'updating'"
-            [value]="getSingleSelectedValueId(char)"
-            (change)="updateCharacteristic(char.id, $any($event.target).value || null)">
-            <option value="">-- Select --</option>
-            <option *ngFor="let option of char.possibleValues" [value]="option.id">
-              {{ option.name }}
+            *ngSwitchCase="'SINGLE'"
+            [disabled]="char.readOnly || status() === 'updating' || status() === 'completing' || status() === 'completed'"
+            [ngModel]="getSingleSelectedValueId(char)"
+            (ngModelChange)="updateCharacteristic(char.id, $event || null)">
+            <option [ngValue]="null">-- Select --</option>
+            <option *ngFor="let val of char.possibleValues" [ngValue]="val.id">
+              {{ val.name }}
             </option>
           </select>
-        </div>
 
-        <!-- MULTI -->
-        <div *ngIf="char.valueType === 'MULTI'" class="field-block">
-          <label>Possible values</label>
-          <div class="multi-values">
-            <button
-              type="button"
-              class="chip"
-              *ngFor="let option of char.possibleValues"
-              [class.chip--selected]="char.values?.some(v => v.id === option.id)"
-              [disabled]="char.readOnly || currentConfig.restoreInfo?.readOnly || status() === 'updating'"
-              (click)="updateCharacteristic(char.id, option.id)">
-              {{ option.name }}
-            </button>
-          </div>
-          <small>
-            Current backend patch flow is still single-value oriented; multi-select will need backend extension.
-          </small>
-        </div>
-
-        <!-- FREETEXT -->
-        <div *ngIf="char.valueType === 'FREETEXT'" class="field-block">
-          <label>Text value</label>
           <input
+            *ngSwitchCase="'FREETEXT'"
             type="text"
-            [disabled]="char.readOnly || currentConfig.restoreInfo?.readOnly || status() === 'updating'"
-            [value]="getSingleSelectedValueId(char)"
-            #textInput
-            (blur)="updateCharacteristic(char.id, textInput.value || null)" />
-        </div>
+            [disabled]="char.readOnly || status() === 'updating' || status() === 'completing' || status() === 'completed'"
+            [ngModel]="char.values?.[0]?.id ?? ''"
+            (blur)="updateCharacteristic(char.id, $any($event.target).value || null)" />
 
-        <!-- NUMERIC -->
-        <div *ngIf="char.valueType === 'NUMERIC'" class="field-block">
-          <label>Numeric value</label>
           <input
+            *ngSwitchCase="'NUMERIC'"
             type="number"
-            [disabled]="char.readOnly || currentConfig.restoreInfo?.readOnly || status() === 'updating'"
-            [value]="getSingleSelectedValueId(char)"
-            #numberInput
-            (blur)="updateCharacteristic(char.id, numberInput.value || null)" />
-        </div>
+            [disabled]="char.readOnly || status() === 'updating' || status() === 'completing' || status() === 'completed'"
+            [ngModel]="char.values?.[0]?.id ?? ''"
+            (blur)="updateCharacteristic(char.id, $any($event.target).value || null)" />
 
-        <div class="current-values" *ngIf="char.values?.length">
-          <p><span>Selected:</span></p>
-          <ul>
-            <li *ngFor="let value of char.values">
-              {{ value.name }}
-              <small *ngIf="value.author">({{ value.author }})</small>
-            </li>
-          </ul>
-        </div>
+          <div *ngSwitchDefault>
+            <span *ngIf="char.values?.length">
+              Selected:
+              {{ char.values[0].name || char.values[0].id }}
+            </span>
+          </div>
+        </ng-container>
       </div>
     </div>
 
     <ng-template #noCharacteristics>
-      <p>No visible characteristics returned by api-service.</p>
+      <p>No visible characteristics.</p>
     </ng-template>
   </div>
 
-  <div class="card" *ngIf="configuration()?.messages?.length">
-    <h3 class="card__title">Messages</h3>
-    <div class="message-list">
-      <p *ngFor="let msg of configuration()?.messages">
-        <strong>{{ msg.severity }}:</strong> {{ msg.text }}
-      </p>
+  <div class="card" *ngIf="configuration() as currentConfig">
+    <h3 class="card__title">Actions</h3>
+
+    <div class="actions">
+      <button
+        *ngIf="status() !== 'completed'"
+        class="btn btn--primary"
+        (click)="completeConfiguration()"
+        [disabled]="status() === 'loading' || status() === 'updating' || status() === 'completing'">
+        {{ status() === 'completing' ? 'Completing...' : 'Complete configuration' }}
+      </button>
+
+      <button
+        *ngIf="status() === 'completed'"
+        class="btn btn--primary"
+        (click)="addToCart()"
+        [disabled]="!currentConfig.complete || !currentConfig.consistent">
+        Add to cart
+      </button>
     </div>
   </div>
 
-  <p class="error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
-
-  <button
-    class="btn btn--secondary btn--full"
-    (click)="completeConfiguration()"
-    [disabled]="
-      !configId() ||
-      status() === 'loading' ||
-      status() === 'updating' ||
-      configuration()?.restoreInfo?.readOnly
-    ">
-    Complete configuration
-  </button>
+  <div class="card" *ngIf="errorMessage() as error">
+    <h3 class="card__title">Error</h3>
+    <p>{{ error }}</p>
+  </div>
 </div>

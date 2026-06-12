@@ -19,6 +19,11 @@ export type CharacteristicValueType = 'SINGLE' | 'MULTI' | 'FREETEXT' | 'NUMERIC
 export type ResumeStrategy = 'LIVECONFIGURATION' | 'SNAPSHOTFALLBACK' | 'READONLYSNAPSHOT';
 export type ResumeStatus = 'RESUMED' | 'FALLBACKAPPLIED' | 'FAILED';
 
+export type ResumeSourceContext =
+  | 'commerce'
+  | 'erp'
+  | 'salesforce'
+  | 'generic';
 
 // ──────────────────────────────
 // Host → Widget
@@ -42,12 +47,6 @@ export interface ResumeInput {
   snapshot?: ConfigurationSnapshot;
   sourceContext?: ResumeSourceContext;
 }
-
-export type ResumeSourceContext =
-  | 'commerce'
-  | 'erp'
-  | 'salesforce'
-  | 'generic';
 
 // ──────────────────────────────
 // Widget → API-Service
@@ -151,7 +150,7 @@ export interface ConfigurationSnapshot {
   messages?: ConfigurationMessage[];
 
   metadata?: SnapshotMetadata;
-  sourceContext?: string;
+  sourceContext?: ResumeSourceContext | string;
 }
 
 export interface SnapshotMetadata {

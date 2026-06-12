@@ -3,18 +3,22 @@
 
   <div class="host-controls">
     <button type="button" (click)="switchToCreateMode()">Create mode</button>
-    <button type="button" (click)="switchToResumeMode()">Resume mode</button>
+    <button type="button" (click)="switchToResumeMode()" [disabled]="!finalSnapshot()">
+      Resume
+    </button>
   </div>
 
   <div class="host-summary">
     <p><strong>Current mode:</strong> {{ widgetConfig.mode }}</p>
     <p><strong>Started config ID:</strong> {{ startedConfigId() || '—' }}</p>
+    <p><strong>Final snapshot available:</strong> {{ !!finalSnapshot() }}</p>
   </div>
 
   <app-configurator-widget
     [config]="widgetConfig"
     (configurationStarted)="onConfigurationStarted($event)"
     (configurationCompleted)="onConfigurationCompleted($event)"
+    (addedToCart)="onAddedToCart($event)"
     (errorOccurred)="onError($event)">
   </app-configurator-widget>
 
@@ -26,6 +30,15 @@
     <p><strong>Saved At:</strong> {{ snapshot.savedAt }}</p>
     <p><strong>Complete:</strong> {{ snapshot.complete }}</p>
     <p><strong>Consistent:</strong> {{ snapshot.consistent }}</p>
+  </div>
+
+  <div class="host-events" *ngIf="finalSnapshot() as snapshot">
+    <h3>Final payload for host / cart</h3>
+    <p><strong>Configuration ID:</strong> {{ snapshot.configurationId }}</p>
+    <p><strong>Product ID:</strong> {{ snapshot.productId }}</p>
+    <p><strong>KB ID:</strong> {{ snapshot.kbId }}</p>
+    <p><strong>Saved At:</strong> {{ snapshot.savedAt }}</p>
+    <p><strong>Source Context:</strong> {{ snapshot.metadata?.sourceContext }}</p>
   </div>
 
   <div class="host-error" *ngIf="lastError() as error">
