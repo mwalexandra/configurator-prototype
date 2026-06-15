@@ -50,7 +50,7 @@ public class ConfigurationService {
             sapRequest.setKbId(Integer.valueOf(request.getKbId()));
         }
 
-        sapRequest.setDate("2018-08-09");
+        sapRequest.setDate(java.time.LocalDate.now().toString());
         sapRequest.setContext(List.of(
                 new SapCreateRequest.SapContextEntry("VBAP-VRKME", "EA")
         ));
@@ -117,32 +117,18 @@ public class ConfigurationService {
             );
         }
 
+        // Получаем ETag — если нет в кэше, делаем GET один раз
         String etag = etagByConfigurationId.get(configId);
-        SapRuntimeConfigurationResponse currentRuntime;
-
         if (etag == null) {
             SapGetConfigurationResult runtimeResult = sapCpsClient.getConfigurationWithEtag(configId);
-            currentRuntime = runtimeResult.getBody();
-
-            if (currentRuntime != null && currentRuntime.getId() != null && runtimeResult.getEtag() != null) {
-                etagByConfigurationId.put(currentRuntime.getId(), runtimeResult.getEtag());
+            if (runtimeResult.getBody() != null && runtimeResult.getEtag() != null) {
+                etagByConfigurationId.put(configId, runtimeResult.getEtag());
                 etag = runtimeResult.getEtag();
             }
-        } else {
-            currentRuntime = sapCpsClient.getConfiguration(configId);
         }
 
-        if (currentRuntime == null) {
-            throw new IllegalStateException("SAP CPS returned null configuration body for configId=" + configId);
-        }
-
-        String itemId = currentRuntime.getRootItem() != null
-                ? currentRuntime.getRootItem().getId()
-                : null;
-
-        if (itemId == null || itemId.isBlank()) {
-            throw new IllegalStateException("rootItem.id is missing in SAP runtime configuration");
-        }
+        // itemId в SAP CPS для rootItem всегда "1"
+        String itemId = "1";
 
         sapCpsClient.patchConfiguration(
                 configId,
@@ -152,20 +138,18 @@ public class ConfigurationService {
                 etag
         );
 
-        SapGetConfigurationResult refreshedRuntimeResult = sapCpsClient.getConfigurationWithEtag(configId);
-        SapRuntimeConfigurationResponse updatedRuntime = refreshedRuntimeResult.getBody();
+        // После PATCH — GET с новым ETag
+        SapGetConfigurationResult refreshed = sapCpsClient.getConfigurationWithEtag(configId);
+        SapRuntimeConfigurationResponse updatedRuntime = refreshed.getBody();
 
         if (updatedRuntime == null) {
             throw new IllegalStateException(
-                    "SAP CPS patchConfiguration returned null body for configurationId="
-                            + configId
-                            + ", characteristicId="
-                            + request.getCharacteristicId()
+                    "SAP CPS returned null after PATCH for configId=" + configId
             );
         }
 
-        if (updatedRuntime.getId() != null && refreshedRuntimeResult.getEtag() != null) {
-            etagByConfigurationId.put(updatedRuntime.getId(), refreshedRuntimeResult.getEtag());
+        if (refreshed.getEtag() != null) {
+            etagByConfigurationId.put(configId, refreshed.getEtag());
         }
 
         String kbId = updatedRuntime.getKbId() != null
@@ -247,29 +231,22 @@ public class ConfigurationService {
         throw new IllegalArgumentException("Resume requires configurationId or snapshot");
     }
 
-    public ConfigurationResponse completeConfiguration(String configId) {
+    public ConfigurationResponse completeConfiguration(String configurationId) {
         long start = System.currentTimeMillis();
 
-        if (Boolean.TRUE.equals(readOnlyByConfigurationId.get(configId))) {
+        if (Boolean.TRUE.equals(readOnlyByConfigurationId.get(configurationId))) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Configuration is read-only after snapshot restore"
             );
         }
 
-        SapRuntimeConfigurationResponse completedRuntime = sapCpsClient.completeConfiguration(configId);
+        SapRuntimeConfigurationResponse completedRuntime = sapCpsClient.completeConfiguration(configurationId);
 
         if (completedRuntime == null) {
-            SapGetConfigurationResult refreshedRuntimeResult = sapCpsClient.getConfigurationWithEtag(configId);
-            completedRuntime = refreshedRuntimeResult.getBody();
-
-            if (completedRuntime != null && refreshedRuntimeResult.getEtag() != null) {
-                etagByConfigurationId.put(configId, refreshedRuntimeResult.getEtag());
-            }
-        }
-
-        if (completedRuntime == null) {
-            throw new IllegalStateException("SAP CPS returned null body for completeConfiguration configId=" + configId);
+            throw new IllegalStateException(
+                    "SAP CPS returned null body for completeConfiguration configurationId=" + configurationId
+            );
         }
 
         String kbId = completedRuntime.getKbId() != null

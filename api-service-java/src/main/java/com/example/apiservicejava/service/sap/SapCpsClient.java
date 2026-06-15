@@ -107,12 +107,18 @@ public class SapCpsClient {
                 headers.set("APIKey", apiKey);
                 headers.setIfMatch(etag);
 
-                Map<String, Object> valueInput = new HashMap<>();
-                valueInput.put("value", value);
-                valueInput.put("selected", true);
-
                 Map<String, Object> body = new HashMap<>();
-                body.put("values", List.of(valueInput));
+
+                if (value != null) {
+                        // Выбор значения
+                        Map<String, Object> valueInput = new HashMap<>();
+                        valueInput.put("value", value);
+                        valueInput.put("selected", true);
+                        body.put("values", List.of(valueInput));
+                } else {
+                        // Снятие выбора — пустой список
+                        body.put("values", List.of());
+                }
 
                 HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
@@ -131,7 +137,22 @@ public class SapCpsClient {
                         throw new IllegalArgumentException("configurationId must not be blank");
                 }
 
-                return getConfiguration(configurationId);
+                String url = baseUrl + "/api/v2/configurations/" + configurationId + "/complete";
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                headers.set("APIKey", apiKey);
+
+                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(Map.of(), headers);
+
+                ResponseEntity<SapRuntimeConfigurationResponse> response = restTemplate.exchange(
+                        url,
+                        HttpMethod.POST,
+                        entity,
+                        SapRuntimeConfigurationResponse.class
+                );
+
+                return response.getBody();
         }
 
 }
