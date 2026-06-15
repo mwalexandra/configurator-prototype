@@ -33,240 +33,315 @@ function createConfigResponse(
 }
 
 describe('ConfiguratorWidgetComponent', () => {
-  let component: ConfiguratorWidgetComponent;
+    let component: ConfiguratorWidgetComponent;
 
-  const apiService = {
-    createConfiguration: vi.fn(),
-    patchConfiguration: vi.fn(),
-    completeConfiguration: vi.fn(),
-    getConfiguration: vi.fn(),
-    resumeConfiguration: vi.fn(),
-    setApiBaseUrl: vi.fn()
-  };
-
-  beforeEach(async () => {
-    // Mocks vor jedem Test zurücksetzen,
-    // damit die Tests unabhängig voneinander bleiben.
-    apiService.createConfiguration.mockReset();
-    apiService.patchConfiguration.mockReset();
-    apiService.completeConfiguration.mockReset();
-    apiService.getConfiguration.mockReset();
-    apiService.resumeConfiguration.mockReset();
-    apiService.setApiBaseUrl.mockReset();
-
-    await TestBed.configureTestingModule({
-      imports: [ConfiguratorWidgetComponent],
-      providers: [{ provide: ConfigurationApiService, useValue: apiService }]
-    }).compileComponents();
-
-    const fixture = TestBed.createComponent(ConfiguratorWidgetComponent);
-    component = fixture.componentInstance;
-
-    component.config = {
-      apiBaseUrl: 'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev',
-      mode: 'create',
-      productId: 'CPS_BURGER',
-      kbId: '80'
-    };
-  });
-
-  it('should start configuration and emit configurationStarted', () => {
-    const mockResponse = createConfigResponse();
-
-    apiService.createConfiguration.mockReturnValue(of(mockResponse));
-
-    const emitSpy = vi.spyOn(component.configurationStarted, 'emit');
-
-    component.startConfiguration();
-
-    // Prüft, dass der Service mit dem erwarteten Payload aufgerufen wird
-    expect(apiService.createConfiguration).toHaveBeenCalledWith({
-      productId: 'CPS_BURGER',
-      kbId: '80'
-    });
-    // Prüft, dass der interne Zustand aktualisiert wurde
-    expect(component.configuration()).toEqual(mockResponse);
-    expect(component.configId()).toBe('cfg-123');
-    expect(component.status()).toBe('loaded');
-    // Prüft, dass das Output-Event mit der richtigen ID emittiert wurde
-    expect(emitSpy).toHaveBeenCalledWith('cfg-123');
-  });
-
-  it('should resume configuration by configurationId', () => {
-    const mockResponse = createConfigResponse({ configurationId: 'cfg-999' });
-
-    apiService.getConfiguration.mockReturnValue(of(mockResponse));
-
-    component.config = {
-      apiBaseUrl: 'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev',
-      mode: 'resume',
-      resume: {
-        configurationId: 'cfg-999'
-      }
+    const apiService = {
+        createConfiguration: vi.fn(),
+        patchConfiguration: vi.fn(),
+        completeConfiguration: vi.fn(),
+        getConfiguration: vi.fn(),
+        resumeConfiguration: vi.fn(),
+        setApiBaseUrl: vi.fn()
     };
 
-    const emitSpy = vi.spyOn(component.configurationStarted, 'emit');
+    beforeEach(async () => {
+        // Mocks vor jedem Test zurücksetzen,
+        // damit die Tests unabhängig voneinander bleiben.
+        apiService.createConfiguration.mockReset();
+        apiService.patchConfiguration.mockReset();
+        apiService.completeConfiguration.mockReset();
+        apiService.getConfiguration.mockReset();
+        apiService.resumeConfiguration.mockReset();
+        apiService.setApiBaseUrl.mockReset();
 
-    component.ngOnInit();
+        await TestBed.configureTestingModule({
+        imports: [ConfiguratorWidgetComponent],
+        providers: [{ provide: ConfigurationApiService, useValue: apiService }]
+        }).compileComponents();
 
-    // API-Basis-URL muss gesetzt werden
-    expect(apiService.setApiBaseUrl).toHaveBeenCalledWith(
-      'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev'
-    );
-    // Konfiguration wird per ID geladen
-    expect(apiService.getConfiguration).toHaveBeenCalledWith('cfg-999');
-    // Zustand im Widget prüfen
-    expect(component.configuration()).toEqual(mockResponse);
-    expect(component.configId()).toBe('cfg-999');
-    expect(component.status()).toBe('loaded');
-    // Beim Resume über configurationId wird kein configurationStarted-Event emittiert
-    expect(emitSpy).not.toHaveBeenCalled();
-  });
+        const fixture = TestBed.createComponent(ConfiguratorWidgetComponent);
+        component = fixture.componentInstance;
 
-  it('should update configuration characteristic', () => {
-    const initialResponse = createConfigResponse();
-    const updatedResponse = createConfigResponse({ complete: true });
-
-    apiService.patchConfiguration.mockReturnValue(of(updatedResponse));
-
-    // Ausgangszustand setzen
-    component.configuration.set(initialResponse);
-    component.configId.set('cfg-123');
-
-    component.updateCharacteristic('CPS_OPTION_M', 'M');
-
-    // Prüfen, dass der Patch-Call korrekt war
-    expect(apiService.patchConfiguration).toHaveBeenCalledWith('cfg-123', {
-      configurationId: 'cfg-123',
-      characteristicId: 'CPS_OPTION_M',
-      value: 'M'
-    });
-
-    // Antwort wurde in den internen Zustand übernommen
-    expect(component.configuration()).toEqual(updatedResponse);
-    expect(component.status()).toBe('loaded');
-  });
-
-  it('should complete configuration', () => {
-    component.config = {
-      apiBaseUrl: 'http://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev',
-      mode: 'create',
-      productId: 'CPS_BURGER',
-      kbId: '80'
-    };
-
-    const completedResponse = createConfigResponse({ complete: true });
-
-    apiService.completeConfiguration.mockReturnValue(of(completedResponse));
-
-    // Bereits geladene Konfiguration simulieren
-    component.configuration.set(completedResponse);
-    component.configId.set('cfg-123');
-
-    const emitSpy = vi.spyOn(component.configurationCompleted, 'emit');
-
-    component.completeConfiguration();
-
-    // Service-Aufruf prüfen
-    expect(apiService.completeConfiguration).toHaveBeenCalledWith('cfg-123');
-    // Status im Widget prüfen
-    expect(component.status()).toBe('completed');
-    // Output-Event mit Snapshot prüfen
-    expect(emitSpy).toHaveBeenCalledOnce();
-    expect(emitSpy.mock.calls[0][0]).toEqual(
-      expect.objectContaining({
-        configurationId: 'cfg-123',
+        component.config = {
+        apiBaseUrl: 'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev',
+        mode: 'create',
         productId: 'CPS_BURGER',
-        kbId: '80',
-        complete: true,
-        consistent: true,
-        rootItem: completedResponse.rootItem,
-        groups: [],
-        messages: []
-      })
-    );
-    expect(emitSpy.mock.calls[0][0].savedAt).toEqual(expect.any(String));
-  });
-
-  it('should not start configuration and emit error when productId or kbId is missing', () => {
-    // Basiskonfiguration manipulieren, um ungültigen Input zu simulieren
-    component.config.mode = 'create';
-    component.config.productId = '';
-    component.config.kbId = '';
-
-    const errorSpy = vi.spyOn(component.errorOccurred, 'emit');
-
-    component.startConfiguration();
-
-    // Widget geht in den Fehlerzustand
-    expect(component.status()).toBe('error');
-    expect(component.errorMessage()).toBe('Missing productId or kbId for create mode');
-
-    // Fehler-Event nach außen emittiert
-    expect(errorSpy).toHaveBeenCalledWith({
-      errorCode: 'CONFIG_INPUT_INVALID',
-      message: 'Missing productId or kbId for create mode'
+        kbId: '80'
+        };
     });
 
-    // Kein Aufruf des API-Services erfolgt
-    expect(apiService.createConfiguration).not.toHaveBeenCalled();
-  });
+    it('should start configuration and emit configurationStarted', () => {
+        const mockResponse = createConfigResponse();
 
-  it('should apply snapshot fallback in read-only mode when resume by configurationId fails', () => {
-    const snapshot = {
-        configurationId: 'snapshot-1',
+        apiService.createConfiguration.mockReturnValue(of(mockResponse));
+
+        const emitSpy = vi.spyOn(component.configurationStarted, 'emit');
+
+        component.startConfiguration();
+
+        // Prüft, dass der Service mit dem erwarteten Payload aufgerufen wird
+        expect(apiService.createConfiguration).toHaveBeenCalledWith({
         productId: 'CPS_BURGER',
-        kbId: '80',
-        savedAt: new Date().toISOString(),
-        complete: false,
-        consistent: true,
-        rootItem: {
-        id: '1',
-        key: 'CPS_BURGER',
-        complete: false,
-        consistent: true,
-        characteristics: []
-        },
-        groups: [],
-        messages: []
-    };
+        kbId: '80'
+        });
+        // Prüft, dass der interne Zustand aktualisiert wurde
+        expect(component.configuration()).toEqual(mockResponse);
+        expect(component.configId()).toBe('cfg-123');
+        expect(component.status()).toBe('loaded');
+        // Prüft, dass das Output-Event mit der richtigen ID emittiert wurde
+        expect(emitSpy).toHaveBeenCalledWith('cfg-123');
+    });
 
-    // API-Aufruf für getConfiguration soll mit Fehler enden
-    apiService.getConfiguration.mockReturnValue({
-        subscribe: ({ next, error }: any) => {
-        if (error) {
-            error(new Error('Backend error'));
-        }
-        }
-    } as any);
+    it('should resume configuration by configurationId', () => {
+        const mockResponse = createConfigResponse({ configurationId: 'cfg-999' });
 
-    const errorSpy = vi.spyOn(component.errorOccurred, 'emit');
+        apiService.getConfiguration.mockReturnValue(of(mockResponse));
 
-    component.config = {
+        component.config = {
         apiBaseUrl: 'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev',
         mode: 'resume',
         resume: {
-        configurationId: 'cfg-999',
-        snapshot
+            configurationId: 'cfg-999'
         }
-    };
+        };
 
-    component.ngOnInit();
+        const emitSpy = vi.spyOn(component.configurationStarted, 'emit');
 
-    const cfg = component.configuration();
+        component.ngOnInit();
 
-    // Fallback-Snapshot wurde angewendet
-    expect(cfg).not.toBeNull();
-    expect(cfg?.configurationId).toBe('snapshot-1');
-    expect(cfg?.productId).toBe('CPS_BURGER');
-    expect(cfg?.kbId).toBe('80');
-    expect(cfg?.restoreInfo?.readOnly).toBe(true);
-    expect(cfg?.restoreInfo?.strategy).toBe('READONLYSNAPSHOT');
+        // API-Basis-URL muss gesetzt werden
+        expect(apiService.setApiBaseUrl).toHaveBeenCalledWith(
+        'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev'
+        );
+        // Konfiguration wird per ID geladen
+        expect(apiService.getConfiguration).toHaveBeenCalledWith('cfg-999');
+        // Zustand im Widget prüfen
+        expect(component.configuration()).toEqual(mockResponse);
+        expect(component.configId()).toBe('cfg-999');
+        expect(component.status()).toBe('loaded');
+        // Beim Resume über configurationId wird kein configurationStarted-Event emittiert
+        expect(emitSpy).not.toHaveBeenCalled();
+    });
 
-    // Status ist "loaded", keine zusätzliche Fehler-Emission
-    expect(component.status()).toBe('loaded');
-    expect(component.errorMessage()).toBeNull();
-    expect(errorSpy).not.toHaveBeenCalled();
+    it('should update configuration characteristic', () => {
+        const initialResponse = createConfigResponse();
+        const updatedResponse = createConfigResponse({ complete: true });
+
+        apiService.patchConfiguration.mockReturnValue(of(updatedResponse));
+
+        // Ausgangszustand setzen
+        component.configuration.set(initialResponse);
+        component.configId.set('cfg-123');
+
+        component.updateCharacteristic('CPS_OPTION_M', 'M');
+
+        // Prüfen, dass der Patch-Call korrekt war
+        expect(apiService.patchConfiguration).toHaveBeenCalledWith('cfg-123', {
+        configurationId: 'cfg-123',
+        characteristicId: 'CPS_OPTION_M',
+        value: 'M'
+        });
+
+        // Antwort wurde in den internen Zustand übernommen
+        expect(component.configuration()).toEqual(updatedResponse);
+        expect(component.status()).toBe('loaded');
+    });
+
+    it('should complete configuration', () => {
+        component.config = {
+        apiBaseUrl: 'http://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev',
+        mode: 'create',
+        productId: 'CPS_BURGER',
+        kbId: '80'
+        };
+
+        const completedResponse = createConfigResponse({ complete: true });
+
+        apiService.completeConfiguration.mockReturnValue(of(completedResponse));
+
+        // Bereits geladene Konfiguration simulieren
+        component.configuration.set(completedResponse);
+        component.configId.set('cfg-123');
+
+        const emitSpy = vi.spyOn(component.configurationCompleted, 'emit');
+
+        component.completeConfiguration();
+
+        // Service-Aufruf prüfen
+        expect(apiService.completeConfiguration).toHaveBeenCalledWith('cfg-123');
+        // Status im Widget prüfen
+        expect(component.status()).toBe('completed');
+        // Output-Event mit Snapshot prüfen
+        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(emitSpy.mock.calls[0][0]).toEqual(
+        expect.objectContaining({
+            configurationId: 'cfg-123',
+            productId: 'CPS_BURGER',
+            kbId: '80',
+            complete: true,
+            consistent: true,
+            rootItem: completedResponse.rootItem,
+            groups: [],
+            messages: []
+        })
+        );
+        expect(emitSpy.mock.calls[0][0].savedAt).toEqual(expect.any(String));
+    });
+
+    it('should not start configuration and emit error when productId or kbId is missing', () => {
+        // Basiskonfiguration manipulieren, um ungültigen Input zu simulieren
+        component.config.mode = 'create';
+        component.config.productId = '';
+        component.config.kbId = '';
+
+        const errorSpy = vi.spyOn(component.errorOccurred, 'emit');
+
+        component.startConfiguration();
+
+        // Widget geht in den Fehlerzustand
+        expect(component.status()).toBe('error');
+        expect(component.errorMessage()).toBe('Missing productId or kbId for create mode');
+
+        // Fehler-Event nach außen emittiert
+        expect(errorSpy).toHaveBeenCalledWith({
+        errorCode: 'CONFIG_INPUT_INVALID',
+        message: 'Missing productId or kbId for create mode'
+        });
+
+        // Kein Aufruf des API-Services erfolgt
+        expect(apiService.createConfiguration).not.toHaveBeenCalled();
+    });
+
+    it('should apply snapshot fallback in read-only mode when resume by configurationId fails', () => {
+        const snapshot = {
+            configurationId: 'snapshot-1',
+            productId: 'CPS_BURGER',
+            kbId: '80',
+            savedAt: new Date().toISOString(),
+            complete: false,
+            consistent: true,
+            rootItem: {
+            id: '1',
+            key: 'CPS_BURGER',
+            complete: false,
+            consistent: true,
+            characteristics: []
+            },
+            groups: [],
+            messages: []
+        };
+
+        // API-Aufruf für getConfiguration soll mit Fehler enden
+        apiService.getConfiguration.mockReturnValue({
+            subscribe: ({ next, error }: any) => {
+            if (error) {
+                error(new Error('Backend error'));
+            }
+            }
+        } as any);
+
+        const errorSpy = vi.spyOn(component.errorOccurred, 'emit');
+
+        component.config = {
+            apiBaseUrl: 'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev',
+            mode: 'resume',
+            resume: {
+            configurationId: 'cfg-999',
+            snapshot
+            }
+        };
+
+        component.ngOnInit();
+
+        const cfg = component.configuration();
+
+        // Fallback-Snapshot wurde angewendet
+        expect(cfg).not.toBeNull();
+        expect(cfg?.configurationId).toBe('snapshot-1');
+        expect(cfg?.productId).toBe('CPS_BURGER');
+        expect(cfg?.kbId).toBe('80');
+        expect(cfg?.restoreInfo?.readOnly).toBe(true);
+        expect(cfg?.restoreInfo?.strategy).toBe('READONLYSNAPSHOT');
+
+        // Status ist "loaded", keine zusätzliche Fehler-Emission
+        expect(component.status()).toBe('loaded');
+        expect(component.errorMessage()).toBeNull();
+        expect(errorSpy).not.toHaveBeenCalled();
+    });
+
+    it('should set error state and emit error when resume configuration has neither configurationId nor snapshot', () => {
+        // Ungültige Resume-Konfiguration: weder ID noch Snapshot gesetzt
+        component.config = {
+            apiBaseUrl: 'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev',
+            mode: 'resume',
+            resume: {} as any
+        };
+
+        const errorSpy = vi.spyOn(component.errorOccurred, 'emit');
+
+        // Act: ngOnInit löst resumeConfiguration() aus
+        component.ngOnInit();
+
+        // Widget geht in den Fehlerzustand
+        expect(component.status()).toBe('error');
+        expect(component.errorMessage()).toBe('Resume mode requires configurationId or snapshot');
+
+        // Fehler-Event nach außen
+        expect(errorSpy).toHaveBeenCalledWith({
+            errorCode: 'CONFIG_RESUME_INPUT_INVALID',
+            message: 'Resume mode requires configurationId or snapshot'
+        });
+    });
+
+    it('should not complete configuration when in read-only mode', () => {
+        // Ausgangszustand: Konfiguration im Read-Only-Modus
+        const readonlyConfig: ConfigurationResponse = {
+            configurationId: 'cfg-readonly',
+            productId: 'CPS_BURGER',
+            kbId: '80',
+            complete: false,
+            consistent: true,
+            rootItem: {
+            id: '1',
+            key: 'CPS_BURGER',
+            complete: false,
+            consistent: true,
+            characteristics: []
+            },
+            groups: [],
+            messages: [],
+            restoreInfo: {
+            mode: 'resume',
+            status: 'FALLBACKAPPLIED',
+            strategy: 'READONLYSNAPSHOT',
+            liveSessionAvailable: false,
+            snapshotUsed: true,
+            readOnly: true,
+            message: 'read-only test'
+            }
+        };
+
+        // Konfiguration und ID im Widget setzen
+        component.configuration.set(readonlyConfig);
+        component.configId.set('cfg-readonly');
+
+        const completeSpy = apiService.completeConfiguration;
+        const completedEventSpy = vi.spyOn(component.configurationCompleted, 'emit');
+
+        // Status vor dem Aufruf merken
+        const prevStatus = component.status();
+
+        // Act: Versuch, die Konfiguration abzuschließen
+        component.completeConfiguration();
+
+        // Service darf nicht aufgerufen werden
+        expect(completeSpy).not.toHaveBeenCalled();
+
+        // Status bleibt unverändert
+        expect(component.status()).toBe(prevStatus);
+
+        // Kein Completed-Event wird emittiert
+        expect(completedEventSpy).not.toHaveBeenCalled();
     });
 
 });
