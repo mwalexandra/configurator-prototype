@@ -1,5 +1,8 @@
 package com.example.apiservicejava.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.example.apiservicejava.model.sapkb.SapKbResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -9,6 +12,8 @@ import org.springframework.web.client.RestTemplate;
 
 @Service
 public class SapKbClient {
+
+    private static final Logger log = LoggerFactory.getLogger(SapKbClient.class);
 
     @Value("${sap.cps.base-url}")
     private String baseUrl;
@@ -43,8 +48,8 @@ public class SapKbClient {
             );
             return response.getBody();
         } catch (HttpStatusCodeException e) {
-            System.out.println("SAP KB status: " + e.getStatusCode());
-            System.out.println("SAP KB response: " + e.getResponseBodyAsString());
+            log.error("SAP KB status: {}", e.getStatusCode());
+            log.error("SAP KB response: {}", e.getResponseBodyAsString());
             throw e;
         }
     }
