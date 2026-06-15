@@ -128,7 +128,7 @@ public class ConfigurationMapper {
 
             boolean kbFreeText = kbChar.getPossibleValues() == null || kbChar.getPossibleValues().isEmpty();
             if ("string".equalsIgnoreCase(kbChar.getType()) && kbFreeText) {
-                return "FREE_TEXT";
+                return "FREETEXT";
             }
 
             return "SINGLE";
@@ -138,7 +138,7 @@ public class ConfigurationMapper {
                 || runtimeChar.getPossibleValues().isEmpty()
                 || runtimeChar.getPossibleValues().stream().allMatch(v -> "0".equals(v.getIntervalType()));
 
-        return freeText ? "FREE_TEXT" : "SINGLE";
+        return freeText ? "FREETEXT" : "SINGLE";
     }
 
     private List<CharacteristicValueDto> mapSelectedValues(
