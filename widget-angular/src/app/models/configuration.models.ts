@@ -36,7 +36,6 @@ export interface WidgetInputConfig {
   // create mode
   productId?: string;
   kbId?: string;
-  locale?: string;
 
   // resume mode
   resume?: ResumeInput;
@@ -55,7 +54,6 @@ export interface ResumeInput {
 export interface CreateConfigurationRequest {
   productId: string;
   kbId?: string;
-  locale?: string;
 }
 
 export interface UpdateCharacteristicRequest {
@@ -157,7 +155,6 @@ export interface SnapshotMetadata {
   hostEntityType?: string;
   hostEntityId?: string;
   version?: string;
-  locale?: string;
 }
 
 // ──────────────────────────────

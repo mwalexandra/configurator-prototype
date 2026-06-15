@@ -23,8 +23,7 @@ export class App {
     apiBaseUrl: 'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev',
     mode: 'create',
     productId: 'CPS_BURGER',
-    kbId: '80',
-    locale: 'de'
+    kbId: '80'
   };
 
   onConfigurationStarted(configId: string): void {
@@ -49,8 +48,7 @@ export class App {
       apiBaseUrl: this.widgetConfig.apiBaseUrl,
       mode: 'create',
       productId: 'CPS_BURGER',
-      kbId: '80',
-      locale: 'de'
+      kbId: '80'
     };
     this.startedConfigId.set(null);
     this.completedSnapshot.set(null);
@@ -68,8 +66,7 @@ export class App {
 
     this.widgetConfig = {
       apiBaseUrl: this.widgetConfig.apiBaseUrl,
-      mode: 'resume',
-      locale: 'de',
+      mode: 'resume'
       resume: {
         configurationId: snapshot.configurationId,
         snapshot,

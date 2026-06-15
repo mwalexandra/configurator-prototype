@@ -31,8 +31,7 @@ describe('ConfiguratorWidgetComponent', () => {
             apiBaseUrl: 'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev',
             mode: 'create',
             productId: 'CPS_BURGER',
-            kbId: '80',
-            locale: 'en'
+            kbId: '80'
         };
     });
 
@@ -62,8 +61,7 @@ describe('ConfiguratorWidgetComponent', () => {
 
         expect(apiService.createConfiguration).toHaveBeenCalledWith({
             productId: 'CPS_BURGER',
-            kbId: '80',
-            locale: 'en'
+            kbId: '80'
         });
         expect(component.configuration()).toEqual(mockResponse);
         expect(component.configId()).toBe('cfg-123');
@@ -156,8 +154,7 @@ describe('ConfiguratorWidgetComponent', () => {
         apiBaseUrl: 'http://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev',
         mode: 'create',
         productId: 'CPS_BURGER',
-        kbId: '80',
-        locale: 'de'
+        kbId: '80'
     };
 
     const completedResponse: ConfigurationResponse = {

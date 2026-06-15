@@ -4,7 +4,6 @@ public class CreateConfigurationRequest {
 
     private String productId;
     private String kbId;
-    private String locale;
 
     public CreateConfigurationRequest() {
     }
@@ -23,13 +22,5 @@ public class CreateConfigurationRequest {
 
     public void setKbId(String kbId) {
         this.kbId = kbId;
-    }
-
-    public String getLocale() {
-        return locale;
-    }
-
-    public void setLocale(String locale) {
-        this.locale = locale;
     }
 }

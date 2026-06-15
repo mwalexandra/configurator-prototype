@@ -6,7 +6,6 @@ public class SnapshotMetadata {
     private String hostEntityType;
     private String hostEntityId;
     private String version;
-    private String locale;
 
     public String getSourceContext() {
         return sourceContext;
@@ -40,11 +39,4 @@ public class SnapshotMetadata {
         this.version = version;
     }
 
-    public String getLocale() {
-        return locale;
-    }
-
-    public void setLocale(String locale) {
-        this.locale = locale;
-    }
 }

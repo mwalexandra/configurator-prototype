@@ -33,8 +33,7 @@ describe('ConfigurationApiService', () => {
     it('should POST createConfiguration with correct payload', () => {
     const payload: CreateConfigurationRequest = {
       productId: 'CPSBURGER',
-      kbId: '80',
-      locale: 'en'
+      kbId: '80'
     };
 
     const mockResponse: ConfigurationResponse = {

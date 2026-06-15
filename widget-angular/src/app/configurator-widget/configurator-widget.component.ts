@@ -70,8 +70,7 @@ export class ConfiguratorWidgetComponent implements OnInit {
 
     const payload: CreateConfigurationRequest = {
       productId: this.config.productId,
-      kbId: this.config.kbId,
-      locale: this.config.locale
+      kbId: this.config.kbId
     };
 
     this.status.set('loading');
@@ -259,7 +258,6 @@ export class ConfiguratorWidgetComponent implements OnInit {
       groups: current.groups,
       messages: current.messages,
       metadata: {
-        locale: this.config.locale,
         version: '1',
         sourceContext: this.config.resume?.sourceContext ?? 'generic',
       }
