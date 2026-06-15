@@ -1,3 +1,4 @@
+// src/app/configurator-widget/configurator-widget.component.ts
 import {
   Component,
   Input,
@@ -14,10 +15,11 @@ import {
   ConfigurationMessage,
   ConfigurationResponse,
   ConfigurationSnapshot,
-  CreateConfigurationRequest,
   WidgetInputConfig,
   WidgetState
 } from '../models/configuration.models';
+import { ConfiguratorWidgetFacade } from './configurator-widget.facade';
+import { createConfiguratorWidgetUiState } from './configurator-widget.ui-state';
 
 @Component({
   selector: 'app-configurator-widget',
@@ -43,163 +45,50 @@ export class ConfiguratorWidgetComponent implements OnInit {
     this.configuration()?.rootItem?.characteristics?.filter(c => c.visible) ?? []
   );
 
+  private facade!: ConfiguratorWidgetFacade;
+
+  readonly ui = createConfiguratorWidgetUiState(
+    this.configuration,
+    this.status,
+    this.errorMessage
+  );
+
   constructor(private configurationApi: ConfigurationApiService) {}
 
   ngOnInit(): void {
-    this.configurationApi.setApiBaseUrl(this.config.apiBaseUrl);
+    this.facade = new ConfiguratorWidgetFacade(this.configurationApi, {
+      config: this.config,
+      configuration: this.configuration,
+      configId: this.configId,
+      status: this.status,
+      errorMessage: this.errorMessage,
+      configurationStarted: this.configurationStarted,
+      configurationCompleted: this.configurationCompleted,
+      addedToCart: this.addedToCart,
+      errorOccurred: this.errorOccurred
+    });
 
-    if (this.config.mode === 'resume') {
-      this.resumeConfiguration();
-    }
+    this.facade.initialize();
   }
 
   startConfiguration(): void {
-    if (this.config.mode !== 'create') {
-      return;
-    }
-
-    if (!this.config.productId || !this.config.kbId) {
-      this.status.set('error');
-      this.errorMessage.set('Missing productId or kbId for create mode');
-      this.errorOccurred.emit({
-        errorCode: 'CONFIG_INPUT_INVALID',
-        message: 'Missing productId or kbId for create mode'
-      });
-      return;
-    }
-
-    const payload: CreateConfigurationRequest = {
-      productId: this.config.productId,
-      kbId: this.config.kbId
-    };
-
-    this.status.set('loading');
-    this.errorMessage.set(null);
-
-    this.configurationApi.createConfiguration(payload).subscribe({
-      next: response => {
-        this.applyConfiguration(response, true);
-      },
-      error: () => {
-        this.status.set('error');
-        this.errorMessage.set('Failed to start configuration');
-        this.errorOccurred.emit({
-          errorCode: 'CONFIG_START_FAILED',
-          message: 'Failed to start configuration'
-        });
-      }
-    });
+    this.facade.startConfiguration();
   }
 
   resumeConfiguration(): void {
-    const resume = this.config.resume;
-
-    if (!resume || (!resume.configurationId && !resume.snapshot)) {
-      this.status.set('error');
-      this.errorMessage.set('Resume mode requires configurationId or snapshot');
-      this.errorOccurred.emit({
-        errorCode: 'CONFIG_RESUME_INPUT_INVALID',
-        message: 'Resume mode requires configurationId or snapshot'
-      });
-      return;
-    }
-
-    this.status.set('loading');
-    this.errorMessage.set(null);
-
-    if (resume.configurationId) {
-      this.configurationApi.getConfiguration(resume.configurationId).subscribe({
-        next: response => {
-          this.applyConfiguration(response);
-        },
-        error: () => {
-          if (resume.snapshot) {
-            this.applySnapshotFallback(resume.snapshot);
-            return;
-          }
-
-          this.status.set('error');
-          this.errorMessage.set('Failed to load configuration');
-          this.errorOccurred.emit({
-            errorCode: 'CONFIG_LOAD_FAILED',
-            message: 'Failed to load configuration'
-          });
-        }
-      });
-      return;
-    }
-
-    if (resume.snapshot) {
-      this.applySnapshotFallback(resume.snapshot);
-    }
+    this.facade.resumeConfiguration();
   }
 
   updateCharacteristic(characteristicId: string, value: string | null): void {
-    const currentConfigId = this.configId();
-    const current = this.configuration();
-
-    if (!currentConfigId || !current || current.restoreInfo?.readOnly) {
-      return;
-    }
-
-    this.status.set('updating');
-    this.errorMessage.set(null);
-
-    this.configurationApi.patchConfiguration(currentConfigId, {
-      configurationId: currentConfigId,
-      characteristicId,
-      value
-    }).subscribe({
-      next: response => {
-        this.applyConfiguration(response);
-      },
-      error: () => {
-        this.status.set('error');
-        this.errorMessage.set('Failed to update configuration');
-        this.errorOccurred.emit({
-          errorCode: 'CONFIG_PATCH_FAILED',
-          message: 'Failed to update configuration'
-        });
-      }
-    });
+    this.facade.updateCharacteristic(characteristicId, value);
   }
 
   completeConfiguration(): void {
-    const currentConfigId = this.configId();
-    const current = this.configuration();
-
-    if (!currentConfigId || !current || current.restoreInfo?.readOnly) {
-      return;
-    }
-
-    this.status.set('completing');
-    this.errorMessage.set(null);
-
-    this.configurationApi.completeConfiguration(currentConfigId).subscribe({
-      next: response => {
-        this.configuration.set(response);
-        this.configId.set(response.configurationId);
-        this.status.set('completed');
-
-        const snapshot = this.buildSnapshot(response);
-        this.configurationCompleted.emit(snapshot);
-      },
-      error: () => {
-        this.status.set('error');
-        this.errorMessage.set('Failed to complete configuration');
-        this.errorOccurred.emit({
-          errorCode: 'CONFIG_COMPLETE_FAILED',
-          message: 'Failed to complete configuration'
-        });
-      }
-    });
+    this.facade.completeConfiguration();
   }
 
   addToCart(): void {
-    const current = this.configuration();
-    if (!current) return;
-
-    this.addedToCart.emit(this.buildSnapshot(current));
+    this.facade.addToCart();
   }
 
   getSingleSelectedValueId(char: Characteristic): string {
@@ -210,73 +99,15 @@ export class ConfiguratorWidgetComponent implements OnInit {
     return char.id;
   }
 
-  private applyConfiguration(response: ConfigurationResponse, emitStartedEvent = false): void {
-    this.configuration.set(response);
-    this.configId.set(response.configurationId);
-    this.status.set('loaded');
-
-    if (emitStartedEvent) {
-      this.configurationStarted.emit(response.configurationId);
-    }
-  }
-
-  private applySnapshotFallback(snapshot: ConfigurationSnapshot): void {
-    this.configuration.set({
-      configurationId: snapshot.configurationId ?? 'snapshot-only',
-      productId: snapshot.productId,
-      kbId: snapshot.kbId,
-      complete: snapshot.complete,
-      consistent: snapshot.consistent,
-      rootItem: snapshot.rootItem,
-      groups: snapshot.groups ?? [],
-      messages: snapshot.messages ?? [],
-      restoreInfo: {
-        mode: 'resume',
-        status: 'FALLBACKAPPLIED',
-        strategy: 'READONLYSNAPSHOT',
-        liveSessionAvailable: false,
-        snapshotUsed: true,
-        readOnly: true,
-        message: 'Live configuration could not be restored. Snapshot fallback is shown in read-only mode.'
-      }
-    });
-
-    this.configId.set(snapshot.configurationId ?? null);
-    this.status.set('loaded');
-    this.errorMessage.set(null);
-  }
-
-  private buildSnapshot(current: ConfigurationResponse): ConfigurationSnapshot {
-    return {
-      configurationId: current.configurationId,
-      productId: current.productId,
-      kbId: current.kbId,
-      savedAt: new Date().toISOString(),
-      complete: current.complete,
-      consistent: current.consistent,
-      rootItem: current.rootItem,
-      groups: current.groups,
-      messages: current.messages,
-      metadata: {
-        version: '1',
-        sourceContext: this.config.resume?.sourceContext ?? 'generic',
-      }
-    };
-  }
-
   getGlobalMessages(): ConfigurationMessage[] {
-    return (this.configuration()?.messages ?? []).filter(msg => !msg.characteristicId);
+    return this.facade.getGlobalMessages();
   }
 
   getMessagesForCharacteristic(characteristicId: string): ConfigurationMessage[] {
-    return (this.configuration()?.messages ?? []).filter(
-      msg => msg.characteristicId === characteristicId
-    );
+    return this.facade.getMessagesForCharacteristic(characteristicId);
   }
 
   hasCharacteristicError(characteristicId: string): boolean {
-    return this.getMessagesForCharacteristic(characteristicId).some(
-      msg => msg.severity === 'ERROR'
-    );
+    return this.facade.hasCharacteristicError(characteristicId);
   }
 }

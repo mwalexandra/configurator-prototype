@@ -1,10 +1,29 @@
 <div class="widget">
   <h2 class="widget__title">Configurator Widget</h2>
 
+  <div class="status-banner" [ngClass]="'status-banner--' + ui.uiState()">
+    {{ ui.uiStateText() }}
+  </div>
+
   <div class="widget-toolbar" *ngIf="configuration() as currentConfig">
     <div class="widget-toolbar__status">
-      <div class="status-pill" [class.status-pill--error]="!currentConfig.consistent">
-        {{ currentConfig.complete ? 'Configuration complete' : 'Configuration incomplete' }}
+      <div
+        class="status-pill"
+        [class.status-pill--error]="ui.uiState() === 'conflict' || ui.uiState() === 'error'"
+        [class.status-pill--success]="ui.uiState() === 'ready' || ui.uiState() === 'completed'"
+        [class.status-pill--readonly]="ui.uiState() === 'readonly'"
+      >
+        {{
+          ui.uiState() === 'completed'
+            ? 'Configuration completed'
+            : ui.uiState() === 'ready'
+            ? 'Ready for completion'
+            : ui.uiState() === 'readonly'
+            ? 'Read-only snapshot'
+            : currentConfig.complete
+            ? 'Configuration complete'
+            : 'Configuration incomplete'
+        }}
       </div>
 
       <div class="status-meta">
@@ -19,7 +38,7 @@
         type="button"
         class="btn btn--secondary"
         (click)="addToCart()"
-        [disabled]="status() === 'loading' || status() === 'updating' || status() === 'completing' || !currentConfig.complete || !currentConfig.consistent"
+        [disabled]="!ui.isReadyForAddToCart()"
       >
         Add to cart
       </button>
@@ -28,7 +47,7 @@
         type="button"
         class="btn btn--primary"
         (click)="completeConfiguration()"
-        [disabled]="status() === 'loading' || status() === 'updating' || status() === 'completing' || status() === 'completed' || !!configuration()?.restoreInfo?.readOnly"
+        [disabled]="!ui.isReadyForCompletion()"
       >
         {{ status() === 'completing' ? 'Completing...' : 'Complete configuration' }}
       </button>
@@ -59,6 +78,7 @@
         <p><span>Product ID</span>{{ config.productId ?? config.resume?.snapshot?.productId }}</p>
         <p><span>KB ID</span>{{ config.kbId ?? config.resume?.snapshot?.kbId }}</p>
         <p><span>Status</span>{{ status() }}</p>
+        <p><span>UI state</span>{{ ui.uiState() }}</p>
         <p><span>Config ID</span>{{ configId() ?? config.resume?.configurationId }}</p>
       </div>
 
@@ -91,14 +111,16 @@
             <p><span>Type</span>{{ char.valueType }}</p>
             <p><span>Required</span>{{ char.required }}</p>
             <p><span>Complete</span>{{ char.complete }}</p>
-            <p><span>Read only</span>{{ char.readOnly || status() === 'completed' }}</p>
+            <p><span>Read only</span>{{ char.readOnly || ui.isReadOnly() || status() === 'completed' }}</p>
 
             <div
               class="characteristic-message-list"
               *ngIf="getMessagesForCharacteristic(char.id).length"
             >
               <p
-                class="characteristic-message characteristic-message--error"
+                class="characteristic-message"
+                [class.characteristic-message--error]="msg.severity === 'ERROR'"
+                [class.characteristic-message--warning]="msg.severity === 'WARNING'"
                 *ngFor="let msg of getMessagesForCharacteristic(char.id)"
               >
                 {{ msg.text }}
@@ -110,7 +132,7 @@
                 <label class="field-label">Select value</label>
                 <select
                   class="select"
-                  [disabled]="char.readOnly || status() === 'updating' || status() === 'completing' || status() === 'completed'"
+                  [disabled]="char.readOnly || ui.isReadOnly() || status() === 'updating' || status() === 'completing' || status() === 'completed'"
                   [ngModel]="getSingleSelectedValueId(char)"
                   (ngModelChange)="updateCharacteristic(char.id, $event || null)"
                 >
@@ -125,7 +147,7 @@
                 <label class="field-label">Text value</label>
                 <input
                   type="text"
-                  [disabled]="char.readOnly || status() === 'updating' || status() === 'completing' || status() === 'completed'"
+                  [disabled]="char.readOnly || ui.isReadOnly() || status() === 'updating' || status() === 'completing' || status() === 'completed'"
                   [ngModel]="char.values?.[0]?.id ?? ''"
                   (blur)="updateCharacteristic(char.id, $any($event.target).value || null)"
                 />
@@ -135,7 +157,7 @@
                 <label class="field-label">Numeric value</label>
                 <input
                   type="number"
-                  [disabled]="char.readOnly || status() === 'updating' || status() === 'completing' || status() === 'completed'"
+                  [disabled]="char.readOnly || ui.isReadOnly() || status() === 'updating' || status() === 'completing' || status() === 'completed'"
                   [ngModel]="char.values?.[0]?.id ?? ''"
                   (blur)="updateCharacteristic(char.id, $any($event.target).value || null)"
                 />
@@ -177,6 +199,22 @@
           <p><span>Snapshot used</span>{{ restoreInfo.snapshotUsed }}</p>
           <p><span>Read only</span>{{ restoreInfo.readOnly }}</p>
         </div>
+
+        <p *ngIf="ui.uiState() === 'incomplete'" class="message message--warning">
+          Complete all required characteristics before finishing the configuration.
+        </p>
+
+        <p *ngIf="ui.uiState() === 'conflict'" class="message message--error">
+          Resolve configuration conflicts before finishing.
+        </p>
+
+        <p *ngIf="ui.uiState() === 'readonly'" class="message message--warning">
+          This configuration is displayed from snapshot fallback in read-only mode.
+        </p>
+
+        <p *ngIf="ui.uiState() !== 'completed'" class="message">
+          Add to cart becomes available only after successful completion.
+        </p>
       </div>
     </div>
   </div>
