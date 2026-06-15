@@ -14,15 +14,11 @@
         [class.status-pill--readonly]="ui.uiState() === 'readonly'"
       >
         {{
-          ui.uiState() === 'completed'
-            ? 'Configuration completed'
-            : ui.uiState() === 'ready'
-            ? 'Ready for completion'
-            : ui.uiState() === 'readonly'
-            ? 'Read-only snapshot'
-            : currentConfig.complete
-            ? 'Configuration complete'
-            : 'Configuration incomplete'
+          ui.uiState() === 'completed' ? 'Configuration completed' :
+          ui.uiState() === 'ready'     ? 'Ready for completion' :
+          ui.uiState() === 'readonly'  ? 'Read-only snapshot' :
+          currentConfig.complete       ? 'Configuration complete' :
+                                         'Configuration incomplete'
         }}
       </div>
 
@@ -74,12 +70,12 @@
 
     <div class="card__content">
       <div class="info-grid">
-        <p><span>Mode</span>{{ config.mode }}</p>
-        <p><span>Product ID</span>{{ config.productId ?? config.resume?.snapshot?.productId }}</p>
-        <p><span>KB ID</span>{{ config.kbId ?? config.resume?.snapshot?.kbId }}</p>
-        <p><span>Status</span>{{ status() }}</p>
-        <p><span>UI state</span>{{ ui.uiState() }}</p>
-        <p><span>Config ID</span>{{ configId() ?? config.resume?.configurationId }}</p>
+        <p><span>Mode</span> {{ config.mode }}</p>
+        <p><span>Product ID</span> {{ config.productId ?? config.resume?.snapshot?.productId }}</p>
+        <p><span>KB ID</span> {{ config.kbId ?? config.resume?.snapshot?.kbId }}</p>
+        <p><span>Status</span> {{ status() }}</p>
+        <p><span>UI state</span> {{ ui.uiState() }}</p>
+        <p><span>Config ID</span> {{ configId() ?? config.resume?.configurationId }}</p>
       </div>
 
       <button
@@ -94,24 +90,62 @@
   </div>
 
   <div class="widget-layout" *ngIf="configuration() as currentConfig">
+
+    <!-- Левая колонка: характеристики -->
     <div class="card">
       <h3 class="card__title">
         {{ status() === 'completed' ? 'Final configuration' : 'Characteristics' }}
       </h3>
 
       <div class="card__content">
-        <div class="characteristics-list" *ngIf="visibleCharacteristics().length; else noCharacteristics">
+
+        <!-- Блок скрытых проблемных полей — ключевой для дебага -->
+        <div
+          class="message message--warning hidden-problems"
+          *ngIf="ui.hiddenProblemCharacteristics().length"
+        >
+          <strong>Completion is blocked by hidden required fields:</strong>
+          <ul class="hidden-problems__list">
+            <li
+              *ngFor="let c of ui.hiddenProblemCharacteristics()"
+            >
+              {{ c.name || c.id }}
+              <span class="hidden-problems__badge">not visible · required · incomplete</span>
+            </li>
+          </ul>
+        </div>
+
+        <div
+          class="characteristics-list"
+          *ngIf="visibleCharacteristics().length; else noCharacteristics"
+        >
           <div
             class="characteristic-item"
             *ngFor="let char of visibleCharacteristics(); trackBy: trackByCharacteristicId"
-            [class.characteristic-item--error]="hasCharacteristicError(char.id)"
+            [class.characteristic-item--error]="hasCharacteristicProblem(char.id) && !isCharacteristicIncomplete(char)"
+            [class.characteristic-item--incomplete]="isCharacteristicIncomplete(char)"
           >
-            <p><span>Name</span>{{ char.name || char.id }}</p>
-            <p><span>ID</span>{{ char.id }}</p>
-            <p><span>Type</span>{{ char.valueType }}</p>
-            <p><span>Required</span>{{ char.required }}</p>
-            <p><span>Complete</span>{{ char.complete }}</p>
-            <p><span>Read only</span>{{ char.readOnly || ui.isReadOnly() || status() === 'completed' }}</p>
+            <div class="info-grid">
+              <p><span>Name</span> {{ char.name || char.id }}</p>
+              <p><span>ID</span> {{ char.id }}</p>
+              <p><span>Type</span> {{ char.valueType }}</p>
+              <p><span>Required</span> {{ char.required }}</p>
+              <p><span>Complete</span> {{ char.complete }}</p>
+              <p><span>Read only</span> {{ char.readOnly || ui.isReadOnly() || status() === 'completed' }}</p>
+            </div>
+
+            <p
+              class="characteristic-status characteristic-status--error"
+              *ngIf="hasCharacteristicProblem(char.id)"
+            >
+              Configuration error on this field
+            </p>
+            <p
+              class="characteristic-status characteristic-status--warning"
+              *ngIf="isCharacteristicIncomplete(char)"
+            >
+              Required — not yet complete
+            </p>
 
             <div
               class="characteristic-message-list"
@@ -128,6 +162,7 @@
             </div>
 
             <ng-container [ngSwitch]="char.valueType">
+
               <div *ngSwitchCase="'SINGLE'" class="field-block">
                 <label class="field-label">Select value</label>
                 <select
@@ -165,58 +200,81 @@
 
               <div *ngSwitchDefault class="field-block">
                 <span *ngIf="char.values?.length" class="selected-value">
-                  <span>Selected</span>
-                  {{ char.values[0].name || char.values[0].id }}
+                  <span>Selected</span> {{ char.values[0].name || char.values[0].id }}
                 </span>
               </div>
+
             </ng-container>
           </div>
         </div>
 
         <ng-template #noCharacteristics>
-          <p>No visible characteristics.</p>
+          <p class="no-items">No visible characteristics.</p>
         </ng-template>
       </div>
     </div>
 
+    <!-- Правая колонка: summary -->
     <div class="card">
       <h3 class="card__title">Configuration summary</h3>
 
       <div class="card__content">
         <div class="info-grid">
-          <p><span>Consistent</span>{{ currentConfig.consistent }}</p>
-          <p><span>Complete</span>{{ currentConfig.complete }}</p>
-          <p><span>Root item</span>{{ currentConfig.rootItem.key }}</p>
-          <p><span>Groups</span>{{ currentConfig.groups.length }}</p>
-          <p><span>Backend time</span>{{ currentConfig.backendProcessingTimeMs ?? 0 }} ms</p>
+          <p><span>Consistent</span> {{ currentConfig.consistent }}</p>
+          <p><span>Complete</span> {{ currentConfig.complete }}</p>
+          <p><span>Root item</span> {{ currentConfig.rootItem.key }}</p>
+          <p><span>Groups</span> {{ currentConfig.groups.length }}</p>
+          <p><span>Backend time</span> {{ currentConfig.backendProcessingTimeMs ?? 0 }} ms</p>
         </div>
 
         <div class="info-grid" *ngIf="currentConfig.restoreInfo as restoreInfo">
-          <p><span>Restore mode</span>{{ restoreInfo.mode }}</p>
-          <p><span>Restore status</span>{{ restoreInfo.status }}</p>
-          <p><span>Strategy</span>{{ restoreInfo.strategy }}</p>
-          <p><span>Live session</span>{{ restoreInfo.liveSessionAvailable }}</p>
-          <p><span>Snapshot used</span>{{ restoreInfo.snapshotUsed }}</p>
-          <p><span>Read only</span>{{ restoreInfo.readOnly }}</p>
+          <p><span>Restore mode</span> {{ restoreInfo.mode }}</p>
+          <p><span>Restore status</span> {{ restoreInfo.status }}</p>
+          <p><span>Strategy</span> {{ restoreInfo.strategy }}</p>
+          <p><span>Live session</span> {{ restoreInfo.liveSessionAvailable }}</p>
+          <p><span>Snapshot used</span> {{ restoreInfo.snapshotUsed }}</p>
+          <p><span>Read only</span> {{ restoreInfo.readOnly }}</p>
         </div>
 
-        <p *ngIf="ui.uiState() === 'incomplete'" class="message message--warning">
-          Complete all required characteristics before finishing the configuration.
-        </p>
+        <div class="summary-messages">
+          <p
+            class="message message--warning"
+            *ngIf="ui.hiddenProblemCharacteristics().length"
+          >
+            {{ ui.hiddenProblemCharacteristics().length }} required field(s) are incomplete but not visible in the current configuration view.
+          </p>
 
-        <p *ngIf="ui.uiState() === 'conflict'" class="message message--error">
-          Resolve configuration conflicts before finishing.
-        </p>
+          <p
+            class="message message--warning"
+            *ngIf="ui.uiState() === 'incomplete' && !ui.hiddenProblemCharacteristics().length"
+          >
+            Complete all required characteristics before finishing the configuration.
+          </p>
 
-        <p *ngIf="ui.uiState() === 'readonly'" class="message message--warning">
-          This configuration is displayed from snapshot fallback in read-only mode.
-        </p>
+          <p
+            class="message message--error"
+            *ngIf="ui.uiState() === 'conflict'"
+          >
+            Resolve configuration conflicts before finishing.
+          </p>
 
-        <p *ngIf="ui.uiState() !== 'completed'" class="message">
-          Add to cart becomes available only after successful completion.
-        </p>
+          <p
+            class="message message--warning"
+            *ngIf="ui.uiState() === 'readonly'"
+          >
+            This configuration is displayed from snapshot fallback in read-only mode.
+          </p>
+
+          <p
+            class="message"
+            *ngIf="ui.uiState() !== 'completed' && ui.uiState() !== 'error'"
+          >
+            Add to cart becomes available only after successful completion.
+          </p>
+        </div>
       </div>
     </div>
+
   </div>
 
   <div class="card" *ngIf="errorMessage() as error">

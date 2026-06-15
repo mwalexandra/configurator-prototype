@@ -107,7 +107,11 @@ export class ConfiguratorWidgetComponent implements OnInit {
     return this.facade.getMessagesForCharacteristic(characteristicId);
   }
 
-  hasCharacteristicError(characteristicId: string): boolean {
-    return this.facade.hasCharacteristicError(characteristicId);
+  hasCharacteristicProblem(characteristicId: string): boolean {
+    return this.ui.problemCharacteristicIds().has(characteristicId);
+  }
+
+  isCharacteristicIncomplete(char: Characteristic): boolean {
+    return !!char.required && !char.complete;
   }
 }
