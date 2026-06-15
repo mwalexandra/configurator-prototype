@@ -66,7 +66,7 @@ export class App {
 
     this.widgetConfig = {
       apiBaseUrl: this.widgetConfig.apiBaseUrl,
-      mode: 'resume'
+      mode: 'resume',
       resume: {
         configurationId: snapshot.configurationId,
         snapshot,

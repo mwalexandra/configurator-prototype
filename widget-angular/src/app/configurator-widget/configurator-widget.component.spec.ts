@@ -1,19 +1,18 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 import { ConfiguratorWidgetComponent } from './configurator-widget.component';
 import { ConfigurationApiService } from '../services/configuration-api.service';
 import { ConfigurationResponse } from '../models/configuration.models';
 
-describe('ConfiguratorWidgetComponent', () => {
-  let component: ConfiguratorWidgetComponent;
-
   // Hilfsfunktion: Erzeugt eine Standard-Konfigurationsantwort,
   // die in den Tests je nach Szenario mit Overrides angepasst werden kann.
-  function createConfigResponse(
+function createConfigResponse(
     overrides: Partial<ConfigurationResponse> = {}
-  ): ConfigurationResponse {
+): ConfigurationResponse {
     return {
       configurationId: 'cfg-123',
       productId: 'CPS_BURGER',
@@ -31,7 +30,10 @@ describe('ConfiguratorWidgetComponent', () => {
       messages: [],
       ...overrides
     };
-  }
+}
+
+describe('ConfiguratorWidgetComponent', () => {
+  let component: ConfiguratorWidgetComponent;
 
   const apiService = {
     createConfiguration: vi.fn(),
@@ -210,5 +212,288 @@ describe('ConfiguratorWidgetComponent', () => {
     expect(apiService.createConfiguration).not.toHaveBeenCalled();
   });
 
-  // Hier können später Integrationstests (mit echtem HttpClient) ergänzt werden.
+  it('should apply snapshot fallback in read-only mode when resume by configurationId fails', () => {
+    const snapshot = {
+        configurationId: 'snapshot-1',
+        productId: 'CPS_BURGER',
+        kbId: '80',
+        savedAt: new Date().toISOString(),
+        complete: false,
+        consistent: true,
+        rootItem: {
+        id: '1',
+        key: 'CPS_BURGER',
+        complete: false,
+        consistent: true,
+        characteristics: []
+        },
+        groups: [],
+        messages: []
+    };
+
+    // API-Aufruf für getConfiguration soll mit Fehler enden
+    apiService.getConfiguration.mockReturnValue({
+        subscribe: ({ next, error }: any) => {
+        if (error) {
+            error(new Error('Backend error'));
+        }
+        }
+    } as any);
+
+    const errorSpy = vi.spyOn(component.errorOccurred, 'emit');
+
+    component.config = {
+        apiBaseUrl: 'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev',
+        mode: 'resume',
+        resume: {
+        configurationId: 'cfg-999',
+        snapshot
+        }
+    };
+
+    component.ngOnInit();
+
+    const cfg = component.configuration();
+
+    // Fallback-Snapshot wurde angewendet
+    expect(cfg).not.toBeNull();
+    expect(cfg?.configurationId).toBe('snapshot-1');
+    expect(cfg?.productId).toBe('CPS_BURGER');
+    expect(cfg?.kbId).toBe('80');
+    expect(cfg?.restoreInfo?.readOnly).toBe(true);
+    expect(cfg?.restoreInfo?.strategy).toBe('READONLYSNAPSHOT');
+
+    // Status ist "loaded", keine zusätzliche Fehler-Emission
+    expect(component.status()).toBe('loaded');
+    expect(component.errorMessage()).toBeNull();
+    expect(errorSpy).not.toHaveBeenCalled();
+    });
+
+});
+
+  // Integrationstests 
+describe('ConfiguratorWidgetComponent (Integration)', () => {
+    let component: ConfiguratorWidgetComponent;
+    let httpMock: HttpTestingController;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+        imports: [ConfiguratorWidgetComponent],
+        providers: [
+            ConfigurationApiService,
+            // Stellt HttpClient bereit
+            provideHttpClient(),
+            // Konfiguriert das Test-Backend (HttpTestingController)
+            provideHttpClientTesting()
+        ]
+    }).compileComponents();
+
+    httpMock = TestBed.inject(HttpTestingController);
+
+    const fixture = TestBed.createComponent(ConfiguratorWidgetComponent);
+    component = fixture.componentInstance;
+
+    // Gültige Config für den Create-Modus setzen
+    component.config = {
+      apiBaseUrl: 'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev',
+      mode: 'create',
+      productId: 'CPS_BURGER',
+      kbId: '80'
+    };
+
+    fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        // Sicherstellen, dass keine offenen HTTP-Requests übrig bleiben
+        httpMock.verify();
+    });
+
+    it('should start configuration via HTTP API and update state on success', () => {
+        // Spy auf das Output-Event configurationStarted
+        const startedSpy = vi.spyOn(component.configurationStarted, 'emit');
+
+        // Act: Start der Konfiguration auslösen
+        component.startConfiguration();
+
+        // Erwarteten HTTP-Request abfangen
+        const req = httpMock.expectOne(
+        'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev/configurations'
+        );
+
+        // Request-Eigenschaften prüfen
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual({
+        productId: 'CPS_BURGER',
+        kbId: '80'
+        });
+
+        // Beispiel-Antwort wie vom Backend
+        const mockResponse = createConfigResponse();
+
+        // Antwort zurück an HttpClient schicken
+        req.flush(mockResponse);
+
+        // Interner Widgetzustand prüfen
+        expect(component.configuration()).toEqual(mockResponse);
+        expect(component.configId()).toBe('cfg-123');
+        expect(component.status()).toBe('loaded');
+
+        // Output-Event prüfen
+        expect(startedSpy).toHaveBeenCalledWith('cfg-123');
+    });
+
+    it('should update characteristic via HTTP API and refresh configuration on success', () => {
+        // Ausgangszustand: vorhandene Konfiguration mit ID
+        const initialResponse = createConfigResponse();
+        const updatedResponse = createConfigResponse({ complete: true });
+
+        // Konfiguration und ID direkt im Widget setzen
+        component.configuration.set(initialResponse);
+        component.configId.set('cfg-123');
+
+        // Act: Merkmalsänderung auslösen
+        component.updateCharacteristic('CPS_OPTION_M', 'M');
+
+        // Erwarteten PATCH-Request abfangen
+        const req = httpMock.expectOne(
+            'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev/configurations/cfg-123'
+        );
+
+        // Request-Eigenschaften prüfen
+        expect(req.request.method).toBe('PATCH');
+        expect(req.request.body).toEqual({
+            characteristicId: 'CPS_OPTION_M',
+            value: 'M'
+        });
+
+        // Backend-Antwort simulieren (z. B. Konfiguration jetzt complete)
+        req.flush(updatedResponse);
+
+        // Interner Zustand prüfen: Konfiguration übernommen, Status wieder 'loaded'
+        expect(component.configuration()).toEqual(updatedResponse);
+        expect(component.status()).toBe('loaded');
+    });
+
+    it('should complete configuration via HTTP API and emit snapshot on success', () => {
+        // Ausgangszustand: fertige Konfiguration mit ID setzen
+        const completedResponse = createConfigResponse({ complete: true });
+
+        component.configuration.set(completedResponse);
+        component.configId.set('cfg-123');
+
+        const completedSpy = vi.spyOn(component.configurationCompleted, 'emit');
+
+        // Act: Abschluss der Konfiguration auslösen
+        component.completeConfiguration();
+
+        // Erwarteten POST-Request auf /complete abfangen
+        const req = httpMock.expectOne(
+            'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev/configurations/cfg-123/complete'
+        );
+
+        // Request-Eigenschaften prüfen
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual({});
+
+        // Backend-Antwort simulieren
+        req.flush(completedResponse);
+
+        // Zustand im Widget prüfen
+        expect(component.configuration()).toEqual(completedResponse);
+        expect(component.configId()).toBe('cfg-123');
+        expect(component.status()).toBe('completed');
+
+        // Output-Event mit Snapshot prüfen (mindestens ID und savedAt)
+        expect(completedSpy).toHaveBeenCalledOnce();
+        const snapshotArg = completedSpy.mock.calls[0][0];
+
+        expect(snapshotArg).toEqual(
+            expect.objectContaining({
+            configurationId: 'cfg-123',
+            productId: 'CPS_BURGER',
+            kbId: '80',
+            complete: true,
+            consistent: true
+            })
+        );
+        expect(snapshotArg.savedAt).toEqual(expect.any(String));
+    });
+
+    it('should set error state and emit errorOccurred when updateCharacteristic HTTP call fails', () => {
+        // Ausgangszustand: vorhandene Konfiguration mit ID
+        const initialResponse = createConfigResponse();
+
+        component.configuration.set(initialResponse);
+        component.configId.set('cfg-123');
+
+        const errorSpy = vi.spyOn(component.errorOccurred, 'emit');
+
+        // Act: Merkmalsänderung auslösen
+        component.updateCharacteristic('CPS_OPTION_M', 'M');
+
+        // Erwarteten PATCH-Request abfangen
+        const req = httpMock.expectOne(
+            'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev/configurations/cfg-123'
+        );
+
+        expect(req.request.method).toBe('PATCH');
+        expect(req.request.body).toEqual({
+            characteristicId: 'CPS_OPTION_M',
+            value: 'M'
+        });
+
+        // HTTP-Fehler simulieren
+        req.flush(
+            { message: 'Update failed' },
+            { status: 500, statusText: 'Server Error' }
+        );
+
+        // Widget sollte in den Fehlerzustand gehen
+        expect(component.status()).toBe('error');
+        expect(component.errorMessage()).toBe('Failed to update configuration');
+
+        // Fehler-Event nach außen prüfen
+        expect(errorSpy).toHaveBeenCalledWith({
+            errorCode: 'CONFIG_PATCH_FAILED',
+            message: 'Failed to update configuration'
+        });
+    });
+
+    it('should set error state and emit errorOccurred when completeConfiguration HTTP call fails', () => {
+        // Ausgangszustand: Konfiguration mit ID vorhanden
+        const currentResponse = createConfigResponse({ complete: false });
+
+        component.configuration.set(currentResponse);
+        component.configId.set('cfg-123');
+
+        const errorSpy = vi.spyOn(component.errorOccurred, 'emit');
+
+        // Act: Abschluss der Konfiguration auslösen
+        component.completeConfiguration();
+
+        // Erwarteten POST-Request auf /complete abfangen
+        const req = httpMock.expectOne(
+            'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev/configurations/cfg-123/complete'
+        );
+
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual({});
+
+        // HTTP-Fehler simulieren
+        req.flush(
+            { message: 'Complete failed' },
+            { status: 500, statusText: 'Server Error' }
+        );
+
+        // Widget sollte in den Fehlerzustand gehen
+        expect(component.status()).toBe('error');
+        expect(component.errorMessage()).toBe('Failed to complete configuration');
+
+        // Fehler-Event nach außen prüfen
+        expect(errorSpy).toHaveBeenCalledWith({
+            errorCode: 'CONFIG_COMPLETE_FAILED',
+            message: 'Failed to complete configuration'
+        });
+    });
 });
