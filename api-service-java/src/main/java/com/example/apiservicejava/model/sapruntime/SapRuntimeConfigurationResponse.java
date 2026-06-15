@@ -1,6 +1,7 @@
 package com.example.apiservicejava.model.sapruntime;
 
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SapRuntimeConfigurationResponse {
 
@@ -8,8 +9,13 @@ public class SapRuntimeConfigurationResponse {
     private Integer kbId;
     private SapRuntimeKbKey kbKey;
     private Integer kbBuild;
+
+    @JsonProperty("consistent")
     private boolean consistent;
+
+    @JsonProperty("complete")
     private boolean complete;
+    
     private String engine;
     private String autoCleanup;
     private boolean locked;

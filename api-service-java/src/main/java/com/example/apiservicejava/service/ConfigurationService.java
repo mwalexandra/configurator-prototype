@@ -142,6 +142,9 @@ public class ConfigurationService {
         SapGetConfigurationResult refreshed = sapCpsClient.getConfigurationWithEtag(configId);
         SapRuntimeConfigurationResponse updatedRuntime = refreshed.getBody();
 
+        // ВРЕМЕННЫЙ ЛОГ
+        System.out.println("=== SAP RAW complete=" + updatedRuntime.isComplete() + " rootItem.complete=" + updatedRuntime.getRootItem().isComplete());
+
         if (updatedRuntime == null) {
             throw new IllegalStateException(
                     "SAP CPS returned null after PATCH for configId=" + configId
@@ -159,6 +162,10 @@ public class ConfigurationService {
         SapKbResponse kbResponse = sapKbClient.getKnowledgeBase(kbId);
 
         ConfigurationResponse response = configurationMapper.toWidgetResponse(updatedRuntime, kbResponse);
+
+        // ВРЕМЕННЫЙ ЛОГ
+        System.out.println("=== MAPPED complete=" + response.isComplete());
+
         response.setBackendProcessingTimeMs(System.currentTimeMillis() - start);
         return response;
     }
