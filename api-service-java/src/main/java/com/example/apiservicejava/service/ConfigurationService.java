@@ -242,6 +242,12 @@ public class ConfigurationService {
                     "SAP CPS returned null body for completeConfiguration configurationId=" + configurationId);
         }
 
+        if (!completedRuntime.isComplete() || !completedRuntime.isConsistent()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Configuration is not complete or not consistent");
+        }
+
         String kbId = completedRuntime.getKbId() != null
                 ? completedRuntime.getKbId().toString()
                 : null;

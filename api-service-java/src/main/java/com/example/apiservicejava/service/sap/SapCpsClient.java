@@ -24,10 +24,9 @@ public class SapCpsClient {
         private final String apiKey;
 
         public SapCpsClient(
-                RestTemplate restTemplate,
-                @Value("${sap.cps.base-url}") String baseUrl,
-                @Value("${sap.cps.api-key}") String apiKey
-        ) {
+                        RestTemplate restTemplate,
+                        @Value("${sap.cps.base-url}") String baseUrl,
+                        @Value("${sap.cps.api-key}") String apiKey) {
                 this.restTemplate = restTemplate;
                 this.baseUrl = baseUrl;
                 this.apiKey = apiKey;
@@ -42,11 +41,10 @@ public class SapCpsClient {
                 HttpEntity<Void> entity = new HttpEntity<>(headers);
 
                 ResponseEntity<SapRuntimeConfigurationResponse> response = restTemplate.exchange(
-                        url,
-                        HttpMethod.GET,
-                        entity,
-                        SapRuntimeConfigurationResponse.class
-                );
+                                url,
+                                HttpMethod.GET,
+                                entity,
+                                SapRuntimeConfigurationResponse.class);
 
                 return response.getBody();
         }
@@ -60,11 +58,10 @@ public class SapCpsClient {
                 HttpEntity<Void> entity = new HttpEntity<>(headers);
 
                 ResponseEntity<SapRuntimeConfigurationResponse> response = restTemplate.exchange(
-                        url,
-                        HttpMethod.GET,
-                        entity,
-                        SapRuntimeConfigurationResponse.class
-                );
+                                url,
+                                HttpMethod.GET,
+                                entity,
+                                SapRuntimeConfigurationResponse.class);
 
                 SapGetConfigurationResult result = new SapGetConfigurationResult();
                 result.setBody(response.getBody());
@@ -82,25 +79,23 @@ public class SapCpsClient {
                 HttpEntity<SapCreateRequest> entity = new HttpEntity<>(request, headers);
 
                 ResponseEntity<SapRuntimeConfigurationResponse> response = restTemplate.exchange(
-                        url,
-                        HttpMethod.POST,
-                        entity,
-                        SapRuntimeConfigurationResponse.class
-                );
+                                url,
+                                HttpMethod.POST,
+                                entity,
+                                SapRuntimeConfigurationResponse.class);
 
                 return response.getBody();
         }
 
         public SapRuntimeConfigurationResponse patchConfiguration(
-                String configurationId,
-                String itemId,
-                String characteristicId,
-                String value,
-                String etag
-        ) {
+                        String configurationId,
+                        String itemId,
+                        String characteristicId,
+                        String value,
+                        String etag) {
                 String url = baseUrl + "/api/v2/configurations/" + configurationId
-                        + "/items/" + itemId
-                        + "/characteristics/" + characteristicId;
+                                + "/items/" + itemId
+                                + "/characteristics/" + characteristicId;
 
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
@@ -123,11 +118,10 @@ public class SapCpsClient {
                 HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
                 ResponseEntity<SapRuntimeConfigurationResponse> response = restTemplate.exchange(
-                        url,
-                        HttpMethod.PATCH,
-                        entity,
-                        SapRuntimeConfigurationResponse.class
-                );
+                                url,
+                                HttpMethod.PATCH,
+                                entity,
+                                SapRuntimeConfigurationResponse.class);
 
                 return response.getBody();
         }
@@ -137,22 +131,7 @@ public class SapCpsClient {
                         throw new IllegalArgumentException("configurationId must not be blank");
                 }
 
-                String url = baseUrl + "/api/v2/configurations/" + configurationId + "/complete";
-
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_JSON);
-                headers.set("APIKey", apiKey);
-
-                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(Map.of(), headers);
-
-                ResponseEntity<SapRuntimeConfigurationResponse> response = restTemplate.exchange(
-                        url,
-                        HttpMethod.POST,
-                        entity,
-                        SapRuntimeConfigurationResponse.class
-                );
-
-                return response.getBody();
+                return getConfiguration(configurationId);
         }
 
 }
