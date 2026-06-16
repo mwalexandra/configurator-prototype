@@ -20,7 +20,7 @@ export class App {
   lastError = signal<string | null>(null);
 
   widgetConfig: WidgetInputConfig = {
-    apiBaseUrl: 'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev',
+    apiBaseUrl: 'http://localhost:8080',
     mode: 'create',
     productId: 'CPS_BURGER',
     kbId: '80'

@@ -15,7 +15,7 @@ export class ConfigurationApiService {
   private http = inject(HttpClient);
 
   // fallback for local prototype runs; host config should override this
-  private apiBaseUrl = 'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev';
+  private apiBaseUrl = 'http://localhost:8080';
 
   setApiBaseUrl(apiBaseUrl: string): void {
     this.apiBaseUrl = apiBaseUrl.replace(/\/$/, '');

@@ -63,7 +63,7 @@ describe('ConfiguratorWidgetComponent', () => {
         component = fixture.componentInstance;
 
         component.config = {
-        apiBaseUrl: 'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev',
+        apiBaseUrl: 'http://localhost:8080',
         mode: 'create',
         productId: 'CPS_BURGER',
         kbId: '80'
@@ -98,7 +98,7 @@ describe('ConfiguratorWidgetComponent', () => {
         apiService.getConfiguration.mockReturnValue(of(mockResponse));
 
         component.config = {
-        apiBaseUrl: 'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev',
+        apiBaseUrl: 'http://localhost:8080',
         mode: 'resume',
         resume: {
             configurationId: 'cfg-999'
@@ -111,7 +111,7 @@ describe('ConfiguratorWidgetComponent', () => {
 
         // API-Basis-URL muss gesetzt werden
         expect(apiService.setApiBaseUrl).toHaveBeenCalledWith(
-        'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev'
+        'http://localhost:8080'
         );
         // Konfiguration wird per ID geladen
         expect(apiService.getConfiguration).toHaveBeenCalledWith('cfg-999');
@@ -243,7 +243,7 @@ describe('ConfiguratorWidgetComponent', () => {
         const errorSpy = vi.spyOn(component.errorOccurred, 'emit');
 
         component.config = {
-            apiBaseUrl: 'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev',
+            apiBaseUrl: 'http://localhost:8080',
             mode: 'resume',
             resume: {
             configurationId: 'cfg-999',
@@ -272,7 +272,7 @@ describe('ConfiguratorWidgetComponent', () => {
     it('should set error state and emit error when resume configuration has neither configurationId nor snapshot', () => {
         // Ungültige Resume-Konfiguration: weder ID noch Snapshot gesetzt
         component.config = {
-            apiBaseUrl: 'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev',
+            apiBaseUrl: 'http://localhost:8080',
             mode: 'resume',
             resume: {} as any
         };
@@ -346,7 +346,7 @@ describe('ConfiguratorWidgetComponent', () => {
 
 });
 
-  // Integrationstests 
+  // Integrationstests
 describe('ConfiguratorWidgetComponent (Integration)', () => {
     let component: ConfiguratorWidgetComponent;
     let httpMock: HttpTestingController;
@@ -370,7 +370,7 @@ describe('ConfiguratorWidgetComponent (Integration)', () => {
 
     // Gültige Config für den Create-Modus setzen
     component.config = {
-      apiBaseUrl: 'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev',
+      apiBaseUrl: 'http://localhost:8080',
       mode: 'create',
       productId: 'CPS_BURGER',
       kbId: '80'
@@ -393,7 +393,7 @@ describe('ConfiguratorWidgetComponent (Integration)', () => {
 
         // Erwarteten HTTP-Request abfangen
         const req = httpMock.expectOne(
-        'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev/configurations'
+        'http://localhost:8080/configurations'
         );
 
         // Request-Eigenschaften prüfen
@@ -432,7 +432,7 @@ describe('ConfiguratorWidgetComponent (Integration)', () => {
 
         // Erwarteten PATCH-Request abfangen
         const req = httpMock.expectOne(
-            'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev/configurations/cfg-123'
+            'http://localhost:8080/configurations/cfg-123'
         );
 
         // Request-Eigenschaften prüfen
@@ -464,7 +464,7 @@ describe('ConfiguratorWidgetComponent (Integration)', () => {
 
         // Erwarteten POST-Request auf /complete abfangen
         const req = httpMock.expectOne(
-            'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev/configurations/cfg-123/complete'
+            'http://localhost:8080/configurations/cfg-123/complete'
         );
 
         // Request-Eigenschaften prüfen
@@ -509,7 +509,7 @@ describe('ConfiguratorWidgetComponent (Integration)', () => {
 
         // Erwarteten PATCH-Request abfangen
         const req = httpMock.expectOne(
-            'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev/configurations/cfg-123'
+            'http://localhost:8080/configurations/cfg-123'
         );
 
         expect(req.request.method).toBe('PATCH');
@@ -549,7 +549,7 @@ describe('ConfiguratorWidgetComponent (Integration)', () => {
 
         // Erwarteten POST-Request auf /complete abfangen
         const req = httpMock.expectOne(
-            'https://shiny-space-acorn-rwgjqrx9x9ph5774-8080.app.github.dev/configurations/cfg-123/complete'
+            'http://localhost:8080/configurations/cfg-123/complete'
         );
 
         expect(req.request.method).toBe('POST');
