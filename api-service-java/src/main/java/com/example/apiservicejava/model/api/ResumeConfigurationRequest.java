@@ -1,7 +1,5 @@
 package com.example.apiservicejava.model.api;
 
-import com.example.apiservicejava.model.api.ConfigurationSnapshot;
-
 public class ResumeConfigurationRequest {
 
     private String configurationId;

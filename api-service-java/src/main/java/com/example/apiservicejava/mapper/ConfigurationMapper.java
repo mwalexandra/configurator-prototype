@@ -3,7 +3,6 @@ package com.example.apiservicejava.mapper;
 import com.example.apiservicejava.model.api.*;
 import com.example.apiservicejava.model.sapkb.*;
 import com.example.apiservicejava.model.sapruntime.*;
-import com.example.apiservicejava.service.sap.support.SapGetConfigurationResult;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -15,8 +14,7 @@ public class ConfigurationMapper {
 
     public ConfigurationResponse toWidgetResponse(
             SapRuntimeConfigurationResponse runtime,
-            SapKbResponse kb
-    ) {
+            SapKbResponse kb) {
         if (runtime == null) {
             throw new IllegalArgumentException("runtime configuration must not be null");
         }
@@ -72,8 +70,7 @@ public class ConfigurationMapper {
                     .collect(Collectors.toMap(
                             SapKbCharacteristic::getId,
                             Function.identity(),
-                            (a, b) -> a
-                    ));
+                            (a, b) -> a));
         } else {
             kbCharacteristics = Collections.emptyMap();
         }
@@ -91,8 +88,7 @@ public class ConfigurationMapper {
 
     private CharacteristicDto mapCharacteristic(
             SapRuntimeCharacteristic runtimeChar,
-            SapKbCharacteristic kbChar
-    ) {
+            SapKbCharacteristic kbChar) {
         CharacteristicDto dto = new CharacteristicDto();
         dto.setId(runtimeChar.getId());
         dto.setName(kbChar != null && kbChar.getName() != null ? kbChar.getName() : runtimeChar.getId());
@@ -143,8 +139,7 @@ public class ConfigurationMapper {
 
     private List<CharacteristicValueDto> mapSelectedValues(
             SapRuntimeCharacteristic runtimeChar,
-            SapKbCharacteristic kbChar
-    ) {
+            SapKbCharacteristic kbChar) {
         Map<String, SapKbPossibleValue> kbValues = extractKbValues(kbChar);
 
         if (runtimeChar.getValues() == null) {
@@ -170,8 +165,7 @@ public class ConfigurationMapper {
 
     private List<CharacteristicValueDto> mapPossibleValues(
             SapRuntimeCharacteristic runtimeChar,
-            SapKbCharacteristic kbChar
-    ) {
+            SapKbCharacteristic kbChar) {
         Map<String, SapKbPossibleValue> kbValues = extractKbValues(kbChar);
 
         if (runtimeChar.getPossibleValues() == null) {
@@ -212,8 +206,7 @@ public class ConfigurationMapper {
                 .collect(Collectors.toMap(
                         this::resolveKbValueId,
                         Function.identity(),
-                        (a, b) -> a
-                ));
+                        (a, b) -> a));
     }
 
     private String resolveKbValueId(SapKbPossibleValue value) {
@@ -225,8 +218,7 @@ public class ConfigurationMapper {
 
     private List<CharacteristicGroup> mapGroups(
             SapRuntimeConfigurationResponse runtime,
-            SapKbResponse kb
-    ) {
+            SapKbResponse kb) {
         Map<String, String> groupNames = new HashMap<>();
 
         if (kb != null && kb.getProducts() != null) {
