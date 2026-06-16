@@ -105,6 +105,10 @@ export class ConfiguratorWidgetFacade {
       return;
     }
 
+    if (this.ctx.status() === 'completed') {
+      return;
+    }
+
     this.ctx.status.set('updating');
     this.ctx.errorMessage.set(null);
 
@@ -126,24 +130,53 @@ export class ConfiguratorWidgetFacade {
       return;
     }
 
+    if (!current.complete || !current.consistent) {
+      this.emitError(
+        'CONFIG_NOT_READY',
+        'Configuration is not complete or not consistent'
+      );
+      return;
+    }
+
     this.ctx.status.set('completing');
     this.ctx.errorMessage.set(null);
 
     this.api.completeConfiguration(currentConfigId).subscribe({
       next: response => {
-        this.applyConfiguration(response);
+        if (!response.complete || !response.consistent) {
+          this.emitError(
+            'CONFIG_CONFIRMATION_INVALID',
+            'Configuration could not be confirmed because it is incomplete or inconsistent'
+          );
+          return;
+        }
+
+        this.ctx.configuration.set(response);
+        this.ctx.configId.set(response.configurationId);
+        this.ctx.errorMessage.set(null);
         this.ctx.status.set('completed');
 
         const snapshot = this.buildSnapshot(response);
         this.ctx.configurationCompleted.emit(snapshot);
       },
-      error: () => this.emitError('CONFIG_COMPLETE_FAILED', 'Failed to complete configuration')
+      error: () => this.emitError('CONFIG_COMPLETE_FAILED', 'Failed to confirm configuration')
     });
   }
 
   addToCart(): void {
     const current = this.ctx.configuration();
-    if (!current) return;
+
+    if (!current) {
+      return;
+    }
+
+    if (this.ctx.status() !== 'completed') {
+      this.emitError(
+        'CONFIG_NOT_CONFIRMED',
+        'Configuration must be confirmed before add to cart'
+      );
+      return;
+    }
 
     this.ctx.addedToCart.emit(this.buildSnapshot(current));
   }

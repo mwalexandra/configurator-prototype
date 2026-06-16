@@ -15,10 +15,10 @@
       >
         {{
           ui.uiState() === 'completed' ? 'Configuration confirmed' :
-          ui.uiState() === 'ready'     ? 'Ready for confirmation' :
-          ui.uiState() === 'readonly'  ? 'Read-only snapshot' :
-          currentConfig.complete       ? 'Configuration complete' :
-                                         'Configuration incomplete'
+          ui.uiState() === 'ready' ? 'Ready for confirmation' :
+          ui.uiState() === 'readonly' ? 'Read-only snapshot' :
+          currentConfig.complete ? 'Configuration complete' :
+          'Configuration incomplete'
         }}
       </div>
 
@@ -89,9 +89,27 @@
     </div>
   </div>
 
+  <div
+    class="card card--success"
+    *ngIf="status() === 'completed' && configuration() as confirmedConfig"
+  >
+    <h3 class="card__title">Configuration confirmed</h3>
+    <div class="card__content">
+      <p class="message message--success">
+        Your final configuration has been confirmed and is ready for downstream handoff.
+      </p>
+
+      <div class="info-grid">
+        <p><span>Configuration ID</span> {{ confirmedConfig.configurationId }}</p>
+        <p><span>Product</span> {{ confirmedConfig.productId }}</p>
+        <p><span>Complete</span> {{ confirmedConfig.complete }}</p>
+        <p><span>Consistent</span> {{ confirmedConfig.consistent }}</p>
+      </div>
+    </div>
+  </div>
+
   <div class="widget-layout" *ngIf="configuration() as currentConfig">
 
-    <!-- Левая колонка: характеристики -->
     <div class="card">
       <h3 class="card__title">
         {{ status() === 'completed' ? 'Confirmed configuration' : 'Characteristics' }}
@@ -99,16 +117,13 @@
 
       <div class="card__content">
 
-        <!-- Блок скрытых проблемных полей — ключевой для дебага -->
         <div
           class="message message--warning hidden-problems"
           *ngIf="ui.hiddenProblemCharacteristics().length"
         >
-          <strong>Completion is blocked by hidden required fields:</strong>
+          <strong>Confirmation is blocked by hidden required fields:</strong>
           <ul class="hidden-problems__list">
-            <li
-              *ngFor="let c of ui.hiddenProblemCharacteristics()"
-            >
+            <li *ngFor="let c of ui.hiddenProblemCharacteristics()">
               {{ c.name || c.id }}
               <span class="hidden-problems__badge">not visible · required · incomplete</span>
             </li>
@@ -124,6 +139,7 @@
             *ngFor="let char of visibleCharacteristics(); trackBy: trackByCharacteristicId"
             [class.characteristic-item--error]="hasCharacteristicProblem(char.id) && !isCharacteristicIncomplete(char)"
             [class.characteristic-item--incomplete]="isCharacteristicIncomplete(char)"
+            [class.characteristic-item--readonly]="char.readOnly || ui.isReadOnly() || status() === 'completed'"
           >
             <div class="info-grid">
               <p><span>Name</span> {{ char.name || char.id }}</p>
@@ -136,15 +152,23 @@
 
             <p
               class="characteristic-status characteristic-status--error"
-              *ngIf="hasCharacteristicProblem(char.id)"
+              *ngIf="hasCharacteristicProblem(char.id) && !isCharacteristicIncomplete(char)"
             >
               Configuration error on this field
             </p>
+
             <p
               class="characteristic-status characteristic-status--warning"
               *ngIf="isCharacteristicIncomplete(char)"
             >
               Required — not yet complete
+            </p>
+
+            <p
+              class="characteristic-status characteristic-status--success"
+              *ngIf="status() === 'completed' && char.complete && char.consistent"
+            >
+              Confirmed in final configuration
             </p>
 
             <div
@@ -176,6 +200,18 @@
                     {{ val.name }}
                   </option>
                 </select>
+              </div>
+
+              <div *ngSwitchCase="'MULTI'" class="field-block">
+                <label class="field-label">Selected values</label>
+                <div class="selected-value-list" *ngIf="char.values?.length; else noMultiSelection">
+                  <span class="selected-value-chip" *ngFor="let val of char.values">
+                    {{ val.name || val.id }}
+                  </span>
+                </div>
+                <ng-template #noMultiSelection>
+                  <p class="no-items">No values selected.</p>
+                </ng-template>
               </div>
 
               <div *ngSwitchCase="'FREETEXT'" class="field-block">
@@ -214,7 +250,6 @@
       </div>
     </div>
 
-    <!-- Правая колонка: summary -->
     <div class="card">
       <h3 class="card__title">Configuration summary</h3>
 
@@ -238,6 +273,13 @@
 
         <div class="summary-messages">
           <p
+            class="message message--success"
+            *ngIf="ui.uiState() === 'completed'"
+          >
+            Configuration was confirmed successfully and is ready for downstream handoff.
+          </p>
+
+          <p
             class="message message--warning"
             *ngIf="ui.hiddenProblemCharacteristics().length"
           >
@@ -248,14 +290,14 @@
             class="message message--warning"
             *ngIf="ui.uiState() === 'incomplete' && !ui.hiddenProblemCharacteristics().length"
           >
-            Complete all required characteristics before finishing the configuration.
+            Complete all required characteristics before confirming the configuration.
           </p>
 
           <p
             class="message message--error"
             *ngIf="ui.uiState() === 'conflict'"
           >
-            Resolve configuration conflicts before finishing.
+            Resolve configuration conflicts before confirming.
           </p>
 
           <p
@@ -269,7 +311,7 @@
             class="message"
             *ngIf="ui.uiState() !== 'completed' && ui.uiState() !== 'error'"
           >
-            Add to cart becomes available only after successful completion.
+            Confirm the configuration to lock the final selection and enable downstream actions.
           </p>
         </div>
       </div>

@@ -42,10 +42,10 @@ export class ConfiguratorWidgetComponent implements OnInit {
   errorMessage = signal<string | null>(null);
 
   visibleCharacteristics = computed(() =>
-    this.configuration()?.rootItem?.characteristics?.filter(c => c.visible) ?? []
+    (this.configuration()?.rootItem?.characteristics ?? []).filter(c => c.visible)
   );
 
-  private facade!: ConfiguratorWidgetFacade;
+  private facade: ConfiguratorWidgetFacade | null = null;
 
   readonly ui = createConfiguratorWidgetUiState(
     this.configuration,
@@ -72,23 +72,23 @@ export class ConfiguratorWidgetComponent implements OnInit {
   }
 
   startConfiguration(): void {
-    this.facade.startConfiguration();
+    this.facade?.startConfiguration();
   }
 
   resumeConfiguration(): void {
-    this.facade.resumeConfiguration();
+    this.facade?.resumeConfiguration();
   }
 
   updateCharacteristic(characteristicId: string, value: string | null): void {
-    this.facade.updateCharacteristic(characteristicId, value);
+    this.facade?.updateCharacteristic(characteristicId, value);
   }
 
   completeConfiguration(): void {
-    this.facade.completeConfiguration();
+    this.facade?.completeConfiguration();
   }
 
   addToCart(): void {
-    this.facade.addToCart();
+    this.facade?.addToCart();
   }
 
   getSingleSelectedValueId(char: Characteristic): string {
@@ -100,11 +100,11 @@ export class ConfiguratorWidgetComponent implements OnInit {
   }
 
   getGlobalMessages(): ConfigurationMessage[] {
-    return this.facade.getGlobalMessages();
+    return this.facade?.getGlobalMessages() ?? [];
   }
 
   getMessagesForCharacteristic(characteristicId: string): ConfigurationMessage[] {
-    return this.facade.getMessagesForCharacteristic(characteristicId);
+    return this.facade?.getMessagesForCharacteristic(characteristicId) ?? [];
   }
 
   hasCharacteristicProblem(characteristicId: string): boolean {

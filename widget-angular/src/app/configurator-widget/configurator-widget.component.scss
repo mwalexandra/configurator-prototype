@@ -1,6 +1,6 @@
 :host {
   display: block;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Inter, Arial, Helvetica, sans-serif;
   color: #1f2f46;
 }
 
@@ -419,5 +419,114 @@ input[type='number']:disabled {
   .status-meta {
     flex-direction: column;
     gap: 4px;
+  }
+
+  .message--success {
+    border-color: #b8d6b8;
+    background: #f4fbf4;
+    color: #2f6b2f;
+  }
+
+  .card--success {
+    border-color: #b8d6b8;
+    background: #fbfffb;
+  }
+
+  .card--success .card__title {
+    background: #eef8ee;
+    border-bottom-color: #b8d6b8;
+    color: #2f6b2f;
+  }
+
+  .summary-messages {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .hidden-problems {
+    margin-bottom: 12px;
+  }
+
+  .hidden-problems__list {
+    margin: 8px 0 0;
+    padding-left: 18px;
+  }
+
+  .hidden-problems__list li {
+    margin: 4px 0;
+  }
+
+  .hidden-problems__badge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #fff7db;
+    color: #8a6b18;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .characteristic-item--incomplete {
+    border-color: #ead9a2;
+    background: #fffdf8;
+    box-shadow: inset 0 0 0 1px rgba(138, 107, 24, 0.08);
+  }
+
+  .characteristic-item--readonly {
+    background: #f7f9fc;
+  }
+
+  .characteristic-status {
+    margin: 8px 0 0;
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1.4;
+    font-weight: 600;
+  }
+
+  .characteristic-status--error {
+    background: #fff1f1;
+    border: 1px solid #efb3b3;
+    color: #a12828;
+  }
+
+  .characteristic-status--warning {
+    background: #fffdf5;
+    border: 1px solid #ead9a2;
+    color: #8a6b18;
+  }
+
+  .characteristic-status--success {
+    background: #eefbf0;
+    border: 1px solid #b8d6b8;
+    color: #2f6b2f;
+  }
+
+  .no-items {
+    margin: 0;
+    color: #5b6777;
+    font-size: 13px;
+  }
+
+  .selected-value-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .selected-value-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 4px 10px;
+    border: 1px solid #c9d5e2;
+    border-radius: 999px;
+    background: #eef2f7;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 700;
   }
 }
