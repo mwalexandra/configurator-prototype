@@ -14,8 +14,8 @@
         [class.status-pill--readonly]="ui.uiState() === 'readonly'"
       >
         {{
-          ui.uiState() === 'completed' ? 'Configuration completed' :
-          ui.uiState() === 'ready'     ? 'Ready for completion' :
+          ui.uiState() === 'completed' ? 'Configuration confirmed' :
+          ui.uiState() === 'ready'     ? 'Ready for confirmation' :
           ui.uiState() === 'readonly'  ? 'Read-only snapshot' :
           currentConfig.complete       ? 'Configuration complete' :
                                          'Configuration incomplete'
@@ -45,7 +45,7 @@
         (click)="completeConfiguration()"
         [disabled]="!ui.isReadyForCompletion()"
       >
-        {{ status() === 'completing' ? 'Completing...' : 'Complete configuration' }}
+        {{ status() === 'completing' ? 'Confirming...' : 'Confirm configuration' }}
       </button>
     </div>
   </div>
@@ -94,7 +94,7 @@
     <!-- Левая колонка: характеристики -->
     <div class="card">
       <h3 class="card__title">
-        {{ status() === 'completed' ? 'Final configuration' : 'Characteristics' }}
+        {{ status() === 'completed' ? 'Confirmed configuration' : 'Characteristics' }}
       </h3>
 
       <div class="card__content">

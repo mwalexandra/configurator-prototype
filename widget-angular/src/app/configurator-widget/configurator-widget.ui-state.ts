@@ -145,9 +145,9 @@ export function createConfiguratorWidgetUiState(
       case 'conflict':
         return 'Configuration contains conflicts or errors. Review the highlighted fields.';
       case 'ready':
-        return 'Configuration is complete and consistent. You can finish it now.';
+        return 'Configuration is complete and consistent. You can confirm it now.';
       case 'completed':
-        return 'Configuration was completed successfully. Add to cart is available.';
+        return 'Configuration was confirmed successfully. Add to cart is available.';
       case 'readonly':
         return 'Snapshot fallback is shown in read-only mode. Changes are not available.';
       case 'error':
