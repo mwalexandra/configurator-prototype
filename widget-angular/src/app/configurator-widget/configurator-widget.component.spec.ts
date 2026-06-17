@@ -63,7 +63,7 @@ describe('ConfiguratorWidgetComponent', () => {
         component = fixture.componentInstance;
 
         component.config = {
-        apiBaseUrl: 'http://localhost:8080',
+        apiBaseUrl: 'https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap/',
         mode: 'create',
         productId: 'CPS_BURGER',
         kbId: '80'
@@ -98,7 +98,7 @@ describe('ConfiguratorWidgetComponent', () => {
         apiService.getConfiguration.mockReturnValue(of(mockResponse));
 
         component.config = {
-        apiBaseUrl: 'http://localhost:8080',
+        apiBaseUrl: 'https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap/',
         mode: 'resume',
         resume: {
             configurationId: 'cfg-999'
@@ -111,7 +111,7 @@ describe('ConfiguratorWidgetComponent', () => {
 
         // API-Basis-URL muss gesetzt werden
         expect(apiService.setApiBaseUrl).toHaveBeenCalledWith(
-        'http://localhost:8080'
+        'https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap/'
         );
         // Konfiguration wird per ID geladen
         expect(apiService.getConfiguration).toHaveBeenCalledWith('cfg-999');
@@ -243,7 +243,7 @@ describe('ConfiguratorWidgetComponent', () => {
         const errorSpy = vi.spyOn(component.errorOccurred, 'emit');
 
         component.config = {
-            apiBaseUrl: 'http://localhost:8080',
+            apiBaseUrl: 'https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap/',
             mode: 'resume',
             resume: {
             configurationId: 'cfg-999',
@@ -272,7 +272,7 @@ describe('ConfiguratorWidgetComponent', () => {
     it('should set error state and emit error when resume configuration has neither configurationId nor snapshot', () => {
         // Ungültige Resume-Konfiguration: weder ID noch Snapshot gesetzt
         component.config = {
-            apiBaseUrl: 'http://localhost:8080',
+            apiBaseUrl: 'https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap/',
             mode: 'resume',
             resume: {} as any
         };
@@ -370,7 +370,7 @@ describe('ConfiguratorWidgetComponent (Integration)', () => {
 
     // Gültige Config für den Create-Modus setzen
     component.config = {
-      apiBaseUrl: 'http://localhost:8080',
+      apiBaseUrl: 'https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap/',
       mode: 'create',
       productId: 'CPS_BURGER',
       kbId: '80'
@@ -393,7 +393,7 @@ describe('ConfiguratorWidgetComponent (Integration)', () => {
 
         // Erwarteten HTTP-Request abfangen
         const req = httpMock.expectOne(
-        'http://localhost:8080/configurations'
+        'https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap//configurations'
         );
 
         // Request-Eigenschaften prüfen
@@ -432,7 +432,7 @@ describe('ConfiguratorWidgetComponent (Integration)', () => {
 
         // Erwarteten PATCH-Request abfangen
         const req = httpMock.expectOne(
-            'http://localhost:8080/configurations/cfg-123'
+            'https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap//configurations/cfg-123'
         );
 
         // Request-Eigenschaften prüfen
@@ -464,7 +464,7 @@ describe('ConfiguratorWidgetComponent (Integration)', () => {
 
         // Erwarteten POST-Request auf /complete abfangen
         const req = httpMock.expectOne(
-            'http://localhost:8080/configurations/cfg-123/complete'
+            'https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap//configurations/cfg-123/complete'
         );
 
         // Request-Eigenschaften prüfen
@@ -509,7 +509,7 @@ describe('ConfiguratorWidgetComponent (Integration)', () => {
 
         // Erwarteten PATCH-Request abfangen
         const req = httpMock.expectOne(
-            'http://localhost:8080/configurations/cfg-123'
+            'https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap//configurations/cfg-123'
         );
 
         expect(req.request.method).toBe('PATCH');
@@ -549,7 +549,7 @@ describe('ConfiguratorWidgetComponent (Integration)', () => {
 
         // Erwarteten POST-Request auf /complete abfangen
         const req = httpMock.expectOne(
-            'http://localhost:8080/configurations/cfg-123/complete'
+            'https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap//configurations/cfg-123/complete'
         );
 
         expect(req.request.method).toBe('POST');

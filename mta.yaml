@@ -1,0 +1,18 @@
+_schema-version: "3.3.0"
+ID: configurator-prototype
+version: 1.0.0
+
+modules:
+  - name: backend
+    type: java
+    path: backend
+
+  - name: widget
+    type: html5
+    path: widget
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm install
+        - npm run build

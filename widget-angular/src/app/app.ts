@@ -20,7 +20,7 @@ export class App {
   lastError = signal<string | null>(null);
 
   widgetConfig: WidgetInputConfig = {
-    apiBaseUrl: 'http://localhost:8080',
+    apiBaseUrl: 'https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap/',
     mode: 'create',
     productId: 'CPS_BURGER',
     kbId: '80'

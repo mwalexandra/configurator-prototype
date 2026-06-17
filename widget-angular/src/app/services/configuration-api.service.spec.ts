@@ -23,7 +23,7 @@ describe('ConfigurationApiService', () => {
     service = TestBed.inject(ConfigurationApiService);
     httpMock = TestBed.inject(HttpTestingController);
 
-    service.setApiBaseUrl('http://localhost:8080'); // Set base URL for testing
+    service.setApiBaseUrl('https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap/'); // Set base URL for testing
   });
 
   afterEach(() => {
@@ -57,7 +57,7 @@ describe('ConfigurationApiService', () => {
       expect(response).toEqual(mockResponse);
     });
 
-    const req = httpMock.expectOne('http://localhost:8080/configurations');
+    const req = httpMock.expectOne('https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap//configurations');
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(payload);
 
@@ -94,7 +94,7 @@ describe('ConfigurationApiService', () => {
         expect(response).toEqual(mockResponse);
     });
 
-    const req = httpMock.expectOne('http://localhost:8080/configurations/cfg-123');
+    const req = httpMock.expectOne('https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap//configurations/cfg-123');
     expect(req.request.method).toBe('PATCH');
     expect(req.request.body).toEqual({
         characteristicId: 'CPS_OPTION_M',
@@ -129,7 +129,7 @@ describe('ConfigurationApiService', () => {
         });
 
         const req = httpMock.expectOne(
-            'http://localhost:8080/configurations/cfg-123/complete'
+            'https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap//configurations/cfg-123/complete'
         );
         expect(req.request.method).toBe('POST');
         expect(req.request.body).toEqual({});

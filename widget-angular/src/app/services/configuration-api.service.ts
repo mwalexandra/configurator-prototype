@@ -15,7 +15,7 @@ export class ConfigurationApiService {
   private http = inject(HttpClient);
 
   // fallback for local prototype runs; host config should override this
-  private apiBaseUrl = 'http://localhost:8080';
+  private apiBaseUrl = 'https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap/';
 
   setApiBaseUrl(apiBaseUrl: string): void {
     this.apiBaseUrl = apiBaseUrl.replace(/\/$/, '');
