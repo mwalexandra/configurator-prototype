@@ -15,6 +15,7 @@ import {
   ConfigurationMessage,
   ConfigurationResponse,
   ConfigurationSnapshot,
+  CompletedConfigurationResult,
   WidgetInputConfig,
   WidgetState
 } from '../models/configuration.models';
@@ -32,7 +33,7 @@ export class ConfiguratorWidgetComponent implements OnInit {
   @Input({ required: true }) config!: WidgetInputConfig;
 
   configurationStarted = output<string>();
-  configurationCompleted = output<ConfigurationSnapshot>();
+  configurationCompleted = output<CompletedConfigurationResult>();
   addedToCart = output<ConfigurationSnapshot>();
   errorOccurred = output<{ errorCode: string; message: string }>();
 

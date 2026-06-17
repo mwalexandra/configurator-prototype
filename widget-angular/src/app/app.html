@@ -11,7 +11,7 @@
   <div class="host-summary">
     <p><strong>Current mode:</strong> {{ widgetConfig.mode }}</p>
     <p><strong>Started config ID:</strong> {{ startedConfigId() || '—' }}</p>
-    <p><strong>Final snapshot available:</strong> {{ !!finalSnapshot() }}</p>
+    <p><strong>Final JSON available:</strong> {{ !!completedResult() }}</p>
   </div>
 
   <app-configurator-widget
@@ -22,7 +22,16 @@
     (errorOccurred)="onError($event)">
   </app-configurator-widget>
 
-  <div class="host-events" *ngIf="completedSnapshot() as snapshot">
+  <div class="host-events" *ngIf="completedResult() as result">
+    <h3>Completed Result</h3>
+    <p><strong>Configuration ID:</strong> {{ result.configurationId }}</p>
+    <p><strong>Product ID:</strong> {{ result.productId }}</p>
+    <p><strong>KB ID:</strong> {{ result.kbId }}</p>
+    <p><strong>Added to cart:</strong> {{ result.addedToCart }}</p>
+    <p><strong>Received At:</strong> {{ result.receivedAt }}</p>
+  </div>
+
+  <div class="host-events" *ngIf="completedResult()?.snapshot as snapshot">
     <h3>Completed Snapshot</h3>
     <p><strong>Configuration ID:</strong> {{ snapshot.configurationId }}</p>
     <p><strong>Product ID:</strong> {{ snapshot.productId }}</p>
@@ -32,8 +41,22 @@
     <p><strong>Consistent:</strong> {{ snapshot.consistent }}</p>
   </div>
 
-  <div class="host-events" *ngIf="finalSnapshot() as snapshot">
+  <div class="host-events" *ngIf="completedResult() as result">
     <h3>Final payload for host / cart</h3>
+    <p><strong>Configuration ID:</strong> {{ result.fullConfiguration.configurationId }}</p>
+    <p><strong>Product ID:</strong> {{ result.fullConfiguration.productId }}</p>
+    <p><strong>KB ID:</strong> {{ result.fullConfiguration.kbId }}</p>
+    <p><strong>Complete:</strong> {{ result.fullConfiguration.complete }}</p>
+    <p><strong>Consistent:</strong> {{ result.fullConfiguration.consistent }}</p>
+    <p><strong>Groups:</strong> {{ result.fullConfiguration.groups?.length }}</p>
+    <p><strong>Messages:</strong> {{ result.fullConfiguration.messages?.length }}</p>
+
+    <h4>Deserialized full JSON from CPS</h4>
+    <pre class="json-block">{{ result.fullConfiguration | json }}</pre>
+  </div>
+
+  <div class="host-events" *ngIf="finalSnapshot() as snapshot">
+    <h3>Final snapshot for resume</h3>
     <p><strong>Configuration ID:</strong> {{ snapshot.configurationId }}</p>
     <p><strong>Product ID:</strong> {{ snapshot.productId }}</p>
     <p><strong>KB ID:</strong> {{ snapshot.kbId }}</p>

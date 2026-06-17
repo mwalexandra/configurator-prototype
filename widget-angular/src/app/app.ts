@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ConfiguratorWidgetComponent } from './configurator-widget/configurator-widget.component';
 import {
   ConfigurationSnapshot,
+  CompletedConfigurationResult,
   WidgetInputConfig
 } from './models/configuration.models';
 import { environment } from '../environments/environment';
@@ -16,6 +17,7 @@ import { environment } from '../environments/environment';
 })
 export class App {
   startedConfigId = signal<string | null>(null);
+  completedResult = signal<CompletedConfigurationResult | null>(null);
   completedSnapshot = signal<ConfigurationSnapshot | null>(null);
   finalSnapshot = signal<ConfigurationSnapshot | null>(null);
   lastError = signal<string | null>(null);
@@ -33,8 +35,9 @@ export class App {
     this.startedConfigId.set(configId);
   }
 
-  onConfigurationCompleted(snapshot: ConfigurationSnapshot): void {
-    this.completedSnapshot.set(snapshot);
+  onConfigurationCompleted(result: CompletedConfigurationResult): void {
+    this.completedResult.set(result);
+    this.completedSnapshot.set(result.snapshot);
   }
 
   onAddedToCart(snapshot: ConfigurationSnapshot): void {

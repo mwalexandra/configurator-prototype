@@ -2,6 +2,7 @@
 import { WritableSignal } from '@angular/core';
 import { ConfigurationApiService } from '../services/configuration-api.service';
 import {
+  CompletedConfigurationResult,
   ConfigurationMessage,
   ConfigurationResponse,
   ConfigurationSnapshot,
@@ -17,7 +18,7 @@ export interface ConfiguratorWidgetFacadeContext {
   status: WritableSignal<WidgetState>;
   errorMessage: WritableSignal<string | null>;
   configurationStarted: { emit(value: string): void };
-  configurationCompleted: { emit(value: ConfigurationSnapshot): void };
+  configurationCompleted: { emit(value: CompletedConfigurationResult): void };
   addedToCart: { emit(value: ConfigurationSnapshot): void };
   errorOccurred: { emit(value: { errorCode: string; message: string }): void };
 }
@@ -157,9 +158,24 @@ export class ConfiguratorWidgetFacade {
         this.ctx.status.set('completed');
 
         const snapshot = this.buildSnapshot(response);
-        this.ctx.configurationCompleted.emit(snapshot);
+
+        const result: CompletedConfigurationResult = {
+          configurationId: response.configurationId,
+          productId: response.productId,
+          kbId: response.kbId,
+          addedToCart: true,
+          receivedAt: new Date().toISOString(),
+          snapshot,
+          fullConfiguration: response
+        };
+
+        this.ctx.configurationCompleted.emit(result);
       },
-      error: () => this.emitError('CONFIG_COMPLETE_FAILED', 'Failed to confirm configuration')
+      error: () =>
+        this.emitError(
+          'CONFIG_COMPLETE_FAILED',
+          'Failed to confirm configuration'
+        )
     });
   }
 
