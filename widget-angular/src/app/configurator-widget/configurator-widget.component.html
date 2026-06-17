@@ -89,25 +89,6 @@
     </div>
   </div>
 
-  <div
-    class="card card--success"
-    *ngIf="status() === 'completed' && configuration() as confirmedConfig"
-  >
-    <h3 class="card__title">Configuration confirmed</h3>
-    <div class="card__content">
-      <p class="message message--success">
-        Your final configuration has been confirmed and is ready for downstream handoff.
-      </p>
-
-      <div class="info-grid">
-        <p><span>Configuration ID</span> {{ confirmedConfig.configurationId }}</p>
-        <p><span>Product</span> {{ confirmedConfig.productId }}</p>
-        <p><span>Complete</span> {{ confirmedConfig.complete }}</p>
-        <p><span>Consistent</span> {{ confirmedConfig.consistent }}</p>
-      </div>
-    </div>
-  </div>
-
   <div class="widget-layout" *ngIf="configuration() as currentConfig">
 
     <div class="card">
