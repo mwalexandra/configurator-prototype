@@ -172,7 +172,7 @@ export interface RestoreInfo {
 }
 
 // ──────────────────────────────
-// API-Service → Widget
+// API-Service → Widget runtime response
 // ──────────────────────────────
 
 export interface ConfigurationResponse {
@@ -190,6 +190,10 @@ export interface ConfigurationResponse {
   backendProcessingTimeMs?: number;
   restoreInfo?: RestoreInfo;
 }
+
+// ──────────────────────────────
+//  Widget → Host outputs
+// ──────────────────────────────
 
 export interface CompletedConfigurationResult {
   configurationId: string;

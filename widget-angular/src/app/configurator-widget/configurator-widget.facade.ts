@@ -7,6 +7,7 @@ import {
   ConfigurationResponse,
   ConfigurationSnapshot,
   CreateConfigurationRequest,
+  ResumeConfigurationRequest,
   WidgetInputConfig,
   WidgetState
 } from '../models/configuration.models';
@@ -45,7 +46,7 @@ export class ConfiguratorWidgetFacade {
     if (!this.ctx.config.productId || !this.ctx.config.kbId) {
       this.emitError(
         'CONFIG_INPUT_INVALID',
-        'Missing productId or kbId for create mode'
+        'Fehlende productId oder kbId für den Start einer neuen Konfiguration'
       );
       return;
     }
@@ -78,24 +79,19 @@ export class ConfiguratorWidgetFacade {
     this.ctx.status.set('loading');
     this.ctx.errorMessage.set(null);
 
-    if (resume.configurationId) {
-      this.api.getConfiguration(resume.configurationId).subscribe({
-        next: response => this.applyConfiguration(response),
-        error: () => {
-          if (resume.snapshot) {
-            this.applySnapshotFallback(resume.snapshot);
-            return;
-          }
+    const payload: ResumeConfigurationRequest = {
+      configurationId: resume.configurationId,
+      snapshot: resume.snapshot,
+      sourceContext: resume.sourceContext
+    };
 
-          this.emitError('CONFIG_LOAD_FAILED', 'Failed to load configuration');
-        }
-      });
-      return;
-    }
-
-    if (resume.snapshot) {
-      this.applySnapshotFallback(resume.snapshot);
-    }
+    this.api.resumeConfiguration(payload).subscribe({
+      next: response => this.applyConfiguration(response),
+      error: () => this.emitError(
+        'CONFIG_RESUME_FAILED',
+        'Failed to resume configuration'
+      )
+    });
   }
 
   updateCharacteristic(characteristicId: string, value: string | null): void {
