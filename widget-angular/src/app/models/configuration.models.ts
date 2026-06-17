@@ -190,3 +190,13 @@ export interface ConfigurationResponse {
   backendProcessingTimeMs?: number;
   restoreInfo?: RestoreInfo;
 }
+
+export interface CompletedConfigurationResult {
+  configurationId: string;
+  productId: string;
+  kbId?: string;
+  addedToCart: boolean;
+  receivedAt: string;
+  snapshot: ConfigurationSnapshot;
+  fullConfiguration: ConfigurationResponse;
+}
