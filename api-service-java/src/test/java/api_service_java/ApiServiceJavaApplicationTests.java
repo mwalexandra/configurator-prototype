@@ -1,13 +1,13 @@
 package api_service_java;
 
+import com.example.apiservicejava.ApiServiceJavaApplication;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+@SpringBootTest(classes = ApiServiceJavaApplication.class)
 class ApiServiceJavaApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
-
+    @Test
+    void contextLoads() {
+    }
 }
