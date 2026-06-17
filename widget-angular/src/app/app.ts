@@ -5,6 +5,7 @@ import {
   ConfigurationSnapshot,
   WidgetInputConfig
 } from './models/configuration.models';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -18,9 +19,11 @@ export class App {
   completedSnapshot = signal<ConfigurationSnapshot | null>(null);
   finalSnapshot = signal<ConfigurationSnapshot | null>(null);
   lastError = signal<string | null>(null);
+  
+  private apiBaseUrl = environment.apiUrl;
 
   widgetConfig: WidgetInputConfig = {
-    apiBaseUrl: 'https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap/',
+    apiBaseUrl: this.apiBaseUrl,
     mode: 'create',
     productId: 'CPS_BURGER',
     kbId: '80'

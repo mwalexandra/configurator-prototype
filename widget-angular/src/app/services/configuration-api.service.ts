@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 import {
   CreateConfigurationRequest,
   ConfigurationResponse,
@@ -12,10 +13,9 @@ import {
   providedIn: 'root'
 })
 export class ConfigurationApiService {
-  private http = inject(HttpClient);
+  private apiBaseUrl = environment.apiUrl;
 
-  // fallback for local prototype runs; host config should override this
-  private apiBaseUrl = 'https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap/';
+  constructor(private http: HttpClient) {}
 
   setApiBaseUrl(apiBaseUrl: string): void {
     this.apiBaseUrl = apiBaseUrl.replace(/\/$/, '');
