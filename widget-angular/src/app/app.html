@@ -1,17 +1,57 @@
 <div class="app-shell">
-  <h1>Configurator Prototype</h1>
-
-  <div class="host-controls">
-    <button type="button" (click)="switchToCreateMode()">Create mode</button>
-    <button type="button" (click)="switchToResumeMode()" [disabled]="!finalSnapshot()">
-      Resume
-    </button>
+  <div class="header">
+    <div class="logo-container">
+      <img src="/assets/img/bfd_Unternehmenslogo_RGB_19_62_143.jpg" alt="Bauerfeind Logo">
+    </div>
+    <h1>Konfigurator-Prototyp</h1>
   </div>
 
-  <div class="host-summary">
-    <p><strong>Current mode:</strong> {{ widgetConfig.mode }}</p>
-    <p><strong>Started config ID:</strong> {{ startedConfigId() || '—' }}</p>
-    <p><strong>Final JSON available:</strong> {{ !!completedResult()?.addedToCart }}</p>
+  <div class="host-container">
+    
+    <div class="host-main-info">
+      <h2 class="host-heading">Host-Frontend</h2>
+      <p>Erstellmodus der Konfigurator:</p>
+      <div class="host-controls">
+        <button type="button" (click)="switchToCreateMode()">Ein Produkt konfigurieren</button>
+        <button type="button" (click)="switchToResumeMode()" [disabled]="!finalSnapshot()">
+          Eine bestehende Konfiguration fortsetzen
+        </button>
+      </div>
+    </div>
+
+    <div class="host-summary">
+      <p><strong>Aktueller Erstellmodus:</strong> {{ widgetConfig.mode }}</p>
+      <p><strong>Konfiguration-ID:</strong> {{ startedConfigId() || '—' }}</p>
+      <p><strong>Finales JSON verfügbar:</strong> {{ !!completedResult()?.addedToCart }}</p>
+    </div>
+
+    <div class="host-events" *ngIf="completedResult()?.snapshot as snapshot">
+      <h3>Abgeschlossener Snapshot</h3>
+      <p><strong>Konfigurations-ID:</strong> {{ snapshot.configurationId }}</p>
+      <p><strong>Produkt-ID:</strong> {{ snapshot.productId }}</p>
+      <p><strong>KB-ID:</strong> {{ snapshot.kbId }}</p>
+      <p><strong>Gespeichert am:</strong> {{ snapshot.savedAt }}</p>
+      <p><strong>Vollständig:</strong> {{ snapshot.complete }}</p>
+      <p><strong>Konsistent:</strong> {{ snapshot.consistent }}</p>
+    </div>
+
+    <div class="host-events" *ngIf="completedResult() as result">
+      <h3>Finale Resume für Host / Warenkorb</h3>
+      <p><strong>Konfigurations-ID:</strong> {{ result.fullConfiguration.configurationId }}</p>
+      <p><strong>Produkt-ID:</strong> {{ result.fullConfiguration.productId }}</p>
+      <p><strong>KB-ID:</strong> {{ result.fullConfiguration.kbId }}</p>
+      <p><strong>Vollständig:</strong> {{ result.fullConfiguration.complete }}</p>
+      <p><strong>Konsistent:</strong> {{ result.fullConfiguration.consistent }}</p>
+      <p><strong>Gruppen der Merkmalen:</strong> {{ result.fullConfiguration.groups?.length }}</p>
+      <p><strong>Nachrichten:</strong> {{ result.fullConfiguration.messages?.length }}</p>
+
+      <h4>Deserialisiertes vollständiges JSON aus CPS</h4>
+      <pre class="json-block">{{ result.fullConfiguration | json }}</pre>
+    </div>
+
+    <div class="host-error" *ngIf="lastError() as error">
+      <p><strong>Fehler:</strong> {{ error }}</p>
+    </div>
   </div>
 
   <app-configurator-widget
@@ -22,49 +62,4 @@
     (errorOccurred)="onError($event)">
   </app-configurator-widget>
 
-  <div class="host-events" *ngIf="completedResult() as result">
-    <h3>Completed Result</h3>
-    <p><strong>Configuration ID:</strong> {{ result.configurationId }}</p>
-    <p><strong>Product ID:</strong> {{ result.productId }}</p>
-    <p><strong>KB ID:</strong> {{ result.kbId }}</p>
-    <p><strong>Added to cart:</strong> {{ result.addedToCart }}</p>
-    <p><strong>Received At:</strong> {{ result.receivedAt }}</p>
-  </div>
-
-  <div class="host-events" *ngIf="completedResult()?.snapshot as snapshot">
-    <h3>Completed Snapshot</h3>
-    <p><strong>Configuration ID:</strong> {{ snapshot.configurationId }}</p>
-    <p><strong>Product ID:</strong> {{ snapshot.productId }}</p>
-    <p><strong>KB ID:</strong> {{ snapshot.kbId }}</p>
-    <p><strong>Saved At:</strong> {{ snapshot.savedAt }}</p>
-    <p><strong>Complete:</strong> {{ snapshot.complete }}</p>
-    <p><strong>Consistent:</strong> {{ snapshot.consistent }}</p>
-  </div>
-
-  <div class="host-events" *ngIf="completedResult() as result">
-    <h3>Final payload for host / cart</h3>
-    <p><strong>Configuration ID:</strong> {{ result.fullConfiguration.configurationId }}</p>
-    <p><strong>Product ID:</strong> {{ result.fullConfiguration.productId }}</p>
-    <p><strong>KB ID:</strong> {{ result.fullConfiguration.kbId }}</p>
-    <p><strong>Complete:</strong> {{ result.fullConfiguration.complete }}</p>
-    <p><strong>Consistent:</strong> {{ result.fullConfiguration.consistent }}</p>
-    <p><strong>Groups:</strong> {{ result.fullConfiguration.groups?.length }}</p>
-    <p><strong>Messages:</strong> {{ result.fullConfiguration.messages?.length }}</p>
-
-    <h4>Deserialized full JSON from CPS</h4>
-    <pre class="json-block">{{ result.fullConfiguration | json }}</pre>
-  </div>
-
-  <div class="host-events" *ngIf="finalSnapshot() as snapshot">
-    <h3>Final snapshot for resume</h3>
-    <p><strong>Configuration ID:</strong> {{ snapshot.configurationId }}</p>
-    <p><strong>Product ID:</strong> {{ snapshot.productId }}</p>
-    <p><strong>KB ID:</strong> {{ snapshot.kbId }}</p>
-    <p><strong>Saved At:</strong> {{ snapshot.savedAt }}</p>
-    <p><strong>Source Context:</strong> {{ snapshot.metadata?.sourceContext }}</p>
-  </div>
-
-  <div class="host-error" *ngIf="lastError() as error">
-    <p><strong>Error:</strong> {{ error }}</p>
-  </div>
 </div>
