@@ -12,10 +12,12 @@ import { FormsModule } from '@angular/forms';
 import { ConfigurationApiService } from '../services/configuration-api.service';
 import {
   Characteristic,
-  ConfigurationMessage,
-  ConfigurationResponse,
-  ConfigurationSnapshot,
   CompletedConfigurationResult,
+  ConfigurationResponse,
+  ConfigurationMessage,
+  ConfigurationSnapshot,
+  CreateConfigurationRequest,
+  ResumeConfigurationRequest,
   WidgetInputConfig,
   WidgetState
 } from '../models/configuration.models';
@@ -33,8 +35,8 @@ export class ConfiguratorWidgetComponent implements OnInit {
   @Input({ required: true }) config!: WidgetInputConfig;
 
   configurationStarted = output<string>();
-  configurationCompleted = output<CompletedConfigurationResult>();
-  addedToCart = output<ConfigurationSnapshot>();
+  configurationCompleted = output<ConfigurationSnapshot>();
+  addedToCart = output<CompletedConfigurationResult>();
   errorOccurred = output<{ errorCode: string; message: string }>();
 
   configuration = signal<ConfigurationResponse | null>(null);

@@ -19,8 +19,8 @@ export interface ConfiguratorWidgetFacadeContext {
   status: WritableSignal<WidgetState>;
   errorMessage: WritableSignal<string | null>;
   configurationStarted: { emit(value: string): void };
-  configurationCompleted: { emit(value: CompletedConfigurationResult): void };
-  addedToCart: { emit(value: ConfigurationSnapshot): void };
+  configurationCompleted: { emit(value: ConfigurationSnapshot): void };
+  addedToCart: { emit(value: CompletedConfigurationResult): void };
   errorOccurred: { emit(value: { errorCode: string; message: string }): void };
 }
 
@@ -143,7 +143,7 @@ export class ConfiguratorWidgetFacade {
         if (!response.complete || !response.consistent) {
           this.emitError(
             'CONFIG_CONFIRMATION_INVALID',
-            'Configuration could not be confirmed because it is incomplete or inconsistent'
+            'Die Konfiguration konnte nicht bestätigt werden, da sie unvollständig oder inkonsistent ist.'
           );
           return;
         }
@@ -154,23 +154,12 @@ export class ConfiguratorWidgetFacade {
         this.ctx.status.set('completed');
 
         const snapshot = this.buildSnapshot(response);
-
-        const result: CompletedConfigurationResult = {
-          configurationId: response.configurationId,
-          productId: response.productId,
-          kbId: response.kbId,
-          addedToCart: true,
-          receivedAt: new Date().toISOString(),
-          snapshot,
-          fullConfiguration: response
-        };
-
-        this.ctx.configurationCompleted.emit(result);
+        this.ctx.configurationCompleted.emit(snapshot);
       },
       error: () =>
         this.emitError(
           'CONFIG_COMPLETE_FAILED',
-          'Failed to confirm configuration'
+          'Bestätigung der Konfiguration fehlgeschlagen'
         )
     });
   }
@@ -190,7 +179,19 @@ export class ConfiguratorWidgetFacade {
       return;
     }
 
-    this.ctx.addedToCart.emit(this.buildSnapshot(current));
+    const snapshot = this.buildSnapshot(current);
+
+    const result: CompletedConfigurationResult = {
+      configurationId: current.configurationId,
+      productId: current.productId,
+      kbId: current.kbId,
+      addedToCart: true,
+      receivedAt: new Date().toISOString(),
+      snapshot,
+      fullConfiguration: current
+    };
+
+    this.ctx.addedToCart.emit(result);
   }
 
   buildSnapshot(current: ConfigurationResponse): ConfigurationSnapshot {
