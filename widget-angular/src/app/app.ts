@@ -2,9 +2,9 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ConfiguratorWidgetComponent } from './configurator-widget/configurator-widget.component';
 import {
-  ConfigurationSnapshot,
+  WidgetInputConfig,
   CompletedConfigurationResult,
-  WidgetInputConfig
+  ConfigurationSnapshot
 } from './models/configuration.models';
 import { environment } from '../environments/environment';
 
@@ -18,7 +18,7 @@ import { environment } from '../environments/environment';
 export class App {
   startedConfigId = signal<string | null>(null);
   completedResult = signal<CompletedConfigurationResult | null>(null);
-  completedSnapshot = signal<ConfigurationSnapshot | null>(null);
+  //completedSnapshot = signal<ConfigurationSnapshot | null>(null);
   finalSnapshot = signal<ConfigurationSnapshot | null>(null);
   lastError = signal<string | null>(null);
   
@@ -35,13 +35,14 @@ export class App {
     this.startedConfigId.set(configId);
   }
 
-  onConfigurationCompleted(result: CompletedConfigurationResult): void {
-    this.completedResult.set(result);
-    this.completedSnapshot.set(result.snapshot);
+  onConfigurationCompleted(snapshot: ConfigurationSnapshot): void {
+    this.finalSnapshot.set(snapshot);
+    this.lastError.set(null);
   }
 
-  onAddedToCart(snapshot: ConfigurationSnapshot): void {
-    this.finalSnapshot.set(snapshot);
+  onAddedToCart(result: CompletedConfigurationResult): void {
+    this.completedResult.set(result);
+    this.finalSnapshot.set(result.snapshot);
     this.lastError.set(null);
   }
 
@@ -57,7 +58,7 @@ export class App {
       kbId: '80'
     };
     this.startedConfigId.set(null);
-    this.completedSnapshot.set(null);
+    //this.completedSnapshot.set(null);
     this.finalSnapshot.set(null);
     this.lastError.set(null);
   }
@@ -80,7 +81,7 @@ export class App {
       }
     };
 
-    this.completedSnapshot.set(null);
+    this.finalSnapshot.set(null);
     this.lastError.set(null);
   }
 }

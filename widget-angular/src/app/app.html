@@ -11,7 +11,7 @@
   <div class="host-summary">
     <p><strong>Current mode:</strong> {{ widgetConfig.mode }}</p>
     <p><strong>Started config ID:</strong> {{ startedConfigId() || '—' }}</p>
-    <p><strong>Final JSON available:</strong> {{ !!completedResult() }}</p>
+    <p><strong>Final JSON available:</strong> {{ !!completedResult()?.addedToCart }}</p>
   </div>
 
   <app-configurator-widget
