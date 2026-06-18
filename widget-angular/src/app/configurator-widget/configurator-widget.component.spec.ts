@@ -64,11 +64,11 @@ describe('ConfiguratorWidgetComponent', () => {
         const fixture = TestBed.createComponent(ConfiguratorWidgetComponent);
         component = fixture.componentInstance;
 
-        component.config = {
-        apiBaseUrl: environment.apiUrl,
-        mode: 'create',
-        productId: 'CPS_BURGER',
-        kbId: '80'
+        component.widgetInputConfig = {
+            apiBaseUrl: environment.apiUrl,
+            mode: 'create',
+            productId: 'CPS_BURGER',
+            kbId: '80'
         };
     });
 
@@ -83,8 +83,8 @@ describe('ConfiguratorWidgetComponent', () => {
 
         // Prüft, dass der Service mit dem erwarteten Payload aufgerufen wird
         expect(apiService.createConfiguration).toHaveBeenCalledWith({
-        productId: 'CPS_BURGER',
-        kbId: '80'
+            productId: 'CPS_BURGER',
+            kbId: '80'
         });
         // Prüft, dass der interne Zustand aktualisiert wurde
         expect(component.configuration()).toEqual(mockResponse);
@@ -99,7 +99,7 @@ describe('ConfiguratorWidgetComponent', () => {
 
         apiService.getConfiguration.mockReturnValue(of(mockResponse));
 
-        component.config = {
+        component.widgetInputConfig = {
         apiBaseUrl: environment.apiUrl,
         mode: 'resume',
         resume: {
@@ -150,11 +150,11 @@ describe('ConfiguratorWidgetComponent', () => {
     });
 
     it('should complete configuration', () => {
-        component.config = {
-        apiBaseUrl: environment.apiUrl,
-        mode: 'create',
-        productId: 'CPS_BURGER',
-        kbId: '80'
+        component.widgetInputConfig = {
+            apiBaseUrl: environment.apiUrl,
+            mode: 'create',
+            productId: 'CPS_BURGER',
+            kbId: '80'
         };
 
         const completedResponse = createConfigResponse({ complete: true });
@@ -192,9 +192,9 @@ describe('ConfiguratorWidgetComponent', () => {
 
     it('should not start configuration and emit error when productId or kbId is missing', () => {
         // Basiskonfiguration manipulieren, um ungültigen Input zu simulieren
-        component.config.mode = 'create';
-        component.config.productId = '';
-        component.config.kbId = '';
+        component.widgetInputConfig.mode = 'create';
+        component.widgetInputConfig.productId = '';
+        component.widgetInputConfig.kbId = '';
 
         const errorSpy = vi.spyOn(component.errorOccurred, 'emit');
 
@@ -206,8 +206,8 @@ describe('ConfiguratorWidgetComponent', () => {
 
         // Fehler-Event nach außen emittiert
         expect(errorSpy).toHaveBeenCalledWith({
-        errorCode: 'CONFIG_INPUT_INVALID',
-        message: 'Missing productId or kbId for create mode'
+            errorCode: 'CONFIG_INPUT_INVALID',
+            message: 'Missing productId or kbId for create mode'
         });
 
         // Kein Aufruf des API-Services erfolgt
@@ -244,12 +244,12 @@ describe('ConfiguratorWidgetComponent', () => {
 
         const errorSpy = vi.spyOn(component.errorOccurred, 'emit');
 
-        component.config = {
+        component.widgetInputConfig = {
             apiBaseUrl: environment.apiUrl,
             mode: 'resume',
             resume: {
-            configurationId: 'cfg-999',
-            snapshot
+                configurationId: 'cfg-999',
+                snapshot
             }
         };
 
@@ -273,7 +273,7 @@ describe('ConfiguratorWidgetComponent', () => {
 
     it('should set error state and emit error when resume configuration has neither configurationId nor snapshot', () => {
         // Ungültige Resume-Konfiguration: weder ID noch Snapshot gesetzt
-        component.config = {
+        component.widgetInputConfig = {
             apiBaseUrl: environment.apiUrl,
             mode: 'resume',
             resume: {} as any
@@ -371,7 +371,7 @@ describe('ConfiguratorWidgetComponent (Integration)', () => {
     component = fixture.componentInstance;
 
     // Gültige Config für den Create-Modus setzen
-    component.config = {
+    component.widgetInputConfig = {
       apiBaseUrl: environment.apiUrl,
       mode: 'create',
       productId: 'CPS_BURGER',

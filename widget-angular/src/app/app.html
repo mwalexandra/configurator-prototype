@@ -3,11 +3,11 @@
     <div class="logo-container">
       <img src="/assets/img/bfd_Unternehmenslogo_RGB_19_62_143.jpg" alt="Bauerfeind Logo">
     </div>
-    <h1>Konfigurator-Prototyp</h1>
+    <h1>Produktkonfigurator-Prototyp</h1>
   </div>
 
   <div class="host-container">
-    
+
     <div class="host-main-info">
       <h2 class="host-heading">Host-Frontend</h2>
       <p>Erstellmodus der Konfigurator:</p>
@@ -55,7 +55,7 @@
   </div>
 
   <app-configurator-widget
-    [config]="widgetConfig"
+    [widgetInputConfig]="widgetConfig"
     (configurationStarted)="onConfigurationStarted($event)"
     (configurationCompleted)="onConfigurationCompleted($event)"
     (addedToCart)="onAddedToCart($event)"

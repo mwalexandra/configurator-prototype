@@ -32,7 +32,7 @@ import { createConfiguratorWidgetUiState } from './configurator-widget.ui-state'
   styleUrl: './configurator-widget.component.scss'
 })
 export class ConfiguratorWidgetComponent implements OnInit {
-  @Input({ required: true }) config!: WidgetInputConfig;
+  @Input({ required: true }) widgetInputConfig!: WidgetInputConfig;
 
   configurationStarted = output<string>();
   configurationCompleted = output<ConfigurationSnapshot>();
@@ -60,7 +60,7 @@ export class ConfiguratorWidgetComponent implements OnInit {
 
   ngOnInit(): void {
     this.facade = new ConfiguratorWidgetFacade(this.configurationApi, {
-      config: this.config,
+      widgetInputConfig: this.widgetInputConfig,
       configuration: this.configuration,
       configId: this.configId,
       status: this.status,

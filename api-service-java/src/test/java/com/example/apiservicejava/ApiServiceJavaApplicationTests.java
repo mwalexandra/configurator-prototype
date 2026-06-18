@@ -1,4 +1,4 @@
-package api_service_java;
+package com.example.apiservicejava;
 
 import com.example.apiservicejava.ApiServiceJavaApplication;
 import org.junit.jupiter.api.Test;

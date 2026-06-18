@@ -7,6 +7,7 @@ import com.example.apiservicejava.model.api.ResumeConfigurationRequest;
 import com.example.apiservicejava.service.ConfigurationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("api/configurations")
@@ -21,7 +22,7 @@ public class ConfigurationController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ConfigurationResponse createConfiguration(@RequestBody CreateConfigurationRequest request) {
+    public ConfigurationResponse createConfiguration(@Valid @RequestBody CreateConfigurationRequest request) {
         return configurationService.createConfiguration(request);
     }
 

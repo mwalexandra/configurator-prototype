@@ -1,8 +1,11 @@
 package com.example.apiservicejava.model.api;
+import jakarta.validation.constraints.NotBlank;
 
 public class CreateConfigurationRequest {
-
+    @NotBlank
     private String productId;
+
+    @NotBlank
     private String kbId;
 
     public CreateConfigurationRequest() {

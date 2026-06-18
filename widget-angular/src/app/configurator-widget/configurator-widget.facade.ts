@@ -13,7 +13,7 @@ import {
 } from '../models/configuration.models';
 
 export interface ConfiguratorWidgetFacadeContext {
-  config: WidgetInputConfig;
+  widgetInputConfig: WidgetInputConfig;
   configuration: WritableSignal<ConfigurationResponse | null>;
   configId: WritableSignal<string | null>;
   status: WritableSignal<WidgetState>;
@@ -31,29 +31,31 @@ export class ConfiguratorWidgetFacade {
   ) {}
 
   initialize(): void {
-    this.api.setApiBaseUrl(this.ctx.config.apiBaseUrl);
+    this.api.setApiBaseUrl(this.ctx.widgetInputConfig.apiBaseUrl);
 
-    if (this.ctx.config.mode === 'resume') {
+    if (this.ctx.widgetInputConfig.mode === 'resume') {
       this.resumeConfiguration();
     }
   }
 
   startConfiguration(): void {
-    if (this.ctx.config.mode !== 'create') {
+    if (this.ctx.widgetInputConfig.mode !== 'create') {
       return;
     }
 
-    if (!this.ctx.config.productId || !this.ctx.config.kbId) {
-      this.emitError(
-        'CONFIG_INPUT_INVALID',
-        'Fehlende productId oder kbId für den Start einer neuen Konfiguration'
-      );
+    if (!this.ctx.widgetInputConfig.productId || !this.ctx.widgetInputConfig.kbId) {
+      this.ctx.status.set('error');
+      this.ctx.errorMessage.set('Missing productId or kbId for create mode');
+      this.ctx.errorOccurred.emit({
+        errorCode: 'CONFIG_INPUT_INVALID',
+        message: 'Missing productId or kbId for create mode'
+      });
       return;
     }
 
     const payload: CreateConfigurationRequest = {
-      productId: this.ctx.config.productId,
-      kbId: this.ctx.config.kbId
+      productId: this.ctx.widgetInputConfig.productId,
+      kbId: this.ctx.widgetInputConfig.kbId
     };
 
     this.ctx.status.set('loading');
@@ -66,7 +68,7 @@ export class ConfiguratorWidgetFacade {
   }
 
   resumeConfiguration(): void {
-    const resume = this.ctx.config.resume;
+    const resume = this.ctx.widgetInputConfig.resume;
 
     if (!resume || (!resume.configurationId && !resume.snapshot)) {
       this.emitError(
@@ -207,7 +209,7 @@ export class ConfiguratorWidgetFacade {
       messages: current.messages,
       metadata: {
         version: '1',
-        sourceContext: this.ctx.config.resume?.sourceContext ?? 'generic'
+        sourceContext: this.ctx.widgetInputConfig.resume?.sourceContext ?? 'generic'
       }
     };
   }
