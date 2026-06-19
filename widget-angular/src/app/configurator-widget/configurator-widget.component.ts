@@ -117,4 +117,57 @@ export class ConfiguratorWidgetComponent implements OnInit {
   isCharacteristicIncomplete(char: Characteristic): boolean {
     return !!char.required && !char.complete;
   }
+
+  translateMode(mode: string | undefined): string {
+    switch (mode) {
+      case 'create':
+        return 'Erstellen';
+      case 'resume':
+        return 'Fortsetzen';
+      default:
+        return mode ?? 'Unbekannt';
+    }
+  }
+
+  translateStatus(status: string | null): string {
+    switch (status) {
+      case 'idle':
+        return 'Inaktiv';
+      case 'loading':
+        return 'Lädt';
+      case 'updating':
+        return 'Aktualisiert';
+      case 'completing':
+        return 'Speichert';
+      case 'completed':
+        return 'Abgeschlossen';
+      case 'error':
+        return 'Fehler';
+      default:
+        return status ?? 'Unbekannt';
+    }
+  }
+
+  translateUiState(uiState: string | null): string {
+    switch (uiState) {
+      case 'idle':
+        return 'Inaktiv';
+      case 'loading':
+        return 'Lädt';
+      case 'incomplete':
+        return 'Unvollständig';
+      case 'conflict':
+        return 'Konflikt';
+      case 'ready':
+        return 'Bereit';
+      case 'completed':
+        return 'Abgeschlossen';
+      case 'readonly':
+        return 'Nur-Lese';
+      case 'error':
+        return 'Fehler';
+      default:
+        return uiState ?? 'Unbekannt';
+    }
+  }
 }

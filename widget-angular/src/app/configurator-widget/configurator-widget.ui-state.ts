@@ -154,25 +154,25 @@ export function createConfiguratorWidgetUiState(
 
     switch (uiState()) {
       case 'idle':
-        return 'Start a new configuration session.';
+        return 'Starten Sie eine neue Konfigurationssitzung.';
       case 'loading':
-        return 'Loading configuration session...';
+        return 'Konfigurationssitzung wird geladen...';
       case 'incomplete':
         return hidden.length
-          ? `Some required characteristics are still incomplete, including ${hidden.length} hidden field(s).`
-          : 'Some required characteristics are still incomplete.';
+          ? `Einige erforderliche Merkmale sind noch unvollständig, darunter ${hidden.length} versteckte Felder.`
+          : 'Einige erforderliche Merkmale sind noch unvollständig.';
       case 'conflict':
-        return 'The configuration contains conflicts that must be resolved before confirmation.';
+        return 'Die Konfiguration enthält Konflikte, die vor der Bestätigung gelöst werden müssen.';
       case 'ready':
-        return 'The configuration is complete and consistent. You can confirm it now.';
+        return 'Die Konfiguration ist vollständig und konsistent. Sie können sie jetzt bestätigen.';
       case 'completed':
-        return 'The configuration has been confirmed and is ready for downstream handoff.';
+        return 'Die Konfiguration wurde bestätigt und ist bereit für die weitere Verarbeitung.';
       case 'readonly':
-        return 'This configuration was restored from snapshot fallback and is available in read-only mode.';
+        return 'Diese Konfiguration wurde aus einem Snapshot-Fallback wiederhergestellt und steht im Nur-Lese-Modus zur Verfügung.';
       case 'error':
-        return error ?? 'The configuration could not be processed.';
+        return error ?? 'Die Konfiguration konnte nicht verarbeitet werden.';
       default:
-        return 'Configuration state unavailable.';
+        return 'Konfigurationsstatus nicht verfügbar.';
     }
   });
 

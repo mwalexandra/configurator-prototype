@@ -202,12 +202,12 @@ describe('ConfiguratorWidgetComponent', () => {
 
         // Widget geht in den Fehlerzustand
         expect(component.status()).toBe('error');
-        expect(component.errorMessage()).toBe('Missing productId or kbId for create mode');
+        expect(component.errorMessage()).toBe('productId oder kbId fehlt für den Erstellmodus');
 
         // Fehler-Event nach außen emittiert
         expect(errorSpy).toHaveBeenCalledWith({
             errorCode: 'CONFIG_INPUT_INVALID',
-            message: 'Missing productId or kbId for create mode'
+            message: 'productId oder kbId fehlt für den Erstellmodus'
         });
 
         // Kein Aufruf des API-Services erfolgt
@@ -286,12 +286,12 @@ describe('ConfiguratorWidgetComponent', () => {
 
         // Widget geht in den Fehlerzustand
         expect(component.status()).toBe('error');
-        expect(component.errorMessage()).toBe('Resume mode requires configurationId or snapshot');
+        expect(component.errorMessage()).toBe('Resume-Modus erfordert configurationId oder Snapshot');
 
         // Fehler-Event nach außen
         expect(errorSpy).toHaveBeenCalledWith({
             errorCode: 'CONFIG_RESUME_INPUT_INVALID',
-            message: 'Resume mode requires configurationId or snapshot'
+            message: 'Resume-Modus erfordert configurationId oder Snapshot'
         });
     });
 
@@ -528,12 +528,12 @@ describe('ConfiguratorWidgetComponent (Integration)', () => {
 
         // Widget sollte in den Fehlerzustand gehen
         expect(component.status()).toBe('error');
-        expect(component.errorMessage()).toBe('Failed to update configuration');
+        expect(component.errorMessage()).toBe('Konfiguration konnte nicht aktualisiert werden');
 
         // Fehler-Event nach außen prüfen
         expect(errorSpy).toHaveBeenCalledWith({
             errorCode: 'CONFIG_PATCH_FAILED',
-            message: 'Failed to update configuration'
+            message: 'Konfiguration konnte nicht aktualisiert werden'
         });
     });
 
@@ -565,12 +565,12 @@ describe('ConfiguratorWidgetComponent (Integration)', () => {
 
         // Widget sollte in den Fehlerzustand gehen
         expect(component.status()).toBe('error');
-        expect(component.errorMessage()).toBe('Failed to complete configuration');
+        expect(component.errorMessage()).toBe('Bestätigung der Konfiguration fehlgeschlagen');
 
         // Fehler-Event nach außen prüfen
         expect(errorSpy).toHaveBeenCalledWith({
             errorCode: 'CONFIG_COMPLETE_FAILED',
-            message: 'Failed to complete configuration'
+            message: 'Bestätigung der Konfiguration fehlgeschlagen'
         });
     });
 });

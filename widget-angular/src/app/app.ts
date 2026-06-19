@@ -21,7 +21,7 @@ export class App {
   //completedSnapshot = signal<ConfigurationSnapshot | null>(null);
   finalSnapshot = signal<ConfigurationSnapshot | null>(null);
   lastError = signal<string | null>(null);
-  
+
   private apiBaseUrl = environment.apiUrl;
 
   widgetConfig: WidgetInputConfig = {
@@ -67,7 +67,7 @@ export class App {
     const snapshot = this.finalSnapshot();
 
     if (!snapshot) {
-      this.lastError.set('No final snapshot available yet for resume mode');
+      this.lastError.set('Noch kein endgültiger Snapshot für den Resume-Modus verfügbar');
       return;
     }
 

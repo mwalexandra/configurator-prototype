@@ -45,10 +45,10 @@ export class ConfiguratorWidgetFacade {
 
     if (!this.ctx.widgetInputConfig.productId || !this.ctx.widgetInputConfig.kbId) {
       this.ctx.status.set('error');
-      this.ctx.errorMessage.set('Missing productId or kbId for create mode');
+      this.ctx.errorMessage.set('productId oder kbId fehlt für den Erstellmodus');
       this.ctx.errorOccurred.emit({
         errorCode: 'CONFIG_INPUT_INVALID',
-        message: 'Missing productId or kbId for create mode'
+        message: 'productId oder kbId fehlt für den Erstellmodus'
       });
       return;
     }
@@ -63,7 +63,7 @@ export class ConfiguratorWidgetFacade {
 
     this.api.createConfiguration(payload).subscribe({
       next: response => this.applyConfiguration(response, true),
-      error: () => this.emitError('CONFIG_START_FAILED', 'Failed to start configuration')
+      error: () => this.emitError('CONFIG_START_FAILED', 'Konfiguration konnte nicht gestartet werden')
     });
   }
 
@@ -73,7 +73,7 @@ export class ConfiguratorWidgetFacade {
     if (!resume || (!resume.configurationId && !resume.snapshot)) {
       this.emitError(
         'CONFIG_RESUME_INPUT_INVALID',
-        'Resume mode requires configurationId or snapshot'
+        'Resume-Modus erfordert configurationId oder Snapshot'
       );
       return;
     }
@@ -91,7 +91,7 @@ export class ConfiguratorWidgetFacade {
       next: response => this.applyConfiguration(response),
       error: () => this.emitError(
         'CONFIG_RESUME_FAILED',
-        'Failed to resume configuration'
+        'Konfiguration konnte nicht fortgesetzt werden'
       )
     });
   }
@@ -117,7 +117,7 @@ export class ConfiguratorWidgetFacade {
       value
     }).subscribe({
       next: response => this.applyConfiguration(response),
-      error: () => this.emitError('CONFIG_PATCH_FAILED', 'Failed to update configuration')
+      error: () => this.emitError('CONFIG_PATCH_FAILED', 'Konfiguration konnte nicht aktualisiert werden')
     });
   }
 
@@ -132,7 +132,7 @@ export class ConfiguratorWidgetFacade {
     if (!current.complete || !current.consistent) {
       this.emitError(
         'CONFIG_NOT_READY',
-        'Configuration is not complete or not consistent'
+        'Die Konfiguration ist nicht vollständig oder nicht konsistent'
       );
       return;
     }
@@ -176,7 +176,7 @@ export class ConfiguratorWidgetFacade {
     if (this.ctx.status() !== 'completed') {
       this.emitError(
         'CONFIG_NOT_CONFIRMED',
-        'Configuration must be confirmed before add to cart'
+        'Die Konfiguration muss bestätigt werden, bevor sie in den Warenkorb gelegt werden kann'
       );
       return;
     }
@@ -261,11 +261,11 @@ export class ConfiguratorWidgetFacade {
         liveSessionAvailable: false,
         snapshotUsed: true,
         readOnly: true,
-        message: 'Live configuration could not be restored. Snapshot fallback is shown in read-only mode.'
+        message:
+          'Live-Konfiguration konnte nicht wiederhergestellt werden. Snapshot-Fallback wird im Nur-Lese-Modus angezeigt.'
       }
     });
-
-    this.ctx.configId.set(snapshot.configurationId ?? null);
+    this.ctx.configId.set(snapshot.configurationId ?? 'snapshot-only');
     this.ctx.status.set('loaded');
     this.ctx.errorMessage.set(null);
   }
