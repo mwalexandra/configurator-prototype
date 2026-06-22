@@ -181,7 +181,11 @@ export class ConfiguratorWidgetFacade {
     });
   }
 
-  updateCharacteristic(characteristicId: string, value: string | null): void {
+  updateCharacteristic(
+    characteristicId: string,
+    value: string | null,
+    itemId?: string
+  ): void {
     const currentConfigId = this.ctx.configId();
     const current = this.ctx.configuration();
 
@@ -198,6 +202,7 @@ export class ConfiguratorWidgetFacade {
 
     this.api.patchConfiguration(currentConfigId, {
       configurationId: currentConfigId,
+      itemId,
       characteristicId,
       value
     }).subscribe({

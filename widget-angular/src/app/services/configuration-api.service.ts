@@ -45,6 +45,7 @@ export class ConfigurationApiService {
     return this.http.patch<ConfigurationResponse>(
       `${this.apiBaseUrl}/configurations/${configurationId}`,
       {
+        itemId: payload.itemId,
         characteristicId: payload.characteristicId,
         value: payload.value
       }

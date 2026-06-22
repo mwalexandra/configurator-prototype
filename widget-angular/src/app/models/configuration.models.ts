@@ -58,6 +58,7 @@ export interface CreateConfigurationRequest {
 
 export interface UpdateCharacteristicRequest {
   configurationId: string;
+  itemId?: string;
   characteristicId: string;
   value: string | null;
 }
