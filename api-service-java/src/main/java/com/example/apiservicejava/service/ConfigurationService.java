@@ -122,8 +122,10 @@ public class ConfigurationService {
             }
         }
 
-        // itemId в SAP CPS для rootItem всегда "1"
-        String itemId = "1";
+        //For root-level updates use itemId = "1" if not provided in the request
+        String itemId = request.getItemId() != null && !request.getItemId().isBlank()
+            ? request.getItemId()
+            : "1";
 
         sapCpsClient.patchConfiguration(
                 configId,

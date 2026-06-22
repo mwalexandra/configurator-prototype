@@ -101,6 +101,14 @@ export class ConfiguratorWidgetComponent implements OnInit {
     console.log(this.facade?.blockingIssues());
   }
 
+  protected updateSubItemCharacteristic(
+    itemId: string,
+    characteristicId: string,
+    value: string | null
+  ): void {
+    this.facade?.updateCharacteristic(characteristicId, value, itemId);
+  }
+
   completeConfiguration(): void {
     this.facade?.completeConfiguration();
   }

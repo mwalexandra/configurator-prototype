@@ -2,6 +2,7 @@ package com.example.apiservicejava.model.api;
 
 public class PatchConfigurationRequest {
 
+    private String itemId;
     private String characteristicId;
     private String value;
 
@@ -22,5 +23,13 @@ public class PatchConfigurationRequest {
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+    public String getItemId() {
+        return itemId;
+    }
+
+    public void setItemId(String itemId) {
+        this.itemId = itemId;
     }
 }
