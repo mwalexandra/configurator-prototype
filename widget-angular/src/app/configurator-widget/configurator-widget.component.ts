@@ -96,9 +96,6 @@ export class ConfiguratorWidgetComponent implements OnInit {
 
   updateCharacteristic(characteristicId: string, value: string | null): void {
     this.facade?.updateCharacteristic(characteristicId, value);
-    console.log(this.facade?.subItemDebug());
-    console.log(this.facade?.incompleteRequiredSubItemCharacteristics());
-    console.log(this.facade?.blockingIssues());
   }
 
   protected updateSubItemCharacteristic(
