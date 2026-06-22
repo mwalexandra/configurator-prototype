@@ -125,9 +125,23 @@
           class="characteristics-list"
           *ngIf="visibleCharacteristics().length; else noCharacteristics"
         >
+
+        <app-characteristic-editor
+          *ngIf="firstVisibleCharacteristic() as firstChar"
+          [characteristic]="firstChar"
+          [readOnly]="isCharacteristicReadOnly(firstChar)"
+          [completed]="status() === 'completed'"
+          [messages]="getRootCharacteristicMessages(firstChar)"
+          [hasProblem]="hasCharacteristicProblem(firstChar.id)"
+          [incomplete]="isCharacteristicIncomplete(firstChar)"
+          [consistent]="firstChar.consistent"
+          (valueChanged)="updateCharacteristic($event.characteristicId, $event.value, $event.itemId)"
+        ></app-characteristic-editor>
+
+
           <div
             class="characteristic-item"
-            *ngFor="let char of visibleCharacteristics(); trackBy: trackByCharacteristicId"
+            *ngFor="let char of visibleCharacteristics().slice(1); trackBy: trackByCharacteristicId"
             [class.characteristic-item--error]="hasCharacteristicProblem(char.id) && !isCharacteristicIncomplete(char)"
             [class.characteristic-item--incomplete]="isCharacteristicIncomplete(char)"
             [class.characteristic-item--readonly]="char.readOnly || ui.isReadOnly() || status() === 'completed'"
@@ -267,7 +281,7 @@
                     class="select"
                     [disabled]="char.readOnly || ui.isReadOnly() || status() === 'updating' || status() === 'completing' || status() === 'completed'"
                     [ngModel]="char.values?.[0]?.id ?? null"
-                    (ngModelChange)="updateSubItemCharacteristic(subItem.id, char.id, $event || null)"
+                    (ngModelChange)="updateCharacteristic(char.id, $any($event), subItem.id)"
                   >
                     <option [ngValue]="null">-- Auswählen --</option>
                     <option *ngFor="let val of char.possibleValues" [ngValue]="val.id">
@@ -282,7 +296,7 @@
                     type="text"
                     [disabled]="char.readOnly || ui.isReadOnly() || status() === 'updating' || status() === 'completing' || status() === 'completed'"
                     [ngModel]="char.values?.[0]?.id ?? ''"
-                    (blur)="updateSubItemCharacteristic(subItem.id, char.id, $any($event.target).value || null)"
+                    (blur)="updateCharacteristic(char.id, $any($event.target).value || null, subItem.id)"
                   />
                 </div>
 
@@ -292,7 +306,7 @@
                     type="number"
                     [disabled]="char.readOnly || ui.isReadOnly() || status() === 'updating' || status() === 'completing' || status() === 'completed'"
                     [ngModel]="char.values?.[0]?.id ?? ''"
-                    (blur)="updateSubItemCharacteristic(subItem.id, char.id, $any($event.target).value || null)"
+                    (blur)="updateCharacteristic(char.id, $any($event.target).value || null, subItem.id)"
                   />
                 </div>
 

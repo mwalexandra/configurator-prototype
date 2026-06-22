@@ -93,14 +93,10 @@ export class ConfiguratorWidgetComponent implements OnInit {
     this.facade?.resumeConfiguration();
   }
 
-  protected updateCharacteristic(characteristicId: string, value: string | null): void {
-    this.facade?.updateCharacteristic(characteristicId, value);
-  }
-
-  protected updateSubItemCharacteristic(
-    itemId: string,
+  protected updateCharacteristic(
     characteristicId: string,
-    value: string | null
+    value: string | null,
+    itemId?: string
   ): void {
     this.facade?.updateCharacteristic(characteristicId, value, itemId);
   }
@@ -188,5 +184,33 @@ export class ConfiguratorWidgetComponent implements OnInit {
       default:
         return uiState ?? 'Unbekannt';
     }
+  }
+
+  protected isCharacteristicReadOnly(char: Characteristic): boolean {
+    return !!char.readOnly
+      || this.ui.isReadOnly()
+      || this.status() === 'updating'
+      || this.status() === 'completing'
+      || this.status() === 'completed';
+  }
+
+  protected isSubItemCharacteristicReadOnly(char: Characteristic): boolean {
+    return !!char.readOnly
+      || this.ui.isReadOnly()
+      || this.status() === 'updating'
+      || this.status() === 'completing'
+      || this.status() === 'completed';
+  }
+
+  protected isRootCharacteristicConfirmed(char: Characteristic): boolean {
+    return this.status() === 'completed' && !!char.complete && !!char.consistent;
+  }
+
+  protected getRootCharacteristicMessages(char: Characteristic): ConfigurationMessage[] {
+    return this.getMessagesForCharacteristic(char.id);
+  }
+
+  protected firstVisibleCharacteristic(): Characteristic | null {
+    return this.visibleCharacteristics()[0] ?? null;
   }
 }
