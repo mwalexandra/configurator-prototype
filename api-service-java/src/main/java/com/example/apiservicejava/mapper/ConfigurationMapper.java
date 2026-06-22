@@ -49,38 +49,47 @@ public class ConfigurationMapper {
     }
 
     private ConfigurationItem mapRootItem(SapRuntimeRootItem runtimeRoot, SapKbResponse kb) {
+        Map<String, SapKbCharacteristic> kbCharacteristics = extractKbCharacteristics(kb);
+        return mapItem(runtimeRoot, kbCharacteristics);
+    }
+
+    private ConfigurationItem mapItem(
+        SapRuntimeRootItem runtimeItem,
+        Map<String, SapKbCharacteristic> kbCharacteristics) {
+
         ConfigurationItem item = new ConfigurationItem();
-        item.setId(runtimeRoot.getId());
-        item.setKey(runtimeRoot.getKey());
-        item.setComplete(runtimeRoot.isComplete());
-        item.setConsistent(runtimeRoot.isConsistent());
-        item.setCharacteristics(mapCharacteristics(runtimeRoot, kb));
-        item.setSubItems(Collections.emptyList());
+        item.setId(runtimeItem.getId());
+        item.setKey(runtimeItem.getKey());
+        item.setComplete(runtimeItem.isComplete());
+        item.setConsistent(runtimeItem.isConsistent());
+        item.setCharacteristics(mapCharacteristics(runtimeItem.getCharacteristics(), kbCharacteristics));
+        item.setSubItems(mapSubItems(runtimeItem.getSubItems(), kbCharacteristics));
         return item;
     }
 
-    private List<CharacteristicDto> mapCharacteristics(SapRuntimeRootItem runtimeRoot, SapKbResponse kb) {
-        final Map<String, SapKbCharacteristic> kbCharacteristics;
+    private List<ConfigurationItem> mapSubItems(
+        List<SapRuntimeRootItem> runtimeSubItems,
+        Map<String, SapKbCharacteristic> kbCharacteristics) {
 
-        if (kb != null && kb.getCharacteristics() != null) {
-            kbCharacteristics = kb.getCharacteristics()
-                    .stream()
-                    .filter(Objects::nonNull)
-                    .filter(c -> c.getId() != null)
-                    .collect(Collectors.toMap(
-                            SapKbCharacteristic::getId,
-                            Function.identity(),
-                            (a, b) -> a));
-        } else {
-            kbCharacteristics = Collections.emptyMap();
-        }
-
-        if (runtimeRoot.getCharacteristics() == null) {
+        if (runtimeSubItems == null) {
             return Collections.emptyList();
         }
 
-        return runtimeRoot.getCharacteristics()
-                .stream()
+        return runtimeSubItems.stream()
+                .filter(Objects::nonNull)
+                .map(subItem -> mapItem(subItem, kbCharacteristics))
+                .collect(Collectors.toList());
+    }
+
+    private List<CharacteristicDto> mapCharacteristics(
+            List<SapRuntimeCharacteristic> runtimeCharacteristics,
+            Map<String, SapKbCharacteristic> kbCharacteristics) {
+
+        if (runtimeCharacteristics == null) {
+            return Collections.emptyList();
+        }
+
+        return runtimeCharacteristics.stream()
                 .filter(Objects::nonNull)
                 .map(runtimeChar -> mapCharacteristic(runtimeChar, kbCharacteristics.get(runtimeChar.getId())))
                 .collect(Collectors.toList());
@@ -207,6 +216,21 @@ public class ConfigurationMapper {
                         this::resolveKbValueId,
                         Function.identity(),
                         (a, b) -> a));
+    }
+
+    private Map<String, SapKbCharacteristic> extractKbCharacteristics(SapKbResponse kb) {
+        if (kb == null || kb.getCharacteristics() == null) {
+            return Collections.emptyMap();
+        }
+
+        return kb.getCharacteristics().stream()
+                .filter(Objects::nonNull)
+                .filter(c -> c.getId() != null)
+                .collect(Collectors.toMap(
+                        SapKbCharacteristic::getId,
+                        Function.identity(),
+                        (a, b) -> a
+                ));
     }
 
     private String resolveKbValueId(SapKbPossibleValue value) {

@@ -137,8 +137,21 @@ public class ConfigurationService {
         SapRuntimeConfigurationResponse updatedRuntime = refreshed.getBody();
 
         // ВРЕМЕННЫЙ ЛОГ
-        System.out.println("=== SAP RAW complete=" + updatedRuntime.isComplete() + " rootItem.complete="
-                + updatedRuntime.getRootItem().isComplete());
+        System.out.println("New Line starts here __ConfigurationService.patchConfiguration (140)_____");
+        System.out.println("updatedRuntime.complete={}" + updatedRuntime.isComplete());
+        System.out.println("updatedRuntime.consistent={}" + updatedRuntime.isConsistent());
+        if (updatedRuntime.getRootItem() != null && updatedRuntime.getRootItem().getCharacteristics() != null) {
+            updatedRuntime.getRootItem().getCharacteristics().forEach(c ->
+                System.out.println(
+                    "cstic id=" + c.getId()
+                    + ", required=" + c.isRequired()
+                    + ", visible=" + c.isVisible()
+                    + ", complete=" + c.isComplete()
+                    + ", consistent=" + c.isConsistent()
+                    + ", values=" + c.getValues()
+                )
+            );
+        }
 
         if (refreshed.getEtag() != null) {
             etagByConfigurationId.put(configId, refreshed.getEtag());
@@ -152,10 +165,13 @@ public class ConfigurationService {
 
         ConfigurationResponse response = configurationMapper.toWidgetResponse(updatedRuntime, kbResponse);
 
-        // ВРЕМЕННЫЙ ЛОГ
-        System.out.println("=== MAPPED complete=" + response.isComplete());
-
         response.setBackendProcessingTimeMs(System.currentTimeMillis() - start);
+
+        System.out.println("########### widget root subItems size=" +
+        (response.getRootItem() != null && response.getRootItem().getSubItems() != null
+                ? response.getRootItem().getSubItems().size()
+                : null));
+
         return response;
     }
 

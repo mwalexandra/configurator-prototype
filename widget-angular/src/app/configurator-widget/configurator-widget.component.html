@@ -65,6 +65,15 @@
     </p>
   </div>
 
+  <div class="config-warning" *ngIf="blockingIssuesForView && blockingIssuesForView.length > 0">
+  <p>Bitte vervollständigen Sie noch folgende Felder:</p>
+  <ul>
+    <li *ngFor="let issue of blockingIssuesForView; trackBy: trackBlockingIssue">
+      {{ issue.label }}
+    </li>
+  </ul>
+</div>
+
   <div class="card">
     <h3 class="card__title">Produktinformationen</h3>
 

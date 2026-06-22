@@ -1,5 +1,5 @@
 // src/app/configurator-widget/configurator-widget.facade.ts
-import { WritableSignal } from '@angular/core';
+import { WritableSignal, computed } from '@angular/core';
 import { ConfigurationApiService } from '../services/configuration-api.service';
 import {
   CompletedConfigurationResult,
@@ -25,6 +25,91 @@ export interface ConfiguratorWidgetFacadeContext {
 }
 
 export class ConfiguratorWidgetFacade {
+
+  // Debug signal to inspect the current configuration state in a simplified format
+  readonly subItemDebug = computed(() => {
+    const config = this.ctx.configuration();
+    const subItems = config?.rootItem?.subItems ?? [];
+
+    return subItems.map(item => ({
+      id: item.id,
+      key: item.key,
+      complete: item.complete,
+      consistent: item.consistent,
+      characteristics: (item.characteristics ?? []).map(c => ({
+        id: c.id,
+        required: c.required,
+        visible: c.visible,
+        readOnly: c.readOnly,
+        complete: c.complete,
+        consistent: c.consistent,
+        values: (c.values ?? []).map(v => v.id)
+      }))
+    }));
+  });
+
+  readonly incompleteRequiredSubItemCharacteristics = computed(() => {
+    const config = this.ctx.configuration();
+    const subItems = config?.rootItem?.subItems ?? [];
+
+    return subItems.flatMap(item =>
+      (item.characteristics ?? [])
+        .filter(c => c.required && (!c.complete || !c.consistent))
+        .map(c => ({
+          itemId: item.id,
+          itemKey: item.key,
+          characteristicId: c.id,
+          complete: c.complete,
+          consistent: c.consistent,
+          values: (c.values ?? []).map(v => v.id)
+        }))
+    );
+  });
+
+  readonly blockingIssues = computed(() => {
+    const config = this.ctx.configuration();
+    if (!config) {
+      return [];
+    }
+
+    const rootIssues = (config.rootItem?.characteristics ?? [])
+      .filter(c => c.required && (!c.complete || !c.consistent))
+      .map(c => ({
+        level: 'root' as const,
+        itemId: config.rootItem?.id ?? 'root',
+        itemKey: config.rootItem?.key ?? config.productId,
+        characteristicId: c.id,
+        complete: c.complete,
+        consistent: c.consistent
+      }));
+
+    const subItemIssues = (config.rootItem?.subItems ?? []).flatMap(item =>
+      (item.characteristics ?? [])
+        .filter(c => c.required && (!c.complete || !c.consistent))
+        .map(c => ({
+          level: 'subItem' as const,
+          itemId: item.id,
+          itemKey: item.key,
+          characteristicId: c.id,
+          complete: c.complete,
+          consistent: c.consistent
+        }))
+    );
+
+    return [...rootIssues, ...subItemIssues];
+  });
+
+  readonly blockingIssueLabels = computed(() => {
+    return this.blockingIssues().map(issue => ({
+      ...issue,
+      label: issue.level === 'root'
+        ? `${issue.characteristicId}`
+        : `${issue.itemKey}: ${issue.characteristicId}`
+    }));
+  });
+
+  // --------------------------------------------------------------------------------------
+
   constructor(
     private readonly api: ConfigurationApiService,
     private readonly ctx: ConfiguratorWidgetFacadeContext

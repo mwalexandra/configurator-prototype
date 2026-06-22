@@ -13,7 +13,7 @@ public class SapRuntimeRootItem {
     private List<SapRuntimeCharacteristicGroup> characteristicGroups;
     private List<SapRuntimeCharacteristic> characteristics;
     private List<Object> variantConditions;
-    private List<Object> subItems;
+    private List<SapRuntimeRootItem> subItems;
 
     public SapRuntimeRootItem() {
     }
@@ -90,11 +90,11 @@ public class SapRuntimeRootItem {
         this.variantConditions = variantConditions;
     }
 
-    public List<Object> getSubItems() {
+    public List<SapRuntimeRootItem> getSubItems() {
         return subItems;
     }
 
-    public void setSubItems(List<Object> subItems) {
+    public void setSubItems(List<SapRuntimeRootItem> subItems) {
         this.subItems = subItems;
     }
 }

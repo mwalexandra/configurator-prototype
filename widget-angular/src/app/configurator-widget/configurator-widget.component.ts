@@ -74,6 +74,18 @@ export class ConfiguratorWidgetComponent implements OnInit {
     this.facade.initialize();
   }
 
+  protected get blockingIssuesForView() {
+    return this.facade?.blockingIssueLabels?.() ?? [];
+  }
+
+  protected trackBlockingIssue(index: number, issue: { itemId: string; characteristicId: string }) {
+    return `${issue.itemId}-${issue.characteristicId}`;
+  }
+
+  protected get subItemsForView() {
+    return this.configuration()?.rootItem?.subItems ?? [];
+  }
+
   startConfiguration(): void {
     this.facade?.startConfiguration();
   }
@@ -84,6 +96,9 @@ export class ConfiguratorWidgetComponent implements OnInit {
 
   updateCharacteristic(characteristicId: string, value: string | null): void {
     this.facade?.updateCharacteristic(characteristicId, value);
+    console.log(this.facade?.subItemDebug());
+    console.log(this.facade?.incompleteRequiredSubItemCharacteristics());
+    console.log(this.facade?.blockingIssues());
   }
 
   completeConfiguration(): void {
