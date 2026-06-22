@@ -44,13 +44,13 @@ export class ConfiguratorWidgetComponent implements OnInit {
   status = signal<WidgetState>('idle');
   errorMessage = signal<string | null>(null);
 
-  visibleCharacteristics = computed(() =>
+  protected readonly visibleCharacteristics = computed(() =>
     (this.configuration()?.rootItem?.characteristics ?? []).filter(c => c.visible)
   );
 
   private facade: ConfiguratorWidgetFacade | null = null;
 
-  readonly ui = createConfiguratorWidgetUiState(
+  protected readonly ui = createConfiguratorWidgetUiState(
     this.configuration,
     this.status,
     this.errorMessage
@@ -86,15 +86,15 @@ export class ConfiguratorWidgetComponent implements OnInit {
     return this.configuration()?.rootItem?.subItems ?? [];
   }
 
-  startConfiguration(): void {
+  protected startConfiguration(): void {
     this.facade?.startConfiguration();
   }
 
-  resumeConfiguration(): void {
+  protected resumeConfiguration(): void {
     this.facade?.resumeConfiguration();
   }
 
-  updateCharacteristic(characteristicId: string, value: string | null): void {
+  protected updateCharacteristic(characteristicId: string, value: string | null): void {
     this.facade?.updateCharacteristic(characteristicId, value);
   }
 
@@ -106,39 +106,39 @@ export class ConfiguratorWidgetComponent implements OnInit {
     this.facade?.updateCharacteristic(characteristicId, value, itemId);
   }
 
-  completeConfiguration(): void {
+  protected completeConfiguration(): void {
     this.facade?.completeConfiguration();
   }
 
-  addToCart(): void {
+  protected addToCart(): void {
     this.facade?.addToCart();
   }
 
-  getSingleSelectedValueId(char: Characteristic): string {
+  protected getSingleSelectedValueId(char: Characteristic): string {
     return char.values?.[0]?.id ?? '';
   }
 
-  trackByCharacteristicId(_: number, char: Characteristic): string {
+  protected trackByCharacteristicId(_: number, char: Characteristic): string {
     return char.id;
   }
 
-  getGlobalMessages(): ConfigurationMessage[] {
+  protected getGlobalMessages(): ConfigurationMessage[] {
     return this.facade?.getGlobalMessages() ?? [];
   }
 
-  getMessagesForCharacteristic(characteristicId: string): ConfigurationMessage[] {
+  protected getMessagesForCharacteristic(characteristicId: string): ConfigurationMessage[] {
     return this.facade?.getMessagesForCharacteristic(characteristicId) ?? [];
   }
 
-  hasCharacteristicProblem(characteristicId: string): boolean {
+  protected hasCharacteristicProblem(characteristicId: string): boolean {
     return this.ui.problemCharacteristicIds().has(characteristicId);
   }
 
-  isCharacteristicIncomplete(char: Characteristic): boolean {
+  protected isCharacteristicIncomplete(char: Characteristic): boolean {
     return !!char.required && !char.complete;
   }
 
-  translateMode(mode: string | undefined): string {
+  protected translateMode(mode: string | undefined): string {
     switch (mode) {
       case 'create':
         return 'Erstellen';
@@ -149,7 +149,7 @@ export class ConfiguratorWidgetComponent implements OnInit {
     }
   }
 
-  translateStatus(status: string | null): string {
+  protected translateStatus(status: string | null): string {
     switch (status) {
       case 'idle':
         return 'Inaktiv';
@@ -168,7 +168,7 @@ export class ConfiguratorWidgetComponent implements OnInit {
     }
   }
 
-  translateUiState(uiState: string | null): string {
+  protected translateUiState(uiState: string | null): string {
     switch (uiState) {
       case 'idle':
         return 'Inaktiv';
