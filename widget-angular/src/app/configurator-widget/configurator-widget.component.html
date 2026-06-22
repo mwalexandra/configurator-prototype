@@ -100,14 +100,12 @@
   </div>
 
   <div class="widget-layout" *ngIf="configuration() as currentConfig">
-
     <div class="card">
       <h3 class="card__title">
         {{ status() === 'completed' ? 'Bestätigte Konfiguration' : 'Eigenschaften' }}
       </h3>
 
       <div class="card__content">
-
         <div
           class="message message--warning hidden-problems"
           *ngIf="ui.hiddenProblemCharacteristics().length"
@@ -138,156 +136,112 @@
           ></app-characteristic-editor>
         </div>
 
-        <div class="subitems" *ngIf="subItemsForView.length > 0">
-          <div class="subitem-section" *ngFor="let subItem of subItemsForView">
-            <h3>{{ subItem.key }}</h3>
-
-            <div
-              class="characteristic-item"
-              *ngFor="let char of subItem.characteristics"
-              [hidden]="!char.visible"
-              [class.characteristic-item--readonly]="char.readOnly || ui.isReadOnly() || status() === 'completed'"
-            >
-              <div class="info-grid">
-                <p><span>Name</span> {{ char.name || char.id }}</p>
-                <p><span>ID</span> {{ char.id }}</p>
-                <p><span>Typ</span> {{ char.valueType }}</p>
-                <p><span>Erforderlich</span> {{ char.required }}</p>
-                <p><span>Abgeschlossen</span> {{ char.complete }}</p>
-              </div>
-
-              <p
-                class="characteristic-status characteristic-status--warning"
-                *ngIf="char.required && !char.complete"
-              >
-                Erforderlich — noch nicht abgeschlossen
-              </p>
-
-              <ng-container [ngSwitch]="char.valueType">
-                <div *ngSwitchCase="'SINGLE'" class="field-block">
-                  <label class="field-label">Wert auswählen</label>
-                  <select
-                    class="select"
-                    [disabled]="char.readOnly || ui.isReadOnly() || status() === 'updating' || status() === 'completing' || status() === 'completed'"
-                    [ngModel]="char.values?.[0]?.id ?? null"
-                    (ngModelChange)="updateCharacteristic(char.id, $any($event), subItem.id)"
-                  >
-                    <option [ngValue]="null">-- Auswählen --</option>
-                    <option *ngFor="let val of char.possibleValues" [ngValue]="val.id">
-                      {{ val.name }}
-                    </option>
-                  </select>
-                </div>
-
-                <div *ngSwitchCase="'FREETEXT'" class="field-block">
-                  <label class="field-label">Textwert</label>
-                  <input
-                    type="text"
-                    [disabled]="char.readOnly || ui.isReadOnly() || status() === 'updating' || status() === 'completing' || status() === 'completed'"
-                    [ngModel]="char.values?.[0]?.id ?? ''"
-                    (blur)="updateCharacteristic(char.id, $any($event.target).value || null, subItem.id)"
-                  />
-                </div>
-
-                <div *ngSwitchCase="'NUMERIC'" class="field-block">
-                  <label class="field-label">Numerischer Wert</label>
-                  <input
-                    type="number"
-                    [disabled]="char.readOnly || ui.isReadOnly() || status() === 'updating' || status() === 'completing' || status() === 'completed'"
-                    [ngModel]="char.values?.[0]?.id ?? ''"
-                    (blur)="updateCharacteristic(char.id, $any($event.target).value || null, subItem.id)"
-                  />
-                </div>
-
-                <div *ngSwitchCase="'MULTI'" class="field-block">
-                  <label class="field-label">Ausgewählte Werte</label>
-                  <div class="selected-value-list" *ngIf="char.values?.length; else noSubMultiSelection">
-                    <span class="selected-value-chip" *ngFor="let val of char.values">
-                      {{ val.name || val.id }}
-                    </span>
-                  </div>
-                  <ng-template #noSubMultiSelection>
-                    <p class="no-items">Keine Werte ausgewählt.</p>
-                  </ng-template>
-                </div>
-              </ng-container>
-            </div>
-          </div>
-        </div>
-
         <ng-template #noCharacteristics>
           <p class="no-items">Keine sichtbaren Merkmale.</p>
         </ng-template>
       </div>
     </div>
 
-    <div class="card">
-      <h3 class="card__title">Konfigurationszusammenfassung</h3>
+    <div class="widget-sidebar">
+      <div class="card" *ngIf="subItemsForView.length > 0">
+        <h3 class="card__title">Unterpositionen</h3>
+        <div class="card__content">
+          <div class="subitems">
+            <div class="subitem-section" *ngFor="let subItem of subItemsForView">
+              <div class="subitem-section__header">
+                <h4 class="subitem-section__title">{{ subItem.key }}</h4>
+                <span class="subitem-section__meta">
+                  {{ subItem.characteristics.length }} Merkmale
+                </span>
+              </div>
 
-      <div class="card__content">
-        <div class="info-grid">
-          <p><span>Konsistent</span> {{ currentConfig.consistent }}</p>
-          <p><span>Vollständig</span> {{ currentConfig.complete }}</p>
-          <p><span>Wurzelelement</span> {{ currentConfig.rootItem.key }}</p>
-          <p><span>Gruppen</span> {{ currentConfig.groups.length }}</p>
-          <p><span>Backend-Zeit</span> {{ currentConfig.backendProcessingTimeMs ?? 0 }} ms</p>
+              <div class="subitem-section__content">
+                <app-characteristic-editor
+                  *ngFor="let char of subItem.characteristics"
+                  [hidden]="!char.visible"
+                  [characteristic]="char"
+                  [itemId]="subItem.id"
+                  [readOnly]="isCharacteristicReadOnly(char)"
+                  [completed]="status() === 'completed'"
+                  [messages]="[]"
+                  [hasProblem]="false"
+                  [incomplete]="isCharacteristicIncomplete(char)"
+                  [consistent]="char.consistent"
+                  (valueChanged)="updateCharacteristic($event.characteristicId, $event.value, $event.itemId)"
+                ></app-characteristic-editor>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div class="info-grid" *ngIf="currentConfig.restoreInfo as restoreInfo">
-          <p><span>Wiederherstellungsmodus</span> {{ restoreInfo.mode }}</p>
-          <p><span>Wiederherstellungsstatus</span> {{ restoreInfo.status }}</p>
-          <p><span>Strategie</span> {{ restoreInfo.strategy }}</p>
-          <p><span>Live-Sitzung</span> {{ restoreInfo.liveSessionAvailable }}</p>
-          <p><span>Snapshot verwendet</span> {{ restoreInfo.snapshotUsed }}</p>
-          <p><span>Nur Lesen</span> {{ restoreInfo.readOnly }}</p>
-        </div>
+      <div class="card">
+        <h3 class="card__title">Konfigurationszusammenfassung</h3>
 
-        <div class="summary-messages">
-          <p
-            class="message message--success"
-            *ngIf="ui.uiState() === 'completed'"
-          >
-            Die Konfiguration wurde erfolgreich bestätigt und ist bereit für die weitere Verarbeitung.
-          </p>
+        <div class="card__content">
+          <div class="info-grid">
+            <p><span>Konsistent</span> {{ currentConfig.consistent }}</p>
+            <p><span>Vollständig</span> {{ currentConfig.complete }}</p>
+            <p><span>Wurzelelement</span> {{ currentConfig.rootItem.key }}</p>
+            <p><span>Gruppen</span> {{ currentConfig.groups.length }}</p>
+            <p><span>Backend-Zeit</span> {{ currentConfig.backendProcessingTimeMs ?? 0 }} ms</p>
+          </div>
 
-          <p
-            class="message message--warning"
-            *ngIf="ui.hiddenProblemCharacteristics().length"
-          >
-            {{ ui.hiddenProblemCharacteristics().length }} erforderliche Felder sind unvollständig und in der aktuellen Konfigurationsansicht nicht sichtbar.
-          </p>
+          <div class="info-grid" *ngIf="currentConfig.restoreInfo as restoreInfo">
+            <p><span>Wiederherstellungsmodus</span> {{ restoreInfo.mode }}</p>
+            <p><span>Wiederherstellungsstatus</span> {{ restoreInfo.status }}</p>
+            <p><span>Strategie</span> {{ restoreInfo.strategy }}</p>
+            <p><span>Live-Sitzung</span> {{ restoreInfo.liveSessionAvailable }}</p>
+            <p><span>Snapshot verwendet</span> {{ restoreInfo.snapshotUsed }}</p>
+            <p><span>Nur Lesen</span> {{ restoreInfo.readOnly }}</p>
+          </div>
 
-          <p
-            class="message message--warning"
-            *ngIf="ui.uiState() === 'incomplete' && !ui.hiddenProblemCharacteristics().length"
-          >
-            Vervollständigen Sie alle erforderlichen Merkmale, bevor Sie die Konfiguration bestätigen.
-          </p>
+          <div class="summary-messages">
+            <p
+              class="message message--success"
+              *ngIf="ui.uiState() === 'completed'"
+            >
+              Die Konfiguration wurde erfolgreich bestätigt und ist bereit für die weitere Verarbeitung.
+            </p>
 
-          <p
-            class="message message--error"
-            *ngIf="ui.uiState() === 'conflict'"
-          >
-            Lösen Sie Konfigurationskonflikte, bevor Sie bestätigen.
-          </p>
+            <p
+              class="message message--warning"
+              *ngIf="ui.hiddenProblemCharacteristics().length"
+            >
+              {{ ui.hiddenProblemCharacteristics().length }} erforderliche Felder sind unvollständig und in der aktuellen Konfigurationsansicht nicht sichtbar.
+            </p>
 
-          <p
-            class="message message--warning"
-            *ngIf="ui.uiState() === 'readonly'"
-          >
-            Diese Konfiguration wird im Nur-Lese-Modus aus einem Snapshot-Fallback angezeigt.
-          </p>
+            <p
+              class="message message--warning"
+              *ngIf="ui.uiState() === 'incomplete' && !ui.hiddenProblemCharacteristics().length"
+            >
+              Vervollständigen Sie alle erforderlichen Merkmale, bevor Sie die Konfiguration bestätigen.
+            </p>
 
-          <p
-            class="message"
-            *ngIf="ui.uiState() !== 'completed' && ui.uiState() !== 'error'"
-          >
-            Bestätigen Sie die Konfiguration, um die endgültige Auswahl zu sperren und nachgelagerte Aktionen zu ermöglichen.
-          </p>
+            <p
+              class="message message--error"
+              *ngIf="ui.uiState() === 'conflict'"
+            >
+              Lösen Sie Konfigurationskonflikte, bevor Sie bestätigen.
+            </p>
+
+            <p
+              class="message message--warning"
+              *ngIf="ui.uiState() === 'readonly'"
+            >
+              Diese Konfiguration wird im Nur-Lese-Modus aus einem Snapshot-Fallback angezeigt.
+            </p>
+
+            <p
+              class="message"
+              *ngIf="ui.uiState() !== 'completed' && ui.uiState() !== 'error'"
+            >
+              Bestätigen Sie die Konfiguration, um die endgültige Auswahl zu sperren und nachgelagerte Aktionen zu ermöglichen.
+            </p>
+          </div>
         </div>
       </div>
     </div>
-
   </div>
 
   <div class="card" *ngIf="errorMessage() as error">
