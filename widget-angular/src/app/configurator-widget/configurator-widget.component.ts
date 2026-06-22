@@ -16,18 +16,17 @@ import {
   ConfigurationResponse,
   ConfigurationMessage,
   ConfigurationSnapshot,
-  CreateConfigurationRequest,
-  ResumeConfigurationRequest,
   WidgetInputConfig,
   WidgetState
 } from '../models/configuration.models';
 import { ConfiguratorWidgetFacade } from './configurator-widget.facade';
 import { createConfiguratorWidgetUiState } from './configurator-widget.ui-state';
+import { CharacteristicEditorComponent } from './characteristic-editor/characteristic-editor.component';
 
 @Component({
   selector: 'app-configurator-widget',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CharacteristicEditorComponent],
   templateUrl: './configurator-widget.component.html',
   styleUrl: './configurator-widget.component.scss'
 })
