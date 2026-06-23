@@ -10,7 +10,7 @@ public class SavedConfigurationDto {
     private String productId;
     private String configurationId;
     private OffsetDateTime savedAt;
-    private Object snapshot;
+    private ConfigurationSnapshot snapshot;
 
     public SavedConfigurationDto() {
     }
@@ -63,11 +63,11 @@ public class SavedConfigurationDto {
         this.savedAt = savedAt;
     }
 
-    public Object getSnapshot() {
+    public ConfigurationSnapshot getSnapshot() {
         return snapshot;
     }
 
-    public void setSnapshot(Object snapshot) {
+    public void setSnapshot(ConfigurationSnapshot snapshot) {
         this.snapshot = snapshot;
     }
 }

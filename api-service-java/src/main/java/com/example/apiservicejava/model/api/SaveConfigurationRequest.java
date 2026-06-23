@@ -1,4 +1,6 @@
 package com.example.apiservicejava.model.api;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 public class SaveConfigurationRequest {
 
@@ -6,7 +8,10 @@ public class SaveConfigurationRequest {
     private String label;
     private String productId;
     private String configurationId;
-    private Object snapshot;
+
+    @NotNull
+    @Valid
+    private ConfigurationSnapshot snapshot;
 
     public SaveConfigurationRequest() {
     }
@@ -43,11 +48,11 @@ public class SaveConfigurationRequest {
         this.configurationId = configurationId;
     }
 
-    public Object getSnapshot() {
+    public ConfigurationSnapshot getSnapshot() {
         return snapshot;
     }
 
-    public void setSnapshot(Object snapshot) {
+    public void setSnapshot(ConfigurationSnapshot snapshot) {
         this.snapshot = snapshot;
     }
 }

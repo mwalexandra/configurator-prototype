@@ -5,6 +5,7 @@ import com.example.apiservicejava.model.api.SavedConfigurationDto;
 import com.example.apiservicejava.service.SavedConfigurationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.io.IOException;
 import java.util.List;
@@ -30,7 +31,7 @@ public class SavedConfigurationController {
 
     @PostMapping("/api/saved-configurations")
     @ResponseStatus(HttpStatus.CREATED)
-    public SavedConfigurationDto save(@RequestBody SaveConfigurationRequest request) throws IOException {
+    public SavedConfigurationDto save(@Valid @RequestBody SaveConfigurationRequest request) throws IOException {
         return savedConfigurationService.save(request);
     }
 }
