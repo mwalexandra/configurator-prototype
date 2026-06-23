@@ -40,10 +40,35 @@ export class App {
     this.lastError.set(null);
   }
 
-  onAddedToCart(result: CompletedConfigurationResult): void {
+  async onAddedToCart(result: CompletedConfigurationResult): Promise<void> {
     this.completedResult.set(result);
     this.finalSnapshot.set(result.snapshot);
     this.lastError.set(null);
+
+    try {
+      const response = await fetch('/api/saved-configurations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          label: `Saved ${new Date().toISOString()}`,
+          productId: result.productId,
+          configurationId: result.configurationId,
+          snapshot: result.snapshot
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Save failed: ${response.status}`);
+      }
+
+      const saved = await response.json();
+      console.log('Saved configuration', saved);
+    } catch (error) {
+      this.lastError.set(error instanceof Error ? error.message : 'Save failed');
+      throw error;
+    }
   }
 
   onError(event: { errorCode: string; message: string }): void {
@@ -79,6 +104,7 @@ export class App {
       apiBaseUrl: this.widgetConfig.apiBaseUrl,
       mode: 'resume',
       resume: {
+        configurationId: selected.configurationId,
         snapshot: selected.snapshot,
         sourceContext: 'generic'
       }
