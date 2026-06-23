@@ -63,20 +63,23 @@ export class App {
     this.lastError.set(null);
   }
 
-  switchToResumeMode(): void {
-    const snapshot = this.finalSnapshot();
+  async switchToResumeMode(): Promise<void> {
+    const response = await fetch('/api/saved-configurations');
+    const configs = await response.json();
+    console.log(configs);
 
-    if (!snapshot) {
-      this.lastError.set('Noch kein endgültiger Snapshot für den Resume-Modus verfügbar');
+    if (!configs || configs.length === 0) {
+      this.lastError.set('Keine gespeicherten Konfigurationen gefunden');
       return;
     }
+
+    const selected = configs[0];
 
     this.widgetConfig = {
       apiBaseUrl: this.widgetConfig.apiBaseUrl,
       mode: 'resume',
       resume: {
-        configurationId: snapshot.configurationId,
-        snapshot,
+        snapshot: selected.snapshot,
         sourceContext: 'generic'
       }
     };
