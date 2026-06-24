@@ -116,6 +116,11 @@ export class ConfiguratorWidgetFacade {
   ) {}
 
   initialize(): void {
+    this.ctx.configuration.set(null);
+    this.ctx.configId.set(null);
+    this.ctx.status.set('idle');
+    this.ctx.errorMessage.set(null);
+
     this.api.setApiBaseUrl(this.ctx.widgetInputConfig.apiBaseUrl);
 
     if (this.ctx.widgetInputConfig.mode === 'resume') {

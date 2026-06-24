@@ -1,11 +1,7 @@
 package com.example.apiservicejava.service.sap;
 
 import com.example.apiservicejava.model.sapruntime.SapCreateRequest;
-import com.example.apiservicejava.model.sapruntime.SapRuntimeCharacteristic;
-import com.example.apiservicejava.model.sapruntime.SapRuntimeCharacteristicGroup;
 import com.example.apiservicejava.model.sapruntime.SapRuntimeConfigurationResponse;
-import com.example.apiservicejava.model.sapruntime.SapRuntimeRootItem;
-import com.example.apiservicejava.model.sapruntime.SapRuntimeValue;
 import com.example.apiservicejava.service.sap.support.SapGetConfigurationResult;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;

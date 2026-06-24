@@ -3,6 +3,8 @@ import {
   Component,
   Input,
   OnInit,
+  OnChanges,
+  SimpleChanges,
   computed,
   output,
   signal
@@ -30,7 +32,7 @@ import { CharacteristicEditorComponent } from './characteristic-editor/character
   templateUrl: './configurator-widget.component.html',
   styleUrl: './configurator-widget.component.scss'
 })
-export class ConfiguratorWidgetComponent implements OnInit {
+export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
   @Input({ required: true }) widgetInputConfig!: WidgetInputConfig;
 
   configurationStarted = output<string>();
@@ -71,6 +73,24 @@ export class ConfiguratorWidgetComponent implements OnInit {
     });
 
     this.facade.initialize();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['widgetInputConfig'] && this.facade) {
+      this.facade = new ConfiguratorWidgetFacade(this.configurationApi, {
+        widgetInputConfig: this.widgetInputConfig,
+        configuration: this.configuration,
+        configId: this.configId,
+        status: this.status,
+        errorMessage: this.errorMessage,
+        configurationStarted: this.configurationStarted,
+        configurationCompleted: this.configurationCompleted,
+        addedToCart: this.addedToCart,
+        errorOccurred: this.errorOccurred
+      });
+
+      this.facade.initialize();
+    }
   }
 
   protected get blockingIssuesForView() {
