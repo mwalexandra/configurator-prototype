@@ -126,11 +126,12 @@
           <app-characteristic-editor
             *ngFor="let char of visibleCharacteristics(); trackBy: trackByCharacteristicId"
             [characteristic]="char"
+            [itemId]="getRootItemId()"
             [readOnly]="isCharacteristicReadOnly(char)"
             [completed]="status() === 'completed'"
             [messages]="getMessagesForCharacteristic(char.id)"
-            [hasProblem]="hasCharacteristicProblem(char.id)"
-            [incomplete]="isCharacteristicIncomplete(char)"
+            [hasProblem]="hasCharacteristicConflict(char, getRootItemId())"
+            [incomplete]="isCharacteristicIncomplete(char, getRootItemId())"
             [consistent]="char.consistent"
             (valueChanged)="updateCharacteristic($event.characteristicId, $event.value, $event.itemId)"
           ></app-characteristic-editor>
@@ -164,8 +165,8 @@
                   [readOnly]="isCharacteristicReadOnly(char)"
                   [completed]="status() === 'completed'"
                   [messages]="[]"
-                  [hasProblem]="false"
-                  [incomplete]="isCharacteristicIncomplete(char)"
+                  [hasProblem]="hasCharacteristicConflict(char, subItem.id)"
+                  [incomplete]="isCharacteristicIncomplete(char, subItem.id)"
                   [consistent]="char.consistent"
                   (valueChanged)="updateCharacteristic($event.characteristicId, $event.value, $event.itemId)"
                 ></app-characteristic-editor>

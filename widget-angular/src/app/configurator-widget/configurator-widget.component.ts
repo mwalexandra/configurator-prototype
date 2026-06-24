@@ -145,12 +145,33 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     return this.facade?.getMessagesForCharacteristic(characteristicId) ?? [];
   }
 
+  // not used
   protected hasCharacteristicProblem(characteristicId: string): boolean {
     return this.ui.problemCharacteristicIds().has(characteristicId);
   }
 
-  protected isCharacteristicIncomplete(char: Characteristic): boolean {
-    return !!char.required && !char.complete;
+  protected hasCharacteristicBlockingIssue(characteristicId: string, itemId?: string): boolean {
+    return this.facade?.blockingIssues().some(issue =>
+      issue.characteristicId === characteristicId &&
+      issue.itemId === itemId
+    ) ?? false;
+  }
+
+  protected isCharacteristicIncomplete(char: Characteristic, itemId?: string): boolean {
+    return this.facade?.blockingIssues().some(issue =>
+      issue.characteristicId === char.id &&
+      issue.itemId === itemId &&
+      issue.complete === false
+    ) ?? false;
+  }
+
+  protected hasCharacteristicConflict(char: Characteristic, itemId?: string): boolean {
+    return this.facade?.blockingIssues().some(issue =>
+      issue.characteristicId === char.id &&
+      issue.itemId === itemId &&
+      issue.complete === true &&
+      issue.consistent === false
+    ) ?? false;
   }
 
   protected translateMode(mode: string | undefined): string {
@@ -220,6 +241,10 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
       || this.status() === 'updating'
       || this.status() === 'completing'
       || this.status() === 'completed';
+  }
+
+  protected getRootItemId(): string | undefined {
+    return this.configuration()?.rootItem?.id;
   }
 
   protected isRootCharacteristicConfirmed(char: Characteristic): boolean {

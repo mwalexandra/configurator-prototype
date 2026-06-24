@@ -1,7 +1,7 @@
 <div
   class="characteristic-item"
-  [class.characteristic-item--error]="hasProblem() && !incomplete()"
   [class.characteristic-item--incomplete]="incomplete()"
+  [class.characteristic-item--error]="!incomplete() && hasProblem()"
   [class.characteristic-item--readonly]="readOnly()"
 >
   <div class="info-grid">
@@ -13,26 +13,28 @@
     <p><span>Nur lesbar</span> {{ readOnly() }}</p>
   </div>
 
-  <p
-    class="characteristic-status characteristic-status--error"
-    *ngIf="hasProblem() && !incomplete()"
-  >
-    Konfigurationsproblem — bitte überprüfen Sie die ausgewählten Werte
-  </p>
+  <ng-container [ngSwitch]="true">
+    <p
+      *ngSwitchCase="incomplete()"
+      class="characteristic-status characteristic-status--warning"
+    >
+      Erforderlich — noch nicht abgeschlossen
+    </p>
 
-  <p
-    class="characteristic-status characteristic-status--warning"
-    *ngIf="incomplete()"
-  >
-    Erforderlich — noch nicht abgeschlossen
-  </p>
+    <p
+      *ngSwitchCase="!incomplete() && hasProblem()"
+      class="characteristic-status characteristic-status--error"
+    >
+      Konfigurationsproblem — bitte überprüfen Sie die ausgewählten Werte
+    </p>
 
-  <p
-    class="characteristic-status characteristic-status--success"
-    *ngIf="completed() && characteristic().complete && consistent()"
-  >
-    Bestätigt in finaler Konfiguration
-  </p>
+    <p
+      *ngSwitchCase="completed() && characteristic().complete && consistent()"
+      class="characteristic-status characteristic-status--success"
+    >
+      Bestätigt in finaler Konfiguration
+    </p>
+  </ng-container>
 
   <div
     class="characteristic-message-list"
@@ -98,7 +100,8 @@
 
     <div *ngSwitchDefault class="field-block">
       <span *ngIf="characteristic().values?.length" class="selected-value">
-        <span>Ausgewählt</span> {{ characteristic().values[0].name || characteristic().values[0].id }}
+        <span>Ausgewählt</span>
+        {{ characteristic().values[0].name || characteristic().values[0].id }}
       </span>
     </div>
   </ng-container>
