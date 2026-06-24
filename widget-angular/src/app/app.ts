@@ -91,14 +91,31 @@ export class App {
   async switchToResumeMode(): Promise<void> {
     const response = await fetch('/api/saved-configurations');
     const configs = await response.json();
-    console.log(configs);
 
     if (!configs || configs.length === 0) {
       this.lastError.set('Keine gespeicherten Konfigurationen gefunden');
       return;
     }
 
-    const selected = configs[0];
+    const selected = [...configs]
+        .filter((c: any) =>
+          c?.snapshot?.configurationId &&
+          c?.snapshot?.productId &&
+          c?.snapshot?.rootItem
+        )
+        .sort((a: any, b: any) =>
+          new Date(b.savedAt ?? b.snapshot?.savedAt ?? 0).getTime() -
+          new Date(a.savedAt ?? a.snapshot?.savedAt ?? 0).getTime()
+        )[0];
+
+    if (!selected) {
+      this.lastError.set('Keine gültige gespeicherte Konfiguration gefunden');
+      return;
+    }
+
+    console.log('app.ts - 112');
+    console.log('selected', selected);
+    console.log('selected.snapshot', selected?.snapshot);
 
     this.widgetConfig = {
       apiBaseUrl: this.widgetConfig.apiBaseUrl,
@@ -109,8 +126,5 @@ export class App {
         sourceContext: 'generic'
       }
     };
-
-    this.finalSnapshot.set(null);
-    this.lastError.set(null);
   }
 }
