@@ -96,8 +96,8 @@ export class App {
     this.completedResult.set(null);
     this.finalSnapshot.set(null);
     this.lastError.set(null);
-
     this.widgetConfig = null;
+
     await Promise.resolve();
 
     this.widgetConfig = {
@@ -133,7 +133,7 @@ export class App {
       }
 
       this.hostMode.set('resume');
-      this.startedConfigId.set(null);
+      this.startedConfigId.set(selected.configurationId ?? null);
       this.completedResult.set(null);
       this.finalSnapshot.set(null);
 
