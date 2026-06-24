@@ -7,7 +7,7 @@ import {
   WidgetState
 } from '../models/configuration.models';
 
-export type WidgetUiState =
+type WidgetUiState =
   | 'idle'
   | 'loading'
   | 'incomplete'
@@ -17,7 +17,7 @@ export type WidgetUiState =
   | 'readonly'
   | 'error';
 
-export interface ConfiguratorWidgetUiState {
+interface ConfiguratorWidgetUiState {
   isReadOnly: Signal<boolean>;
   hasErrors: Signal<boolean>;
   isReadyForCompletion: Signal<boolean>;

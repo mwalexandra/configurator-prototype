@@ -12,7 +12,7 @@ import {
   WidgetState
 } from '../models/configuration.models';
 
-export interface ConfiguratorWidgetFacadeContext {
+interface ConfiguratorWidgetFacadeContext {
   widgetInputConfig: WidgetInputConfig;
   configuration: WritableSignal<ConfigurationResponse | null>;
   configId: WritableSignal<string | null>;

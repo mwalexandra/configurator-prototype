@@ -1,5 +1,3 @@
-// widget-angular/src/app/models/configuration.models.ts
-
 // ──────────────────────────────
 // Modes & widget state
 // ──────────────────────────────
