@@ -11,16 +11,27 @@
     <div class="host-main-info">
       <h2 class="host-heading">Host-Frontend</h2>
       <p>Erstellmodus der Konfigurator:</p>
+      <p>hostMode: {{ hostMode() }}</p>
+      <p>widgetVisible: {{ widgetVisible() }}</p>
+      <p>hasWidgetConfig: {{ widgetConfig !== null }}</p>
       <div class="host-controls">
-        <button type="button" (click)="switchToCreateMode()">Ein Produkt konfigurieren</button>
-        <button type="button" (click)="switchToResumeMode()" [disabled]="!finalSnapshot()">
-          Eine bestehende Konfiguration fortsetzen
+        <button 
+          type="button" 
+          (click)="switchToCreateMode()" 
+          [disabled]="isCreateModeButtonDisabled()">
+          Ein Produkt konfigurieren
+        </button>
+        <button 
+          type="button" 
+          (click)="switchToResumeMode()" 
+          [disabled]="isResumeModeButtonDisabled()">
+          {{ isLoadingSavedConfig() ? 'Lade gespeicherte Konfiguration...' : 'Eine bestehende Konfiguration fortsetzen' }}
         </button>
       </div>
     </div>
 
     <div class="host-summary">
-      <p><strong>Aktueller Erstellmodus:</strong> {{ widgetConfig.mode }}</p>
+      <p><strong>Aktueller Erstellmodus:</strong> {{ widgetConfig?.mode }}</p>
       <p><strong>Konfiguration-ID:</strong> {{ startedConfigId() || '—' }}</p>
       <p><strong>Finales JSON verfügbar:</strong> {{ !!completedResult()?.addedToCart }}</p>
     </div>
@@ -55,7 +66,8 @@
   </div>
 
   <app-configurator-widget
-    [widgetInputConfig]="widgetConfig"
+    *ngIf="widgetConfig as config"
+    [widgetInputConfig]="config"
     (configurationStarted)="onConfigurationStarted($event)"
     (configurationCompleted)="onConfigurationCompleted($event)"
     (addedToCart)="onAddedToCart($event)"
