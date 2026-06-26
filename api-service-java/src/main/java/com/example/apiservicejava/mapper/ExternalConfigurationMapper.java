@@ -185,35 +185,6 @@ public final class ExternalConfigurationMapper {
             response.setRootItem(mapRuntimeItem(sapResponse.getRootItem()));
         }
 
-        System.out.println("=== API RESPONSE DETAILS ===");
-        if (response != null && response.getRootItem() != null && response.getRootItem().getCharacteristics() != null) {
-            response.getRootItem().getCharacteristics().forEach(c -> {
-                System.out.println("--- api characteristic ---");
-                System.out.println("id = " + c.getId());
-                System.out.println("readOnly = " + c.isReadOnly());
-                System.out.println("required = " + c.isRequired());
-                System.out.println("visible = " + c.isVisible());
-
-                if (c.getValues() != null) {
-                    c.getValues().forEach(v -> {
-                        System.out.println("selected value: id=" + v.getId()
-                                + ", name=" + v.getName()
-                                + ", selected=" + v.isSelected()
-                                + ", author=" + v.getAuthor());
-                    });
-                }
-
-                if (c.getPossibleValues() != null) {
-                    c.getPossibleValues().forEach(v -> {
-                        System.out.println("possible value: id=" + v.getId()
-                                + ", name=" + v.getName()
-                                + ", selected=" + v.isSelected()
-                                + ", author=" + v.getAuthor());
-                    });
-                }
-            });
-        }
-
         return response;
     }
 
