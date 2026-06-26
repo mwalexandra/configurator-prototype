@@ -1,6 +1,7 @@
 package com.example.apiservicejava.service;
 
 import com.example.apiservicejava.mapper.ConfigurationMapper;
+import com.example.apiservicejava.mapper.ExternalConfigurationMapper;
 import com.example.apiservicejava.model.api.ConfigurationResponse;
 import com.example.apiservicejava.model.api.ConfigurationSnapshot;
 import com.example.apiservicejava.model.api.CreateConfigurationRequest;
@@ -78,9 +79,10 @@ public class ConfigurationService {
     }
 
     public ConfigurationResponse createFromExternalConfiguration(
-        ExternalConfigurationCreateRequest request
+            ExternalConfigurationCreateRequest request
     ) {
-        throw new UnsupportedOperationException("createFromExternalConfiguration not implemented yet");
+        Map<String, Object> sapRequestBody = ExternalConfigurationMapper.toSapRequestBody(request);
+        throw new UnsupportedOperationException("SAP call not implemented yet. Payload prepared: " + sapRequestBody);
     }
     
     public ConfigurationResponse getConfiguration(String configId) {
