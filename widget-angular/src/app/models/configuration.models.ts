@@ -103,7 +103,7 @@ export interface Characteristic {
   possibleValues: CharacteristicValue[];
 }
 
-export type CharacteristicValueAuthor =
+type CharacteristicValueAuthor =
   | 'Default'
   | 'System'
   | 'User'
@@ -200,4 +200,36 @@ export interface CompletedConfigurationResult {
   receivedAt: string;
   snapshot: ConfigurationSnapshot;
   fullConfiguration: ConfigurationResponse;
+}
+
+// ───────────────────────────────────────────
+//  External Configuration API service models
+// ───────────────────────────────────────────
+
+export interface ExternalConfigurationValuePayload {
+  value: string;
+}
+
+export interface ExternalConfigurationCharacteristicPayload {
+  id: string;
+  values: ExternalConfigurationValuePayload[];
+}
+
+export interface ExternalConfigurationItemPayload {
+  id?: string;
+  key?: string;
+  characteristics: ExternalConfigurationCharacteristicPayload[];
+  subItems?: ExternalConfigurationItemPayload[];
+}
+
+export interface ExternalConfigurationPayload {
+  productId: string;
+  kbId?: string;
+  rootItem: ExternalConfigurationItemPayload;
+  metadata?: {
+    version: string;
+    sourceContext: string;
+    configurationId?: string;
+    savedAt: string;
+  };
 }

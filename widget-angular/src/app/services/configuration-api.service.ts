@@ -6,7 +6,8 @@ import {
   CreateConfigurationRequest,
   ConfigurationResponse,
   ResumeConfigurationRequest,
-  UpdateCharacteristicRequest
+  UpdateCharacteristicRequest,
+  ExternalConfigurationPayload
 } from '../models/configuration.models';
 
 @Injectable({
@@ -68,5 +69,28 @@ export class ConfigurationApiService {
       `${this.apiBaseUrl}/configurations/resume`,
       payload
     );
+  }
+
+  createFromExternalConfiguration(
+    payload: ExternalConfigurationPayload
+  ): Observable<ConfigurationResponse> {
+    return this.http.post<ConfigurationResponse>(
+      `${this.apiBaseUrl}/configurations/external`,
+      this.mapExternalConfigurationRequest(payload)
+    );
+  }
+
+  // Helper methods
+  private mapExternalConfigurationRequest(
+    payload: ExternalConfigurationPayload
+  ): unknown {
+    return {
+      productId: payload.productId,
+      kbId: payload.kbId,
+      externalConfiguration: {
+        rootItem: payload.rootItem,
+        metadata: payload.metadata
+      }
+    };
   }
 }

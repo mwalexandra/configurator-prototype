@@ -113,6 +113,10 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     this.facade?.resumeConfiguration();
   }
 
+  createFromExternalConfiguration(): void {
+    this.facade?.createFromExternalConfiguration();
+  }
+
   protected updateCharacteristic(
     characteristicId: string,
     value: string | null,

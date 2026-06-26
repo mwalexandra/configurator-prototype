@@ -7,10 +7,14 @@ import {
   ConfigurationResponse,
   ConfigurationSnapshot,
   CreateConfigurationRequest,
+  ExternalConfigurationPayload,
   ResumeConfigurationRequest,
   WidgetInputConfig,
-  WidgetState
+  WidgetState,
+  ConfigurationItem,
+  ExternalConfigurationItemPayload
 } from '../models/configuration.models';
+import { Observable } from 'rxjs/internal/Observable';
 
 interface ConfiguratorWidgetFacadeContext {
   widgetInputConfig: WidgetInputConfig;
@@ -369,5 +373,63 @@ export class ConfiguratorWidgetFacade {
     this.ctx.status.set('error');
     this.ctx.errorMessage.set(message);
     this.ctx.errorOccurred.emit({ errorCode, message });
+  }
+
+  createFromExternalConfiguration(): void {
+    const current = this.ctx.configuration();
+    if (!current) {
+      this.emitError('CONFIG_EXTERNAL_CREATE_INVALID', 'Keine Konfiguration zum Export vorhanden');
+      return;
+    }
+
+    const payload = this.buildExternalConfigurationPayload(current);
+
+    this.ctx.status.set('loading');
+    this.ctx.errorMessage.set(null);
+
+    this.api.createFromExternalConfiguration(payload).subscribe({
+      next: response => this.applyConfiguration(response, true),
+      error: () =>
+        this.emitError(
+          'CONFIG_EXTERNAL_CREATE_FAILED',
+          'Konfiguration aus externalConfiguration konnte nicht erstellt werden'
+        )
+    });
+  }
+
+  private buildExternalConfigurationPayload(
+    current: ConfigurationResponse
+  ): ExternalConfigurationPayload {
+    return {
+      productId: current.productId,
+      kbId: current.kbId ?? undefined,
+      rootItem: this.mapItemToExternalConfiguration(current.rootItem),
+      metadata: {
+        version: '1.0',
+        sourceContext: this.ctx.widgetInputConfig.resume?.sourceContext ?? 'widget',
+        configurationId: current.configurationId,
+        savedAt: new Date().toISOString()
+      }
+    };
+  }
+
+  private mapItemToExternalConfiguration(
+    item: ConfigurationItem
+  ): ExternalConfigurationItemPayload {
+    return {
+      id: item.id,
+      key: item.key,
+      characteristics: (item.characteristics ?? [])
+        .filter(char => (char.values?.length ?? 0) > 0)
+        .map(char => ({
+          id: char.id,
+          values: (char.values ?? []).map(value => ({
+            value: value.id
+          }))
+        })),
+      subItems: (item.subItems ?? []).map(subItem =>
+        this.mapItemToExternalConfiguration(subItem)
+      )
+    };
   }
 }
