@@ -7,6 +7,7 @@ import com.example.apiservicejava.model.api.CreateConfigurationRequest;
 import com.example.apiservicejava.model.api.PatchConfigurationRequest;
 import com.example.apiservicejava.model.api.RestoreInfo;
 import com.example.apiservicejava.model.api.ResumeConfigurationRequest;
+import com.example.apiservicejava.model.api.ExternalConfigurationCreateRequest;
 import com.example.apiservicejava.model.sapkb.SapKbResponse;
 import com.example.apiservicejava.model.sapruntime.SapCreateRequest;
 import com.example.apiservicejava.model.sapruntime.SapRuntimeConfigurationResponse;
@@ -76,6 +77,12 @@ public class ConfigurationService {
         return response;
     }
 
+    public ConfigurationResponse createFromExternalConfiguration(
+        ExternalConfigurationCreateRequest request
+    ) {
+        throw new UnsupportedOperationException("createFromExternalConfiguration not implemented yet");
+    }
+    
     public ConfigurationResponse getConfiguration(String configId) {
         long start = System.currentTimeMillis();
 
