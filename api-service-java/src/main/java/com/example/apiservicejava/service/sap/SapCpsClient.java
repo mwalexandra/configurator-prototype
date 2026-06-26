@@ -1,6 +1,5 @@
 package com.example.apiservicejava.service.sap;
 
-import com.example.apiservicejava.mapper.ExternalConfigurationMapper;
 import com.example.apiservicejava.model.sapruntime.SapCreateRequest;
 import com.example.apiservicejava.model.sapruntime.SapRuntimeConfigurationResponse;
 import com.example.apiservicejava.service.sap.support.SapGetConfigurationResult;
