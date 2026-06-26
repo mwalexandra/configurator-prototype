@@ -30,11 +30,9 @@ export type ResumeSourceContext =
 export interface WidgetInputConfig {
   apiBaseUrl: string;
   mode: ConfiguratorMode;
-
   // create mode
   productId?: string;
   kbId?: string;
-
   // resume mode
   resume?: ResumeInput;
 }

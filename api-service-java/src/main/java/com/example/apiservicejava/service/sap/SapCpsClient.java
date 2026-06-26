@@ -50,25 +50,25 @@ public class SapCpsClient {
         }
 
         public SapGetConfigurationResult getConfigurationWithEtag(String configurationId) {
-        String url = baseUrl + "/api/v2/configurations/" + configurationId;
+                String url = baseUrl + "/api/v2/configurations/" + configurationId;
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("APIKey", apiKey);
+                HttpHeaders headers = new HttpHeaders();
+                headers.set("APIKey", apiKey);
 
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
+                HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-        ResponseEntity<SapRuntimeConfigurationResponse> response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                entity,
-                SapRuntimeConfigurationResponse.class);
+                ResponseEntity<SapRuntimeConfigurationResponse> response = restTemplate.exchange(
+                        url,
+                        HttpMethod.GET,
+                        entity,
+                        SapRuntimeConfigurationResponse.class);
 
-        SapRuntimeConfigurationResponse body = response.getBody();
+                SapRuntimeConfigurationResponse body = response.getBody();
 
-        SapGetConfigurationResult result = new SapGetConfigurationResult();
-        result.setBody(body);
-        result.setEtag(response.getHeaders().getETag());
-        return result;
+                SapGetConfigurationResult result = new SapGetConfigurationResult();
+                result.setBody(body);
+                result.setEtag(response.getHeaders().getETag());
+                return result;
         }
 
         public SapRuntimeConfigurationResponse createConfiguration(SapCreateRequest request) {
