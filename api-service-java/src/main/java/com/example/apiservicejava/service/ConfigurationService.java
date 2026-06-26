@@ -93,14 +93,16 @@ public class ConfigurationService {
             ExternalConfigurationCreateRequest request
     ) {
         Map<String, Object> sapRequestBody = ExternalConfigurationMapper.toSapRequestBody(request);
-        
-        //debugging
-        System.out.println("sapRequestBody = " + sapRequestBody);
 
         SapRuntimeConfigurationResponse sapResponse =
                 sapCpsClient.createConfigurationFromExternal(sapRequestBody);
 
-        return ExternalConfigurationMapper.fromSapRuntimeResponse(sapResponse);
+        ConfigurationResponse response = ExternalConfigurationMapper.fromSapRuntimeResponse(sapResponse);
+
+        SapKbResponse kbResponse = sapKbClient.getKnowledgeBase(request.getKbId());
+        ExternalConfigurationMapper.enrichFromSapKb(response, kbResponse);
+
+        return response;
     }
     
     public ConfigurationResponse getConfiguration(String configId) {

@@ -14,6 +14,9 @@ import com.example.apiservicejava.model.sapruntime.SapRuntimeConfigurationRespon
 import com.example.apiservicejava.model.sapruntime.SapRuntimePossibleValue;
 import com.example.apiservicejava.model.sapruntime.SapRuntimeRootItem;
 import com.example.apiservicejava.model.sapruntime.SapRuntimeValue;
+import com.example.apiservicejava.model.sapkb.SapKbCharacteristic;
+import com.example.apiservicejava.model.sapkb.SapKbPossibleValue;
+import com.example.apiservicejava.model.sapkb.SapKbResponse;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -182,6 +185,35 @@ public final class ExternalConfigurationMapper {
             response.setRootItem(mapRuntimeItem(sapResponse.getRootItem()));
         }
 
+        System.out.println("=== API RESPONSE DETAILS ===");
+        if (response != null && response.getRootItem() != null && response.getRootItem().getCharacteristics() != null) {
+            response.getRootItem().getCharacteristics().forEach(c -> {
+                System.out.println("--- api characteristic ---");
+                System.out.println("id = " + c.getId());
+                System.out.println("readOnly = " + c.isReadOnly());
+                System.out.println("required = " + c.isRequired());
+                System.out.println("visible = " + c.isVisible());
+
+                if (c.getValues() != null) {
+                    c.getValues().forEach(v -> {
+                        System.out.println("selected value: id=" + v.getId()
+                                + ", name=" + v.getName()
+                                + ", selected=" + v.isSelected()
+                                + ", author=" + v.getAuthor());
+                    });
+                }
+
+                if (c.getPossibleValues() != null) {
+                    c.getPossibleValues().forEach(v -> {
+                        System.out.println("possible value: id=" + v.getId()
+                                + ", name=" + v.getName()
+                                + ", selected=" + v.isSelected()
+                                + ", author=" + v.getAuthor());
+                    });
+                }
+            });
+        }
+
         return response;
     }
 
@@ -279,5 +311,179 @@ public final class ExternalConfigurationMapper {
         value.setSelected(false);
         value.setAuthor(null);
         return value;
+    }
+
+
+    // Mapping from SAP KB response to API response
+    public static void enrichFromSapKb(ConfigurationResponse response, SapKbResponse kbResponse) {
+        if (response == null || response.getRootItem() == null || kbResponse == null || kbResponse.getCharacteristics() == null) {
+            return;
+        }
+
+        Map<String, SapKbCharacteristic> kbCharacteristicsById = new HashMap<>();
+        for (SapKbCharacteristic kbCharacteristic : kbResponse.getCharacteristics()) {
+            if (kbCharacteristic != null && kbCharacteristic.getId() != null) {
+                kbCharacteristicsById.put(kbCharacteristic.getId(), kbCharacteristic);
+            }
+        }
+
+        enrichItemFromSapKb(response.getRootItem(), kbCharacteristicsById);
+    }
+
+    private static void enrichItemFromSapKb(
+            ConfigurationItem item,
+            Map<String, SapKbCharacteristic> kbCharacteristicsById
+    ) {
+        if (item == null) {
+            return;
+        }
+
+        if (item.getCharacteristics() != null) {
+            for (CharacteristicDto characteristic : item.getCharacteristics()) {
+                if (characteristic == null || characteristic.getId() == null) {
+                    continue;
+                }
+
+                SapKbCharacteristic kbCharacteristic = kbCharacteristicsById.get(characteristic.getId());
+                if (kbCharacteristic != null) {
+                    enrichCharacteristicFromSapKb(characteristic, kbCharacteristic);
+                }
+            }
+        }
+
+        if (item.getSubItems() != null) {
+            for (ConfigurationItem subItem : item.getSubItems()) {
+                enrichItemFromSapKb(subItem, kbCharacteristicsById);
+            }
+        }
+    }
+
+    private static void enrichCharacteristicFromSapKb(
+            CharacteristicDto characteristic,
+            SapKbCharacteristic kbCharacteristic
+    ) {
+        if (isBlank(characteristic.getName())) {
+            characteristic.setName(kbCharacteristic.getName());
+        }
+        if (isBlank(characteristic.getDescription())) {
+            characteristic.setDescription(kbCharacteristic.getDescription());
+        }
+        if (characteristic.getEntryFieldMask() == null) {
+            characteristic.setEntryFieldMask(kbCharacteristic.getEntryFieldMask());
+        }
+        if (characteristic.getLength() == null) {
+            characteristic.setLength(kbCharacteristic.getLength());
+        }
+        if (characteristic.getNumberDecimals() == null) {
+            characteristic.setNumberDecimals(kbCharacteristic.getNumberDecimals());
+        }
+        if (isBlank(characteristic.getValueType())) {
+            characteristic.setValueType(resolveValueType(kbCharacteristic));
+        }
+
+        Map<String, SapKbPossibleValue> kbPossibleValuesById = new HashMap<>();
+        if (kbCharacteristic.getPossibleValues() != null) {
+            for (SapKbPossibleValue kbPossibleValue : kbCharacteristic.getPossibleValues()) {
+                if (kbPossibleValue == null) {
+                    continue;
+                }
+
+                String key = firstNonBlank(kbPossibleValue.getId(), kbPossibleValue.getValueLow());
+                if (key != null) {
+                    kbPossibleValuesById.put(key, kbPossibleValue);
+                }
+            }
+        }
+
+        if (characteristic.getPossibleValues() != null) {
+            for (CharacteristicValueDto possibleValue : characteristic.getPossibleValues()) {
+                enrichValueFromSapKb(possibleValue, kbPossibleValuesById);
+            }
+        }
+
+        if (characteristic.getValues() != null) {
+            for (CharacteristicValueDto value : characteristic.getValues()) {
+                enrichValueFromSapKb(value, kbPossibleValuesById);
+            }
+        }
+    }
+
+    private static void enrichValueFromSapKb(
+            CharacteristicValueDto value,
+            Map<String, SapKbPossibleValue> kbPossibleValuesById
+    ) {
+        if (value == null) {
+            return;
+        }
+
+        SapKbPossibleValue kbPossibleValue = kbPossibleValuesById.get(value.getId());
+        if (kbPossibleValue == null) {
+            return;
+        }
+
+        if (isBlank(value.getName())) {
+            value.setName(firstNonBlank(kbPossibleValue.getName(), kbPossibleValue.getValueLow(), kbPossibleValue.getId()));
+        }
+        if (isBlank(value.getDescription())) {
+            value.setDescription(kbPossibleValue.getDescription());
+        }
+
+        if (isBlank(value.getId())) {
+            value.setId(firstNonBlank(kbPossibleValue.getId(), kbPossibleValue.getValueLow()));
+        }
+    }
+
+    private static String resolveValueType(SapKbCharacteristic kbCharacteristic) {
+        String type = kbCharacteristic.getType();
+        Boolean multiValued = kbCharacteristic.getMultiValued();
+
+        if (type == null) {
+            return Boolean.TRUE.equals(multiValued) ? "MULTI" : "SINGLE";
+        }
+
+        String normalizedType = type.trim().toUpperCase();
+
+        if (normalizedType.contains("NUM")
+                || normalizedType.contains("INT")
+                || normalizedType.contains("DEC")
+                || normalizedType.contains("CURR")
+                || normalizedType.contains("FLOAT")) {
+            return "NUMERIC";
+        }
+
+        if (normalizedType.contains("DATE")) {
+            return "NUMERIC";
+        }
+
+        if (normalizedType.contains("TIME")) {
+            return "NUMERIC";
+        }
+
+        if (Boolean.TRUE.equals(multiValued)) {
+            return "MULTI";
+        }
+
+        if (kbCharacteristic.getPossibleValues() == null || kbCharacteristic.getPossibleValues().isEmpty()) {
+            return "FREETEXT";
+        }
+
+        return "SINGLE";
+    }
+
+    private static String firstNonBlank(String... values) {
+        if (values == null) {
+            return null;
+        }
+
+        for (String value : values) {
+            if (!isBlank(value)) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }
