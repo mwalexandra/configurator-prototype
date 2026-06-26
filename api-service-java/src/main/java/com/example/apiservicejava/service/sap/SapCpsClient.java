@@ -1,5 +1,6 @@
 package com.example.apiservicejava.service.sap;
 
+import com.example.apiservicejava.mapper.ExternalConfigurationMapper;
 import com.example.apiservicejava.model.sapruntime.SapCreateRequest;
 import com.example.apiservicejava.model.sapruntime.SapRuntimeConfigurationResponse;
 import com.example.apiservicejava.service.sap.support.SapGetConfigurationResult;
@@ -135,6 +136,26 @@ public class SapCpsClient {
                 }
 
                 return getConfiguration(configurationId);
+        }
+
+        public SapRuntimeConfigurationResponse createConfigurationFromExternal(Map<String, Object> requestBody) {
+
+                String url = baseUrl + "/api/v2/externalConfigurations";
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                headers.set("APIKey", apiKey);
+
+                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+                ResponseEntity<SapRuntimeConfigurationResponse> response = restTemplate.exchange(
+                        url,
+                        HttpMethod.POST,
+                        entity,
+                        SapRuntimeConfigurationResponse.class
+                );
+
+                return response.getBody();
         }
 
 }

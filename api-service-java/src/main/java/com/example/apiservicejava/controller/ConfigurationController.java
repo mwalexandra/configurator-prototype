@@ -43,7 +43,7 @@ public class ConfigurationController {
         return configurationService.resumeConfiguration(request);
     }
 
-    @PostMapping("/configurations/external")
+    @PostMapping("/external")
     public ResponseEntity<ConfigurationResponse> createFromExternalConfiguration(
         @RequestBody ExternalConfigurationCreateRequest request
     ) {

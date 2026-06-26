@@ -2,6 +2,7 @@ package com.example.apiservicejava.service;
 
 import com.example.apiservicejava.mapper.ConfigurationMapper;
 import com.example.apiservicejava.mapper.ExternalConfigurationMapper;
+import com.example.apiservicejava.model.api.ConfigurationItem;
 import com.example.apiservicejava.model.api.ConfigurationResponse;
 import com.example.apiservicejava.model.api.ConfigurationSnapshot;
 import com.example.apiservicejava.model.api.CreateConfigurationRequest;
@@ -11,13 +12,23 @@ import com.example.apiservicejava.model.api.ResumeConfigurationRequest;
 import com.example.apiservicejava.model.api.ExternalConfigurationCreateRequest;
 import com.example.apiservicejava.model.sapkb.SapKbResponse;
 import com.example.apiservicejava.model.sapruntime.SapCreateRequest;
+import com.example.apiservicejava.model.sapruntime.SapRuntimeCharacteristic;
 import com.example.apiservicejava.model.sapruntime.SapRuntimeConfigurationResponse;
+import com.example.apiservicejava.model.sapruntime.SapRuntimeRootItem;
+import com.example.apiservicejava.model.sapruntime.SapRuntimeValue;
 import com.example.apiservicejava.service.sap.SapCpsClient;
 import com.example.apiservicejava.service.sap.support.SapGetConfigurationResult;
+
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -82,7 +93,14 @@ public class ConfigurationService {
             ExternalConfigurationCreateRequest request
     ) {
         Map<String, Object> sapRequestBody = ExternalConfigurationMapper.toSapRequestBody(request);
-        throw new UnsupportedOperationException("SAP call not implemented yet. Payload prepared: " + sapRequestBody);
+        
+        //debugging
+        System.out.println("sapRequestBody = " + sapRequestBody);
+
+        SapRuntimeConfigurationResponse sapResponse =
+                sapCpsClient.createConfigurationFromExternal(sapRequestBody);
+
+        return ExternalConfigurationMapper.fromSapRuntimeResponse(sapResponse);
     }
     
     public ConfigurationResponse getConfiguration(String configId) {
