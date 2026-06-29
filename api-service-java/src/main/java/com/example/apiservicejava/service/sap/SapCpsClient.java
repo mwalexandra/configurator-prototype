@@ -137,4 +137,43 @@ public class SapCpsClient {
                 return getConfiguration(configurationId);
         }
 
+        public SapRuntimeConfigurationResponse createConfigurationFromExternal(Map<String, Object> requestBody) {
+
+                String url = baseUrl + "/api/v2/externalConfigurations";
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                headers.set("APIKey", apiKey);
+
+                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+                ResponseEntity<SapRuntimeConfigurationResponse> response = restTemplate.exchange(
+                        url,
+                        HttpMethod.POST,
+                        entity,
+                        SapRuntimeConfigurationResponse.class
+                );
+
+                return response.getBody();
+        }
+
+        public void deleteConfiguration(String configurationId) {
+                if (configurationId == null || configurationId.isBlank()) {
+                        throw new IllegalArgumentException("configurationId must not be blank");
+                }
+
+                String url = baseUrl + "/api/v2/configurations/" + configurationId;
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.set("APIKey", apiKey);
+
+                HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+                restTemplate.exchange(
+                        url,
+                        HttpMethod.DELETE,
+                        entity,
+                        Void.class);
+        }
+
 }

@@ -1,9 +1,9 @@
 <div class="widget">
   <h2 class="widget__title">Konfigurator-Widget</h2>
 
-  <div class="status-banner" [ngClass]="'status-banner--' + ui.uiState()">
+<!--  <div class="status-banner" [ngClass]="'status-banner--' + ui.uiState()">
     {{ ui.uiStateText() }}
-  </div>
+  </div> -->
 
   <div class="widget-toolbar" *ngIf="configuration() as currentConfig">
     <div class="widget-toolbar__status">
@@ -47,6 +47,29 @@
       >
         {{ status() === 'completing' ? 'Speicherung...' : 'Konfiguration speichern' }}
       </button>
+
+      <!-- Nur sichtbar wenn kein Runtime-Exemplar existiert und Snapshot im Readonly-Modus geladen wurde -->
+      <button
+        *ngIf="ui.isReadOnly()"
+        type="button"
+        class="btn btn--secondary"
+        (click)="createFromExternalConfiguration()"
+        [disabled]="!ui.isReadyForExternalCreate()"
+        title="Neue bearbeitbare Konfiguration aus diesem Snapshot erstellen"
+      >
+        {{ status() === 'loading' ? 'Wird erstellt...' : 'Neue Konfiguration aus Snapshot erstellen' }}
+      </button>
+
+      <!-- Neue кнопка для удаления -->
+      <button
+        type="button"
+        class="btn btn--danger"
+        (click)="deleteConfiguration()"
+        [disabled]="!configuration() || status() === 'updating' || status() === 'completing' || ui.isReadOnly()"
+        title="Aktuelle Konfiguration löschen"
+      >
+        🗑️ {{ status() === 'updating' ? 'Löschen...' : 'Löschen' }}
+      </button>
     </div>
   </div>
 
@@ -62,6 +85,10 @@
       *ngFor="let msg of getGlobalMessages()"
     >
       {{ msg.text }}
+    </p>
+
+    <p class="message message--warning" *ngIf="ui.uiState() === 'readonly'">
+      Runtime-Version wurde nicht gefunden. Eine neue Konfiguration wird mit dem neuen ID erstellt.
     </p>
   </div>
 
@@ -86,12 +113,13 @@
         <p><span>UI-Zustand</span> {{ translateUiState(ui.uiState()) }}</p>
       </div>
 
-      <div class="actions">
+      <div class="actions" *ngIf="widgetInputConfig.mode === 'create' && !configuration()">
+        <!-- TODO add disabled or change to Reset if configuration is started -->
         <button
           type="button"
           class="btn btn--primary"
           (click)="startConfiguration()"
-          [disabled]="status() === 'loading' || status() === 'updating' || status() === 'completing'"
+          [disabled]="status() !== 'idle' && status() !== 'error'"
         >
           {{ status() === 'loading' ? 'Wird gestartet...' : 'Konfiguration starten' }}
         </button>

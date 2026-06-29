@@ -15,13 +15,13 @@
         <button 
           type="button" 
           (click)="switchToCreateMode()" 
-          [disabled]="isCreateModeButtonDisabled()">
+          [disabled]="isCreateModeButtonDisabled() || showWidget()">
           Ein neues Produkt konfigurieren
         </button>
         <button 
           type="button" 
           (click)="switchToResumeMode()" 
-          [disabled]="isResumeModeButtonDisabled()">
+          [disabled]="isResumeModeButtonDisabled() || showWidget()">
           {{ isLoadingSavedConfig() ? 'Lade gespeicherte Konfiguration...' : 'Eine bestehende Konfiguration fortsetzen' }}
         </button>
       </div>

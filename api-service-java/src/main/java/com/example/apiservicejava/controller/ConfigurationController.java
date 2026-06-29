@@ -1,12 +1,26 @@
 package com.example.apiservicejava.controller;
 
-import com.example.apiservicejava.model.api.CreateConfigurationRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.example.apiservicejava.model.api.ConfigurationResponse;
+import com.example.apiservicejava.model.api.CreateConfigurationRequest;
+import com.example.apiservicejava.model.api.DeleteConfigurationsRequest;
+import com.example.apiservicejava.model.api.DeleteConfigurationsResponse;
+import com.example.apiservicejava.model.api.ExternalConfigurationCreateRequest;
 import com.example.apiservicejava.model.api.PatchConfigurationRequest;
 import com.example.apiservicejava.model.api.ResumeConfigurationRequest;
 import com.example.apiservicejava.service.ConfigurationService;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+
 import jakarta.validation.Valid;
 
 @RestController
@@ -32,6 +46,14 @@ public class ConfigurationController {
         return configurationService.resumeConfiguration(request);
     }
 
+    @PostMapping("/external")
+    public ResponseEntity<ConfigurationResponse> createFromExternalConfiguration(
+        @RequestBody ExternalConfigurationCreateRequest request
+    ) {
+        ConfigurationResponse response = configurationService.createFromExternalConfiguration(request);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/{configId}")
     @ResponseStatus(HttpStatus.OK)
     public ConfigurationResponse getConfiguration(@PathVariable String configId) {
@@ -51,5 +73,17 @@ public class ConfigurationController {
     @ResponseStatus(HttpStatus.OK)
     public ConfigurationResponse completeConfiguration(@PathVariable String configId) {
         return configurationService.completeConfiguration(configId);
+    }
+
+    @DeleteMapping("/{configId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteConfiguration(@PathVariable String configId) {
+        configurationService.deleteConfiguration(configId);
+    }
+
+    @PostMapping("/batch/delete")
+    @ResponseStatus(HttpStatus.OK)
+    public DeleteConfigurationsResponse deleteConfigurations(@Valid @RequestBody DeleteConfigurationsRequest request) {
+        return configurationService.deleteConfigurations(request);
     }
 }

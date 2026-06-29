@@ -113,6 +113,10 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     this.facade?.resumeConfiguration();
   }
 
+  createFromExternalConfiguration(): void {
+    this.facade?.createFromExternalConfiguration();
+  }
+
   protected updateCharacteristic(
     characteristicId: string,
     value: string | null,
@@ -127,6 +131,14 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
 
   protected addToCart(): void {
     this.facade?.addToCart();
+  }
+
+  protected deleteConfiguration(): void {
+    this.facade?.deleteCurrentConfiguration();
+  }
+
+  protected deleteConfigurationIds(configurationIds: string[]): void {
+    this.facade?.deleteMultipleConfigurations(configurationIds);
   }
 
   protected getSingleSelectedValueId(char: Characteristic): string {

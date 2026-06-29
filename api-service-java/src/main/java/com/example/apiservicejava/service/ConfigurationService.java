@@ -1,21 +1,27 @@
 package com.example.apiservicejava.service;
 
 import com.example.apiservicejava.mapper.ConfigurationMapper;
+import com.example.apiservicejava.mapper.ExternalConfigurationMapper;
 import com.example.apiservicejava.model.api.ConfigurationResponse;
 import com.example.apiservicejava.model.api.ConfigurationSnapshot;
 import com.example.apiservicejava.model.api.CreateConfigurationRequest;
+import com.example.apiservicejava.model.api.DeleteConfigurationsRequest;
+import com.example.apiservicejava.model.api.DeleteConfigurationsResponse;
 import com.example.apiservicejava.model.api.PatchConfigurationRequest;
 import com.example.apiservicejava.model.api.RestoreInfo;
 import com.example.apiservicejava.model.api.ResumeConfigurationRequest;
+import com.example.apiservicejava.model.api.ExternalConfigurationCreateRequest;
 import com.example.apiservicejava.model.sapkb.SapKbResponse;
 import com.example.apiservicejava.model.sapruntime.SapCreateRequest;
 import com.example.apiservicejava.model.sapruntime.SapRuntimeConfigurationResponse;
 import com.example.apiservicejava.service.sap.SapCpsClient;
 import com.example.apiservicejava.service.sap.support.SapGetConfigurationResult;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -76,6 +82,33 @@ public class ConfigurationService {
         return response;
     }
 
+    public ConfigurationResponse createFromExternalConfiguration(
+            ExternalConfigurationCreateRequest request
+    ) {
+        Map<String, Object> sapRequestBody = ExternalConfigurationMapper.toSapRequestBody(request);
+
+        SapRuntimeConfigurationResponse sapResponse =
+                sapCpsClient.createConfigurationFromExternal(sapRequestBody);
+
+        ConfigurationResponse response = ExternalConfigurationMapper.fromSapRuntimeResponse(sapResponse);
+
+        // Получить kbId - приоритет: request.kbId > sapResponse.kbId
+        String kbId = request.getKbId();
+        if (kbId == null || kbId.isBlank()) {
+            kbId = sapResponse.getKbId() != null
+                    ? sapResponse.getKbId().toString()
+                    : null;
+        }
+
+        // Подгрузить Knowledge Base если kbId доступен
+        if (kbId != null && !kbId.isBlank()) {
+            SapKbResponse kbResponse = sapKbClient.getKnowledgeBase(kbId);
+            ExternalConfigurationMapper.enrichFromSapKb(response, kbResponse);
+        }
+
+        return response;
+    }
+    
     public ConfigurationResponse getConfiguration(String configId) {
         long start = System.currentTimeMillis();
 
@@ -253,6 +286,41 @@ public class ConfigurationService {
         ConfigurationResponse response = configurationMapper.toWidgetResponse(completedRuntime, kbResponse);
         response.setBackendProcessingTimeMs(System.currentTimeMillis() - start);
         return response;
+    }
+
+    public void deleteConfiguration(String configurationId) {
+        if (configurationId == null || configurationId.isBlank()) {
+            throw new IllegalArgumentException("configurationId must not be blank");
+        }
+
+        sapCpsClient.deleteConfiguration(configurationId);
+
+        // Очистка кэша для удаленной конфигурации
+        etagByConfigurationId.remove(configurationId);
+        readOnlyByConfigurationId.remove(configurationId);
+    }
+
+    public DeleteConfigurationsResponse deleteConfigurations(DeleteConfigurationsRequest request) {
+        List<String> configurationIds = request.getConfigurationIds();
+        
+        if (configurationIds == null || configurationIds.isEmpty()) {
+            throw new IllegalArgumentException("configurationIds list must not be empty");
+        }
+
+        int totalRequested = configurationIds.size();
+        int successfullyDeleted = 0;
+        List<String> failedConfigurationIds = new ArrayList<>();
+
+        for (String configId : configurationIds) {
+            try {
+                deleteConfiguration(configId);
+                successfullyDeleted++;
+            } catch (Exception ex) {
+                failedConfigurationIds.add(configId);
+            }
+        }
+
+        return new DeleteConfigurationsResponse(totalRequested, successfullyDeleted, failedConfigurationIds);
     }
 
 }

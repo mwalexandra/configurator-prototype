@@ -22,6 +22,7 @@ interface ConfiguratorWidgetUiState {
   hasErrors: Signal<boolean>;
   isReadyForCompletion: Signal<boolean>;
   isReadyForAddToCart: Signal<boolean>;
+  isReadyForExternalCreate: Signal<boolean>;
   uiState: Signal<WidgetUiState>;
   uiStateText: Signal<string>;
 
@@ -116,6 +117,23 @@ export function createConfiguratorWidgetUiState(
     return status() === 'completed' && current.complete && current.consistent;
   });
 
+    // Кнопка нужна ТОЛЬКО когда загружен readonly snapshot (нет живой runtime сессии)
+  const isReadyForExternalCreate = computed(() => {
+    const current = configuration();
+    if (!current) return false;
+
+    const restoreInfo = current.restoreInfo;
+    const isSnapshot =
+      restoreInfo?.readOnly === true &&
+      restoreInfo?.liveSessionAvailable === false;
+
+    if (!isSnapshot) return false;
+
+    // Не во время загрузки/выполнения операции
+    const s = status();
+    return s !== 'loading' && s !== 'updating' && s !== 'completing' && s !== 'completed';
+  });
+
   const uiState = computed<WidgetUiState>(() => {
     const current = configuration();
 
@@ -181,6 +199,7 @@ export function createConfiguratorWidgetUiState(
     hasErrors,
     isReadyForCompletion,
     isReadyForAddToCart,
+    isReadyForExternalCreate,
     uiState,
     uiStateText,
     incompleteCharacteristics,

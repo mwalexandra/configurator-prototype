@@ -7,10 +7,16 @@ import {
   ConfigurationResponse,
   ConfigurationSnapshot,
   CreateConfigurationRequest,
+  DeleteConfigurationsRequest,
+  DeleteConfigurationsResponse,
+  ExternalConfigurationPayload,
   ResumeConfigurationRequest,
   WidgetInputConfig,
-  WidgetState
+  WidgetState,
+  ConfigurationItem,
+  ExternalConfigurationItemPayload
 } from '../models/configuration.models';
+import { Observable } from 'rxjs/internal/Observable';
 
 interface ConfiguratorWidgetFacadeContext {
   widgetInputConfig: WidgetInputConfig;
@@ -369,5 +375,150 @@ export class ConfiguratorWidgetFacade {
     this.ctx.status.set('error');
     this.ctx.errorMessage.set(message);
     this.ctx.errorOccurred.emit({ errorCode, message });
+  }
+
+  createFromExternalConfiguration(): void {
+    const current = this.ctx.configuration();
+    if (!current) {
+      this.emitError('CONFIG_EXTERNAL_CREATE_INVALID', 'Keine Konfiguration zum Export vorhanden');
+      return;
+    }
+
+    // Guard: только для readonly snapshot без живой runtime сессии
+    const restoreInfo = current.restoreInfo;
+    if (
+      restoreInfo?.readOnly !== true ||
+      restoreInfo?.liveSessionAvailable !== false
+    ) {
+      this.emitError(
+        'CONFIG_EXTERNAL_CREATE_INVALID',
+        'createFromExternalConfiguration ist nur für Readonly-Snapshots ohne Runtime-Sitzung erlaubt'
+      );
+      return;
+    }
+
+    const s = this.ctx.status();
+    if (s === 'loading' || s === 'updating' || s === 'completing' || s === 'completed') {
+      return;
+    }
+
+    const payload = this.buildExternalConfigurationPayload(current);
+
+    this.ctx.status.set('loading');
+    this.ctx.errorMessage.set(null);
+
+    this.api.createFromExternalConfiguration(payload).subscribe({
+      next: response => this.applyConfiguration(response, true),
+      error: () =>
+        this.emitError(
+          'CONFIG_EXTERNAL_CREATE_FAILED',
+          'Konfiguration aus externalConfiguration konnte nicht erstellt werden'
+        )
+    });
+  }
+
+  private buildExternalConfigurationPayload(
+    current: ConfigurationResponse
+  ): ExternalConfigurationPayload {
+    return {
+      productId: current.productId,
+      kbId: current.kbId ?? undefined,
+      rootItem: this.mapItemToExternalConfiguration(current.rootItem),
+      metadata: {
+        version: '1.0',
+        sourceContext: this.ctx.widgetInputConfig.resume?.sourceContext ?? 'widget',
+        configurationId: current.configurationId,
+        savedAt: new Date().toISOString()
+      }
+    };
+  }
+
+  private mapItemToExternalConfiguration(
+    item: ConfigurationItem
+  ): ExternalConfigurationItemPayload {
+    return {
+      id: item.id,
+      key: item.key,
+      characteristics: (item.characteristics ?? [])
+        .filter(char => (char.values?.length ?? 0) > 0)
+        .map(char => ({
+          id: char.id,
+          values: (char.values ?? []).map(value => ({
+            value: value.id
+          }))
+        })),
+      subItems: (item.subItems ?? []).map(subItem =>
+        this.mapItemToExternalConfiguration(subItem)
+      )
+    };
+  }
+
+  deleteCurrentConfiguration(): void {
+    const currentConfigId = this.ctx.configId();
+
+    if (!currentConfigId) {
+      this.emitError('CONFIG_DELETE_INVALID', 'Keine aktive Konfiguration zum Löschen vorhanden');
+      return;
+    }
+
+    this.ctx.status.set('updating');
+    this.ctx.errorMessage.set(null);
+
+    this.api.deleteConfiguration(currentConfigId).subscribe({
+      next: () => {
+        this.ctx.configuration.set(null);
+        this.ctx.configId.set(null);
+        this.ctx.status.set('idle');
+        this.ctx.errorMessage.set(null);
+
+        // Автоматически восстановить следующую конфигурацию
+        this.resumeConfiguration();
+      },
+      error: () =>
+        this.emitError('CONFIG_DELETE_FAILED', 'Die Konfiguration konnte nicht gelöscht werden')
+    });
+  }
+
+  deleteMultipleConfigurations(configurationIds: string[]): void {
+    if (!configurationIds || configurationIds.length === 0) {
+      this.emitError('CONFIG_DELETE_LIST_INVALID', 'Liste der zu löschenden Konfigurationen ist leer');
+      return;
+    }
+
+    this.ctx.status.set('updating');
+    this.ctx.errorMessage.set(null);
+
+    const payload: DeleteConfigurationsRequest = {
+      configurationIds
+    };
+
+    this.api.deleteConfigurations(payload).subscribe({
+      next: (response: DeleteConfigurationsResponse) => {
+        const message = `${response.successfullyDeleted} von ${response.totalRequested} Konfigurationen gelöscht.` +
+          (response.failedConfigurationIds.length > 0
+            ? ` ${response.failedConfigurationIds.length} fehlgeschlagen.`
+            : '');
+
+        this.ctx.status.set('idle');
+        this.ctx.errorMessage.set(null);
+
+        // Очищаем текущую конфигурацию, если она была удалена
+        const currentConfigId = this.ctx.configId();
+        if (currentConfigId && configurationIds.includes(currentConfigId)) {
+          this.ctx.configuration.set(null);
+          this.ctx.configId.set(null);
+        }
+
+        this.ctx.errorOccurred.emit({
+          errorCode: 'CONFIG_BULK_DELETE_SUCCESS',
+          message
+        });
+      },
+      error: () =>
+        this.emitError(
+          'CONFIG_BULK_DELETE_FAILED',
+          'Batch-Löschung der Konfigurationen fehlgeschlagen'
+        )
+    });
   }
 }
