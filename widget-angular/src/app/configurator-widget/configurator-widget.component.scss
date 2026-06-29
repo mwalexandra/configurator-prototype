@@ -440,6 +440,23 @@
   background: #f4f7fa;
 }
 
+.btn--danger {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.btn--small {
+  min-height: 28px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
 .btn--full {
   width: 100%;
 }

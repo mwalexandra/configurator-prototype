@@ -59,6 +59,17 @@
       >
         {{ status() === 'loading' ? 'Wird erstellt...' : 'Neue Konfiguration aus Snapshot erstellen' }}
       </button>
+
+      <!-- Neue кнопка для удаления -->
+      <button
+        type="button"
+        class="btn btn--danger"
+        (click)="deleteConfiguration()"
+        [disabled]="!configuration() || status() === 'updating' || status() === 'completing' || ui.isReadOnly()"
+        title="Aktuelle Konfiguration löschen"
+      >
+        🗑️ {{ status() === 'updating' ? 'Löschen...' : 'Löschen' }}
+      </button>
     </div>
   </div>
 

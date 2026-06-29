@@ -133,6 +133,14 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     this.facade?.addToCart();
   }
 
+  protected deleteConfiguration(): void {
+    this.facade?.deleteCurrentConfiguration();
+  }
+
+  protected deleteConfigurationIds(configurationIds: string[]): void {
+    this.facade?.deleteMultipleConfigurations(configurationIds);
+  }
+
   protected getSingleSelectedValueId(char: Characteristic): string {
     return char.values?.[0]?.id ?? '';
   }

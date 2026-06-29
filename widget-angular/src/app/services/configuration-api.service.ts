@@ -7,7 +7,9 @@ import {
   ConfigurationResponse,
   ResumeConfigurationRequest,
   UpdateCharacteristicRequest,
-  ExternalConfigurationPayload
+  ExternalConfigurationPayload,
+  DeleteConfigurationsRequest,
+  DeleteConfigurationsResponse
 } from '../models/configuration.models';
 
 @Injectable({
@@ -92,5 +94,20 @@ export class ConfigurationApiService {
         metadata: payload.metadata
       }
     };
+  }
+
+  deleteConfiguration(configurationId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.apiBaseUrl}/configurations/${configurationId}`
+    );
+  }
+
+  deleteConfigurations(
+    payload: DeleteConfigurationsRequest
+  ): Observable<DeleteConfigurationsResponse> {
+    return this.http.post<DeleteConfigurationsResponse>(
+      `${this.apiBaseUrl}/configurations/batch/delete`,
+      payload
+    );
   }
 }

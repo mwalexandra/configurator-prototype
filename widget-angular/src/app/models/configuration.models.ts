@@ -233,3 +233,17 @@ export interface ExternalConfigurationPayload {
     savedAt: string;
   };
 }
+
+// ───────────────────────────────────────────
+//  Delete Configuration API models
+// ───────────────────────────────────────────
+
+export interface DeleteConfigurationsRequest {
+  configurationIds: string[];
+}
+
+export interface DeleteConfigurationsResponse {
+  totalRequested: number;
+  successfullyDeleted: number;
+  failedConfigurationIds: string[];
+}

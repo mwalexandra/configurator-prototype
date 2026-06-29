@@ -7,6 +7,8 @@ import {
   ConfigurationResponse,
   ConfigurationSnapshot,
   CreateConfigurationRequest,
+  DeleteConfigurationsRequest,
+  DeleteConfigurationsResponse,
   ExternalConfigurationPayload,
   ResumeConfigurationRequest,
   WidgetInputConfig,
@@ -449,5 +451,74 @@ export class ConfiguratorWidgetFacade {
         this.mapItemToExternalConfiguration(subItem)
       )
     };
+  }
+
+  deleteCurrentConfiguration(): void {
+    const currentConfigId = this.ctx.configId();
+
+    if (!currentConfigId) {
+      this.emitError('CONFIG_DELETE_INVALID', 'Keine aktive Konfiguration zum Löschen vorhanden');
+      return;
+    }
+
+    this.ctx.status.set('updating');
+    this.ctx.errorMessage.set(null);
+
+    this.api.deleteConfiguration(currentConfigId).subscribe({
+      next: () => {
+        this.ctx.configuration.set(null);
+        this.ctx.configId.set(null);
+        this.ctx.status.set('idle');
+        this.ctx.errorMessage.set(null);
+
+        // Автоматически восстановить следующую конфигурацию
+        this.resumeConfiguration();
+      },
+      error: () =>
+        this.emitError('CONFIG_DELETE_FAILED', 'Die Konfiguration konnte nicht gelöscht werden')
+    });
+  }
+
+  deleteMultipleConfigurations(configurationIds: string[]): void {
+    if (!configurationIds || configurationIds.length === 0) {
+      this.emitError('CONFIG_DELETE_LIST_INVALID', 'Liste der zu löschenden Konfigurationen ist leer');
+      return;
+    }
+
+    this.ctx.status.set('updating');
+    this.ctx.errorMessage.set(null);
+
+    const payload: DeleteConfigurationsRequest = {
+      configurationIds
+    };
+
+    this.api.deleteConfigurations(payload).subscribe({
+      next: (response: DeleteConfigurationsResponse) => {
+        const message = `${response.successfullyDeleted} von ${response.totalRequested} Konfigurationen gelöscht.` +
+          (response.failedConfigurationIds.length > 0
+            ? ` ${response.failedConfigurationIds.length} fehlgeschlagen.`
+            : '');
+
+        this.ctx.status.set('idle');
+        this.ctx.errorMessage.set(null);
+
+        // Очищаем текущую конфигурацию, если она была удалена
+        const currentConfigId = this.ctx.configId();
+        if (currentConfigId && configurationIds.includes(currentConfigId)) {
+          this.ctx.configuration.set(null);
+          this.ctx.configId.set(null);
+        }
+
+        this.ctx.errorOccurred.emit({
+          errorCode: 'CONFIG_BULK_DELETE_SUCCESS',
+          message
+        });
+      },
+      error: () =>
+        this.emitError(
+          'CONFIG_BULK_DELETE_FAILED',
+          'Batch-Löschung der Konfigurationen fehlgeschlagen'
+        )
+    });
   }
 }
