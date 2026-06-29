@@ -9,6 +9,8 @@ import com.example.apiservicejava.model.api.ExternalConfigurationCreateRequest;
 import com.example.apiservicejava.model.api.ExternalConfigurationDto;
 import com.example.apiservicejava.model.api.ExternalConfigurationItemDto;
 import com.example.apiservicejava.model.api.ExternalConfigurationValueDto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.example.apiservicejava.model.sapruntime.SapRuntimeCharacteristic;
 import com.example.apiservicejava.model.sapruntime.SapRuntimeConfigurationResponse;
 import com.example.apiservicejava.model.sapruntime.SapRuntimePossibleValue;
@@ -24,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class ExternalConfigurationMapper {
-
+    private static final Logger log = LoggerFactory.getLogger(ExternalConfigurationMapper.class);
     private ExternalConfigurationMapper() {
     }
 
@@ -269,7 +271,7 @@ public final class ExternalConfigurationMapper {
 
         CharacteristicValueDto value = new CharacteristicValueDto();
         value.setId(sapValue.getValue());
-        value.setName(sapValue.getValue());
+        value.setName(null);  // KB enrichment заполнит
         value.setSelected(true);
         value.setAuthor(sapValue.getAuthor());
         return value;
@@ -282,7 +284,7 @@ public final class ExternalConfigurationMapper {
 
         CharacteristicValueDto value = new CharacteristicValueDto();
         value.setId(sapValue.getValueLow());
-        value.setName(sapValue.getValueLow());
+        value.setName(null);  // KB enrichment заполнит
         value.setSelected(false);
         value.setAuthor(null);
         return value;
@@ -296,9 +298,11 @@ public final class ExternalConfigurationMapper {
         }
 
         Map<String, SapKbCharacteristic> kbCharacteristicsById = new HashMap<>();
+        log.info("KB characteristics available:");
         for (SapKbCharacteristic kbCharacteristic : kbResponse.getCharacteristics()) {
             if (kbCharacteristic != null && kbCharacteristic.getId() != null) {
                 kbCharacteristicsById.put(kbCharacteristic.getId(), kbCharacteristic);
+                log.info("  KB char: id={}, name={}", kbCharacteristic.getId(), kbCharacteristic.getName());
             }
         }
 
@@ -314,19 +318,25 @@ public final class ExternalConfigurationMapper {
         }
 
         if (item.getCharacteristics() != null) {
+            log.info("Enriching item id={} with {} characteristics", item.getId(), item.getCharacteristics().size());
             for (CharacteristicDto characteristic : item.getCharacteristics()) {
                 if (characteristic == null || characteristic.getId() == null) {
                     continue;
                 }
 
+                log.info("  Runtime char: id={}, name={}", characteristic.getId(), characteristic.getName());
                 SapKbCharacteristic kbCharacteristic = kbCharacteristicsById.get(characteristic.getId());
                 if (kbCharacteristic != null) {
+                    log.info("    -> MATCHED with KB, enriching");
                     enrichCharacteristicFromSapKb(characteristic, kbCharacteristic);
+                } else {
+                    log.warn("    -> NOT MATCHED in KB!");
                 }
             }
         }
 
         if (item.getSubItems() != null) {
+            log.info("Enriching {} subitems for item id={}", item.getSubItems().size(), item.getId());
             for (ConfigurationItem subItem : item.getSubItems()) {
                 enrichItemFromSapKb(subItem, kbCharacteristicsById);
             }
