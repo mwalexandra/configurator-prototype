@@ -48,13 +48,16 @@
         {{ status() === 'completing' ? 'Speicherung...' : 'Konfiguration speichern' }}
       </button>
 
+      <!-- Nur sichtbar wenn kein Runtime-Exemplar existiert und Snapshot im Readonly-Modus geladen wurde -->
       <button
+        *ngIf="ui.isReadOnly()"
         type="button"
         class="btn btn--secondary"
         (click)="createFromExternalConfiguration()"
-        [disabled]="!configuration() || status() === 'loading' || status() === 'updating' || status() === 'completing'"
+        [disabled]="!ui.isReadyForExternalCreate()"
+        title="Neue bearbeitbare Konfiguration aus diesem Snapshot erstellen"
       >
-        Neue Konfiguration aus externalConfiguration
+        {{ status() === 'loading' ? 'Wird erstellt...' : 'Neue Konfiguration aus Snapshot erstellen' }}
       </button>
     </div>
   </div>

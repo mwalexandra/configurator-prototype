@@ -382,6 +382,24 @@ export class ConfiguratorWidgetFacade {
       return;
     }
 
+    // Guard: только для readonly snapshot без живой runtime сессии
+    const restoreInfo = current.restoreInfo;
+    if (
+      restoreInfo?.readOnly !== true ||
+      restoreInfo?.liveSessionAvailable !== false
+    ) {
+      this.emitError(
+        'CONFIG_EXTERNAL_CREATE_INVALID',
+        'createFromExternalConfiguration ist nur für Readonly-Snapshots ohne Runtime-Sitzung erlaubt'
+      );
+      return;
+    }
+
+    const s = this.ctx.status();
+    if (s === 'loading' || s === 'updating' || s === 'completing' || s === 'completed') {
+      return;
+    }
+
     const payload = this.buildExternalConfigurationPayload(current);
 
     this.ctx.status.set('loading');
