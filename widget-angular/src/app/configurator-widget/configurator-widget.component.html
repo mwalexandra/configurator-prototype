@@ -99,13 +99,13 @@
         <p><span>UI-Zustand</span> {{ translateUiState(ui.uiState()) }}</p>
       </div>
 
-      <div class="actions">
+      <div class="actions" *ngIf="widgetInputConfig.mode === 'create' && !configuration()">
         <!-- TODO add disabled or change to Reset if configuration is started -->
         <button
           type="button"
           class="btn btn--primary"
           (click)="startConfiguration()"
-          [disabled]="status() === 'loading' || status() === 'updating' || status() === 'completing'"
+          [disabled]="status() !== 'idle' && status() !== 'error'"
         >
           {{ status() === 'loading' ? 'Wird gestartet...' : 'Konfiguration starten' }}
         </button>
