@@ -17,6 +17,8 @@ import com.example.apiservicejava.model.sapruntime.SapRuntimeConfigurationRespon
 import com.example.apiservicejava.service.sap.SapCpsClient;
 import com.example.apiservicejava.service.sap.support.SapGetConfigurationResult;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -28,6 +30,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class ConfigurationService {
+
+    private static final Logger log = LoggerFactory.getLogger(ConfigurationService.class);
 
     private final SapCpsClient sapCpsClient;
     private final SapKbClient sapKbClient;
@@ -85,14 +89,21 @@ public class ConfigurationService {
     public ConfigurationResponse createFromExternalConfiguration(
             ExternalConfigurationCreateRequest request
     ) {
+        long start = System.currentTimeMillis();
+
+        log.info("createFromExternalConfiguration: request.kbId={}, request.productId={}", 
+                request.getKbId(), request.getProductId());
+
         Map<String, Object> sapRequestBody = ExternalConfigurationMapper.toSapRequestBody(request);
 
         SapRuntimeConfigurationResponse sapResponse =
                 sapCpsClient.createConfigurationFromExternal(sapRequestBody);
 
+        log.info("SAP CPS response: id={}, kbId={}", sapResponse.getId(), sapResponse.getKbId());
+
         ConfigurationResponse response = ExternalConfigurationMapper.fromSapRuntimeResponse(sapResponse);
 
-        // Получить kbId - приоритет: request.kbId > sapResponse.kbId
+        // Получить kbId - приоритет: request.kbId > sapResponse.kbId > query productId
         String kbId = request.getKbId();
         if (kbId == null || kbId.isBlank()) {
             kbId = sapResponse.getKbId() != null
@@ -100,12 +111,50 @@ public class ConfigurationService {
                     : null;
         }
 
-        // Подгрузить Knowledge Base если kbId доступен
-        if (kbId != null && !kbId.isBlank()) {
-            SapKbResponse kbResponse = sapKbClient.getKnowledgeBase(kbId);
-            ExternalConfigurationMapper.enrichFromSapKb(response, kbResponse);
+        // Fallback: если kbId все еще пустой, попробовать получить его через productId
+        if ((kbId == null || kbId.isBlank()) && request.getProductId() != null && !request.getProductId().isBlank()) {
+            log.warn("kbId not available, attempting to resolve via productId={}", request.getProductId());
+            try {
+                SapCreateRequest tempRequest = new SapCreateRequest();
+                tempRequest.setProductKey(request.getProductId());
+                SapRuntimeConfigurationResponse tempResponse = sapCpsClient.createConfiguration(tempRequest);
+                
+                if (tempResponse != null && tempResponse.getKbId() != null) {
+                    kbId = tempResponse.getKbId().toString();
+                    log.info("Resolved kbId from product: {}", kbId);
+                    
+                    // Удалить временную конфигурацию
+                    if (tempResponse.getId() != null) {
+                        try {
+                            sapCpsClient.deleteConfiguration(tempResponse.getId());
+                            log.info("Deleted temporary configuration: {}", tempResponse.getId());
+                        } catch (Exception cleanupEx) {
+                            log.warn("Failed to cleanup temporary configuration: {}", tempResponse.getId(), cleanupEx);
+                        }
+                    }
+                }
+            } catch (Exception fallbackEx) {
+                log.error("Failed to resolve kbId via productId", fallbackEx);
+            }
         }
 
+        log.info("Resolved kbId: {}", kbId);
+
+        // Подгрузить Knowledge Base если kbId доступен
+        if (kbId != null && !kbId.isBlank()) {
+            log.info("Fetching KB for kbId={}", kbId);
+            SapKbResponse kbResponse = sapKbClient.getKnowledgeBase(kbId);
+            log.info("KB received: {} characteristics", 
+                    kbResponse != null && kbResponse.getCharacteristics() != null 
+                        ? kbResponse.getCharacteristics().size() 
+                        : 0);
+            ExternalConfigurationMapper.enrichFromSapKb(response, kbResponse);
+            log.info("KB enrichment completed");
+        } else {
+            log.warn("No kbId available, skipping KB enrichment");
+        }
+
+        response.setBackendProcessingTimeMs(System.currentTimeMillis() - start);
         return response;
     }
     
