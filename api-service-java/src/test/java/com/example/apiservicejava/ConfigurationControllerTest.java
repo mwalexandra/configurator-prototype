@@ -2,7 +2,9 @@ package com.example.apiservicejava;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -12,6 +14,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.apiservicejava.controller.ConfigurationController;
 import com.example.apiservicejava.model.api.ConfigurationResponse;
 import com.example.apiservicejava.model.api.CreateConfigurationRequest;
+import com.example.apiservicejava.model.api.DeleteConfigurationsRequest;
+import com.example.apiservicejava.model.api.DeleteConfigurationsResponse;
 import com.example.apiservicejava.model.api.PatchConfigurationRequest;
 import com.example.apiservicejava.service.ConfigurationService;
 
@@ -23,6 +27,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import tools.jackson.databind.ObjectMapper;
+
+import java.util.List;
 
 // Testet nur den Web-Layer (Controller) für ConfigurationController
 @WebMvcTest(ConfigurationController.class)
@@ -112,23 +118,51 @@ class ConfigurationControllerTest {
     }
 
     @Test
-    void shouldCompleteConfigurationAndReturnFinalState() throws Exception {
-        // Arrange
-        String configId = "cfg-123";
+        void shouldCompleteConfigurationAndReturnFinalState() throws Exception {
+            // Arrange
+            String configId = "cfg-123";
 
-        ConfigurationResponse completed = new ConfigurationResponse();
-        completed.setConfigurationId(configId);
-        completed.setProductId("CPS_BURGER");
-        completed.setKbId("80");
-        completed.setComplete(true);
-        completed.setConsistent(true);
+            ConfigurationResponse completed = new ConfigurationResponse();
+            completed.setConfigurationId(configId);
+            completed.setProductId("CPS_BURGER");
+            completed.setKbId("80");
+            completed.setComplete(true);
+            completed.setConsistent(true);
 
-        when(configurationService.completeConfiguration(configId)).thenReturn(completed);
+            when(configurationService.completeConfiguration(configId)).thenReturn(completed);
 
-        // Act + Assert: POST /api/configurations/{id}/complete
-        mockMvc.perform(post("/api/configurations/{configId}/complete", configId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.configurationId").value("cfg-123"))
-                .andExpect(jsonPath("$.complete").value(true));
+            // Act + Assert: POST /api/configurations/{id}/complete
+            mockMvc.perform(post("/api/configurations/{configId}/complete", configId))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.configurationId").value("cfg-123"))
+                    .andExpect(jsonPath("$.complete").value(true));
+        }
+
+        @Test
+    void shouldDeleteConfigurationAndReturn204() throws Exception {
+        mockMvc.perform(delete("/api/configurations/cfg-123"))
+            .andExpect(status().isNoContent());
+        verify(configurationService).deleteConfiguration("cfg-123");
+    }
+
+    @Test
+    void shouldDeleteMultipleConfigurationsAndReturnResults() throws Exception {
+        DeleteConfigurationsRequest request = new DeleteConfigurationsRequest();
+        request.setConfigurationIds(List.of("cfg-1", "cfg-2"));
+        
+        DeleteConfigurationsResponse mockResponse = new DeleteConfigurationsResponse();
+        mockResponse.setTotalRequested(2);
+        mockResponse.setSuccessfullyDeleted(2);
+        mockResponse.setFailedConfigurationIds(List.of());
+        
+        when(configurationService.deleteConfigurations(any(DeleteConfigurationsRequest.class)))
+                .thenReturn(mockResponse);
+        
+        mockMvc.perform(post("/api/configurations/batch/delete")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalRequested").value(2))
+            .andExpect(jsonPath("$.successfullyDeleted").value(2));
     }
 }

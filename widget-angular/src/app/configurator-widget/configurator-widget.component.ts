@@ -105,11 +105,11 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     return this.configuration()?.rootItem?.subItems ?? [];
   }
 
-  protected startConfiguration(): void {
+  public startConfiguration(): void {
     this.facade?.startConfiguration();
   }
 
-  protected resumeConfiguration(): void {
+  public resumeConfiguration(): void {
     this.facade?.resumeConfiguration();
   }
 
@@ -117,7 +117,7 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     this.facade?.createFromExternalConfiguration();
   }
 
-  protected updateCharacteristic(
+  public updateCharacteristic(
     characteristicId: string,
     value: string | null,
     itemId?: string
@@ -125,7 +125,7 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     this.facade?.updateCharacteristic(characteristicId, value, itemId);
   }
 
-  protected completeConfiguration(): void {
+  public completeConfiguration(): void {
     this.facade?.completeConfiguration();
   }
 

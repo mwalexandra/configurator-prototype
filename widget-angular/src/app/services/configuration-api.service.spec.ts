@@ -7,7 +7,8 @@ import {
 import { ConfigurationApiService } from './configuration-api.service';
 import {
   CreateConfigurationRequest,
-  ConfigurationResponse
+  ConfigurationResponse,
+  DeleteConfigurationsRequest
 } from '../models/configuration.models';
 
 import { environment } from '../../environments/environment';
@@ -137,5 +138,24 @@ describe('ConfigurationApiService', () => {
         expect(req.request.body).toEqual({});
 
         req.flush(mockResponse);
+    });
+
+    it('should DELETE configuration by id', () => {
+      service.deleteConfiguration('cfg-123').subscribe();
+      
+      const req = httpMock.expectOne(`${environment.apiUrl}/configurations/cfg-123`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null, { status: 204, statusText: 'No Content' });
+    });
+
+    it('should POST batch delete request', () => {
+      const request: DeleteConfigurationsRequest = {
+        configurationIds: ['cfg-1', 'cfg-2']
+      };
+      
+      service.deleteConfigurations(request).subscribe();
+      
+      const req = httpMock.expectOne(`${environment.apiUrl}/configurations/batch/delete`);
+      expect(req.request.method).toBe('POST');
     });
 });
