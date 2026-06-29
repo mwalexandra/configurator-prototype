@@ -185,6 +185,10 @@ public final class ExternalConfigurationMapper {
             response.setRootItem(mapRuntimeItem(sapResponse.getRootItem()));
         }
 
+        // Инициализировать groups и messages пустыми списками по умолчанию
+        response.setGroups(new ArrayList<>());
+        response.setMessages(new ArrayList<>());
+
         return response;
     }
 
@@ -359,7 +363,8 @@ public final class ExternalConfigurationMapper {
                     continue;
                 }
 
-                String key = firstNonBlank(kbPossibleValue.getId(), kbPossibleValue.getValueLow());
+                // Приоритет: valueLow (из runtime) > id
+                String key = firstNonBlank(kbPossibleValue.getValueLow(), kbPossibleValue.getId());
                 if (key != null) {
                     kbPossibleValuesById.put(key, kbPossibleValue);
                 }

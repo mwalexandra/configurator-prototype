@@ -92,8 +92,19 @@ public class ConfigurationService {
 
         ConfigurationResponse response = ExternalConfigurationMapper.fromSapRuntimeResponse(sapResponse);
 
-        SapKbResponse kbResponse = sapKbClient.getKnowledgeBase(request.getKbId());
-        ExternalConfigurationMapper.enrichFromSapKb(response, kbResponse);
+        // Получить kbId - приоритет: request.kbId > sapResponse.kbId
+        String kbId = request.getKbId();
+        if (kbId == null || kbId.isBlank()) {
+            kbId = sapResponse.getKbId() != null
+                    ? sapResponse.getKbId().toString()
+                    : null;
+        }
+
+        // Подгрузить Knowledge Base если kbId доступен
+        if (kbId != null && !kbId.isBlank()) {
+            SapKbResponse kbResponse = sapKbClient.getKnowledgeBase(kbId);
+            ExternalConfigurationMapper.enrichFromSapKb(response, kbResponse);
+        }
 
         return response;
     }
