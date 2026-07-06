@@ -1,6 +1,6 @@
 {
   "/api": {
-    "target": "https://port8080-workspaces-ws-qkpkj.us10.trial.applicationstudio.cloud.sap",
+    "target": "https://port8080-workspaces-ws-hou1r.us10.trial.applicationstudio.cloud.sap",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
