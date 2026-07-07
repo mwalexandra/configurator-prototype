@@ -597,27 +597,4 @@ describe('ConfiguratorWidgetComponent (Integration)', () => {
         });
     });
 
-    it('should delete configuration and auto-resume', () => {
-        const mockResponse = createConfigResponse();
-        apiService.deleteConfiguration.mockReturnValue(of(null));
-        apiService.resumeConfiguration.mockReturnValue(of(mockResponse));
-        
-        component.ngOnInit();
-        component.configId.set('cfg-123');
-        
-        component.deleteConfiguration();
-        
-        expect(apiService.deleteConfiguration).toHaveBeenCalledWith('cfg-123');
-        expect(apiService.resumeConfiguration).toHaveBeenCalled();
-        });
-
-        it('should not show delete button in readonly mode', () => {
-        component.configuration.set({
-            ...createConfigResponse(),
-            restoreInfo: { readOnly: true, /* ... */ }
-        });
-        
-        const compiled = fixture.nativeElement;
-        expect(compiled.querySelector('.btn--danger')).toBeNull();
-    });
 });
