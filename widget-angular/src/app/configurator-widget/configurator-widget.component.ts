@@ -25,6 +25,14 @@ import { ConfiguratorWidgetFacade } from './configurator-widget.facade';
 import { createConfiguratorWidgetUiState } from './configurator-widget.ui-state';
 import { CharacteristicEditorComponent } from './characteristic-editor/characteristic-editor.component';
 
+// TODO: Remove this when the MVP is done and the characteristic IDs are no longer hardcoded
+// MVP characteristic IDs for demonstration purposes
+const MVP_CHARACTERISTIC_IDS = [
+  'PH_AL_VP_SEITE',
+  'PH_AL_VP_FARBE',
+  'PH_AL_VP_STEUERAUSFUEHRUNG'
+];
+
 @Component({
   selector: 'app-configurator-widget',
   standalone: true,
@@ -46,7 +54,9 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
   errorMessage = signal<string | null>(null);
 
   protected readonly visibleCharacteristics = computed(() =>
-    (this.configuration()?.rootItem?.characteristics ?? []).filter(c => c.visible)
+    (this.configuration()?.rootItem?.characteristics ?? []).filter(
+      char => char.visible && MVP_CHARACTERISTIC_IDS.includes(char.id)
+    )
   );
 
   private facade: ConfiguratorWidgetFacade | null = null;

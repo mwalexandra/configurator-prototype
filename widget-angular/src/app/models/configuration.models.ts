@@ -114,6 +114,7 @@ export interface CharacteristicValue {
   name: string;
   description?: string;
   author?: CharacteristicValueAuthor;
+  selectable?: boolean;
 }
 
 export type MessageSeverity =

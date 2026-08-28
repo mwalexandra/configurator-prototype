@@ -183,7 +183,6 @@ public class ConfigurationMapper {
 
         return runtimeChar.getPossibleValues().stream()
                 .filter(Objects::nonNull)
-                .filter(SapRuntimePossibleValue::isSelectable)
                 .map(v -> {
                     String id = v.getValueLow();
                     if (id == null) {
@@ -198,6 +197,7 @@ public class ConfigurationMapper {
                     dto.setDescription(kbValue != null ? kbValue.getDescription() : null);
 
                     dto.setSelected(false);
+                    dto.setSelectable(v.isSelectable());
                     return dto;
                 })
                 .filter(Objects::nonNull)

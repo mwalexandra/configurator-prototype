@@ -60,8 +60,12 @@
         (ngModelChange)="emitValue($event || null)"
       >
         <option [ngValue]="null">-- Auswählen --</option>
-        <option *ngFor="let val of characteristic().possibleValues" [ngValue]="val.id">
-          {{ val.name }}
+        <option 
+          *ngFor="let val of characteristic().possibleValues" 
+          [ngValue]="val.id"
+          [disabled]="val.selectable === false"
+        >
+          {{ val.name|| val.id }}
         </option>
       </select>
     </div>

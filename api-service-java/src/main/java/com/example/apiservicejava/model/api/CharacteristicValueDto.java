@@ -7,6 +7,7 @@ public class CharacteristicValueDto {
     private String description;
     private boolean selected;
     private String author;
+    private boolean selectable;
 
     public CharacteristicValueDto() {
     }
@@ -62,5 +63,13 @@ public class CharacteristicValueDto {
 
     public void setAuthor(String author) {
         this.author = author;
+    }
+
+    public Boolean getSelectable() {
+        return selectable;
+    }
+
+    public void setSelectable(Boolean selectable) {
+        this.selectable = selectable;
     }
 }

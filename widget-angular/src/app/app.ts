@@ -103,8 +103,8 @@ export class App {
     this.widgetConfig = {
       apiBaseUrl: this.apiBaseUrl,
       mode: 'create',
-      productId: 'CPS_BURGER',
-      kbId: '80'
+      productId: '000020000009900002',
+      kbId: '100'
     };
   }
 
