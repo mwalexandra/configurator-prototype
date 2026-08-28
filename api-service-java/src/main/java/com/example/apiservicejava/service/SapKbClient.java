@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
+import com.example.apiservicejava.service.sap.CpsOAuthTokenService;
+
 @Service
 public class SapKbClient {
 
@@ -18,13 +20,14 @@ public class SapKbClient {
     @Value("${sap.cps.base-url}")
     private String baseUrl;
 
-    @Value("${sap.cps.api-key}")
-    private String apiKey;
-
     private final RestTemplate restTemplate;
+    private final CpsOAuthTokenService tokenService;
 
-    public SapKbClient(RestTemplate restTemplate) {
+    public SapKbClient(
+            RestTemplate restTemplate,
+            CpsOAuthTokenService tokenService) {
         this.restTemplate = restTemplate;
+        this.tokenService = tokenService;
     }
 
     public SapKbResponse getKnowledgeBase(String kbId) {
@@ -35,7 +38,7 @@ public class SapKbClient {
         String url = baseUrl + "/api/v2/knowledgebases/" + kbId;
 
         HttpHeaders headers = new HttpHeaders();
-        headers.set("APIKey", apiKey);
+        headers.setBearerAuth(tokenService.getAccessToken());
 
         HttpEntity<Void> request = new HttpEntity<>(headers);
 

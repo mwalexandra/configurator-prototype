@@ -11,6 +11,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import java.util.HashMap;
 import java.util.List;
@@ -21,22 +23,59 @@ public class SapCpsClient {
 
         private final RestTemplate restTemplate;
         private final String baseUrl;
-        private final String apiKey;
+        
+        private final String uaaUrl;
+        private final String clientId;
+        private final String clientSecret;
 
         public SapCpsClient(
                         RestTemplate restTemplate,
                         @Value("${sap.cps.base-url}") String baseUrl,
-                        @Value("${sap.cps.api-key}") String apiKey) {
+                        @Value("${sap.cps.uaa-url}") String uaaUrl,
+                        @Value("${sap.cps.client-id}") String clientId,
+                        @Value("${sap.cps.client-secret}") String clientSecret) {
                 this.restTemplate = restTemplate;
                 this.baseUrl = baseUrl;
-                this.apiKey = apiKey;
+                this.uaaUrl = uaaUrl;
+                this.clientId = clientId;
+                this.clientSecret = clientSecret;
+        }
+
+        private String getAccessToken() {
+                String tokenUrl = uaaUrl + "/oauth/token";
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+                MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+                form.add("grant_type", "client_credentials");
+                form.add("client_id", clientId);
+                form.add("client_secret", clientSecret);
+
+                HttpEntity<MultiValueMap<String, String>> request =
+                        new HttpEntity<>(form, headers);
+
+                ResponseEntity<Map> response = restTemplate.exchange(
+                        tokenUrl,
+                        HttpMethod.POST,
+                        request,
+                        Map.class);
+
+                Object accessToken = response.getBody().get("access_token");
+
+                if (accessToken == null) {
+                        throw new IllegalStateException(
+                                "CPS OAuth response contains no access_token");
+                }
+
+                return accessToken.toString();
         }
 
         public SapRuntimeConfigurationResponse getConfiguration(String configurationId) {
                 String url = baseUrl + "/api/v2/configurations/" + configurationId;
 
                 HttpHeaders headers = new HttpHeaders();
-                headers.set("APIKey", apiKey);
+                headers.setBearerAuth(getAccessToken());
 
                 HttpEntity<Void> entity = new HttpEntity<>(headers);
 
@@ -53,7 +92,7 @@ public class SapCpsClient {
                 String url = baseUrl + "/api/v2/configurations/" + configurationId;
 
                 HttpHeaders headers = new HttpHeaders();
-                headers.set("APIKey", apiKey);
+                headers.setBearerAuth(getAccessToken());
 
                 HttpEntity<Void> entity = new HttpEntity<>(headers);
 
@@ -76,7 +115,7 @@ public class SapCpsClient {
 
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
-                headers.set("APIKey", apiKey);
+                headers.setBearerAuth(getAccessToken());
 
                 HttpEntity<SapCreateRequest> entity = new HttpEntity<>(request, headers);
 
@@ -101,7 +140,7 @@ public class SapCpsClient {
 
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
-                headers.set("APIKey", apiKey);
+                headers.setBearerAuth(getAccessToken());
                 headers.setIfMatch(etag);
 
                 Map<String, Object> body = new HashMap<>();
@@ -143,7 +182,7 @@ public class SapCpsClient {
 
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
-                headers.set("APIKey", apiKey);
+                headers.setBearerAuth(getAccessToken());
 
                 HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
@@ -165,7 +204,7 @@ public class SapCpsClient {
                 String url = baseUrl + "/api/v2/configurations/" + configurationId;
 
                 HttpHeaders headers = new HttpHeaders();
-                headers.set("APIKey", apiKey);
+                headers.setBearerAuth(getAccessToken());
 
                 HttpEntity<Void> entity = new HttpEntity<>(headers);
 
