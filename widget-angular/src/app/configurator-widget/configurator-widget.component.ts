@@ -52,13 +52,13 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
 
   // Define the sections of the configurator with their corresponding item keys
   protected readonly configuratorSections: ConfiguratorSection[] = [
-    { title: 'Produkt', itemKey: '000020000009900002' },
-    { title: 'Arm', itemKey: '000020000009900021' },
-    { title: 'Hand', itemKey: '000020000009900022' }
+    { title: 'PRODUKT', itemKey: '000020000009900002' },
+    { title: 'ARM', itemKey: '000020000009900021' },
+    { title: 'HAND', itemKey: '000020000009900022' }
   ];
 
   protected readonly expandedSectionTitles = signal<Set<string>>(
-    new Set(['Produkt'])
+    new Set(['PRODUKT'])
   );
 
   protected readonly visibleCharacteristics = computed(() =>
