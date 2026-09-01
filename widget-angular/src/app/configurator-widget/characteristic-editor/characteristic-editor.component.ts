@@ -22,6 +22,7 @@ export class CharacteristicEditorComponent {
     hasProblem = input(false);
     incomplete = input(false);
     consistent = input(true);
+    readonly compact = input(false);
 
     valueChanged = output<{
         itemId?: string;

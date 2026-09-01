@@ -1,11 +1,15 @@
 <div
   class="characteristic-item"
+  [class.characteristic-item--compact]="compact()"
   [class.characteristic-item--incomplete]="incomplete()"
   [class.characteristic-item--error]="!incomplete() && hasProblem()"
   [class.characteristic-item--readonly]="readOnly()"
 >
   <div class="info-grid">
-    <p><span>Name</span> {{ characteristic().name || characteristic().id }}</p>
+    <p class="characteristic-item__name">
+      <span>Name</span>
+      {{ characteristic().name || characteristic().id }}
+    </p>
     <p><span>ID</span> {{ characteristic().id }}</p>
     <p><span>Typ</span> {{ characteristic().valueType }}</p>
     <p><span>Erforderlich</span> {{ characteristic().required }}</p>
@@ -52,7 +56,7 @@
 
   <ng-container [ngSwitch]="characteristic().valueType">
     <div *ngSwitchCase="'SINGLE'" class="field-block">
-      <label class="field-label">Wert auswählen</label>
+      <label class="field-label characteristic-item__field-label">Wert auswählen</label>
       <select
         class="select"
         [disabled]="readOnly()"
@@ -71,7 +75,7 @@
     </div>
 
     <div *ngSwitchCase="'MULTI'" class="field-block">
-      <label class="field-label">Ausgewählte Werte</label>
+      <label class="field-label characteristic-item__field-label">Ausgewählte Werte</label>
       <div class="selected-value-list" *ngIf="characteristic().values?.length; else noMultiSelection">
         <span class="selected-value-chip" *ngFor="let val of characteristic().values">
           {{ val.name || val.id }}
@@ -83,7 +87,7 @@
     </div>
 
     <div *ngSwitchCase="'FREETEXT'" class="field-block">
-      <label class="field-label">Textwert</label>
+      <label class="field-label characteristic-item__field-label">Textwert</label>
       <input
         type="text"
         [disabled]="readOnly()"
@@ -93,7 +97,7 @@
     </div>
 
     <div *ngSwitchCase="'NUMERIC'" class="field-block">
-      <label class="field-label">Numerischer Wert</label>
+      <label class="field-label characteristic-item__field-label">Numerischer Wert</label>
       <input
         type="number"
         [disabled]="readOnly()"

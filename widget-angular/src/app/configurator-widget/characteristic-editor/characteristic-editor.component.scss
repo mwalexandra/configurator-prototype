@@ -196,6 +196,73 @@ input[type='number']:disabled {
   font-size: 13px;
 }
 
+.characteristic-item--compact {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.characteristic-item--compact .info-grid {
+  display: block;
+  margin: 0 0 0.3rem;
+}
+
+.characteristic-item--compact .info-grid p {
+  display: none;
+}
+
+.characteristic-item--compact .info-grid .characteristic-item__name {
+  display: block;
+  margin: 0;
+  overflow: hidden;
+  color: #1f2937;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.characteristic-item--compact .characteristic-item__name span {
+  display: none;
+}
+
+.characteristic-item--compact .characteristic-status,
+.characteristic-item--compact .characteristic-message-list,
+.characteristic-item--compact .characteristic-item__field-label {
+  display: none;
+}
+
+.characteristic-item--compact .field-block {
+  margin: 0;
+}
+
+.characteristic-item--compact input,
+.characteristic-item--compact select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 2rem;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.25rem;
+  background: #fff;
+  color: #111827;
+  font-size: 0.9rem;
+}
+
+.characteristic-item--compact input[type='number'] {
+  max-width: 6rem;
+}
+
+.characteristic-item--compact .selected-value,
+.characteristic-item--compact .selected-value-list,
+.characteristic-item--compact .no-items {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
 @media (max-width: 640px) {
   .info-grid {
     grid-template-columns: 1fr;

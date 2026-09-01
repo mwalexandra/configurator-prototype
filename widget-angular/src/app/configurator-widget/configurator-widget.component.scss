@@ -257,6 +257,25 @@
   align-items: start;
 }
 
+.left-panel {
+  min-width: 0;
+}
+
+.configurator-section--measurements {
+  padding: 1.25rem;
+}
+
+.measurements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 0.65rem 0.75rem;
+  align-items: start;
+}
+
+.measurements-grid app-characteristic-editor {
+  min-width: 0;
+}
+
 .widget-sidebar {
   display: grid;
   gap: 12px;

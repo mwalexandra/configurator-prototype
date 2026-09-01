@@ -132,17 +132,18 @@
           
     <div class="left-panel">
       @for (section of leftPanelSections; track section.groupCharacteristicId) {
-        <section class="configurator-section">
+        <section class="configurator-section configurator-section--measurements">
           <h2 class="configurator-section__title">
             {{ section.title }}
           </h2>
 
-          <div class="characteristics-list">
+          <div class="measurements-grid">
             @for (
               char of getLeftPanelCharacteristics(section);
               track char.id
             ) {
               <app-characteristic-editor
+                [compact]="true"
                 [characteristic]="char"
                 [itemId]="getSectionItemId('000020000009900021')"
                 [readOnly]="isCharacteristicReadOnly(char)"
