@@ -128,7 +128,54 @@
   </div>
 
   <div class="widget-layout" *ngIf="configuration() as currentConfig">
-    <div class="card">
+
+          
+    <div class="left-panel">
+      @for (section of leftPanelSections; track section.groupCharacteristicId) {
+        <section class="configurator-section">
+          <h2 class="configurator-section__title">
+            {{ section.title }}
+          </h2>
+
+          <div class="characteristics-list">
+            @for (
+              char of getLeftPanelCharacteristics(section);
+              track char.id
+            ) {
+              <app-characteristic-editor
+                [characteristic]="char"
+                [itemId]="getSectionItemId('000020000009900021')"
+                [readOnly]="isCharacteristicReadOnly(char)"
+                [completed]="status() === 'completed'"
+                [messages]="getMessagesForCharacteristic(char.id)"
+                [hasProblem]="
+                  hasCharacteristicConflict(
+                    char,
+                    getSectionItemId('000020000009900021')
+                  )
+                "
+                [incomplete]="
+                  isCharacteristicIncomplete(
+                    char,
+                    getSectionItemId('000020000009900021')
+                  )
+                "
+                [consistent]="char.consistent"
+                (valueChanged)="
+                  updateCharacteristic(
+                    $event.characteristicId,
+                    $event.value,
+                    $event.itemId
+                  )
+                "
+              ></app-characteristic-editor>
+            }
+          </div>
+        </section>
+      }
+    </div>
+
+    <div class="card" *ngIf="false">
       <h3 class="card__title">
         {{ status() === 'completed' ? 'Bestätigte Konfiguration' : 'Eigenschaften' }}
       </h3>

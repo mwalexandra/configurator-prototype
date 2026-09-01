@@ -30,6 +30,11 @@ interface ConfiguratorSection {
   itemKey: string;
 }
 
+interface MeasurementSection {
+  title: string;
+  groupCharacteristicId: string;
+}
+
 @Component({
   selector: 'app-configurator-widget',
   standalone: true,
@@ -55,6 +60,10 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     { title: 'PRODUKT', itemKey: '000020000009900002' },
     { title: 'ARM', itemKey: '000020000009900021' },
     { title: 'HAND', itemKey: '000020000009900022' }
+  ];
+
+  protected readonly leftPanelSections: MeasurementSection[] = [
+    { title: 'ARMMASSE', groupCharacteristicId: 'PHASVIMASSFELDERGEAENDERT' }
   ];
 
   protected readonly expandedSectionTitles = signal<Set<string>>(
@@ -111,6 +120,13 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     }
   }
 
+  // TODO to remove 
+  protected logRootItem(): void {
+    console.log('configuration:', this.configuration());
+    console.log('rootItem:', this.configuration()?.rootItem);
+    console.log('rootItem.characteristics:', this.configuration()?.rootItem?.characteristics);
+  }
+
   protected get blockingIssuesForView() {
     return this.facade?.blockingIssueLabels?.() ?? [];
   }
@@ -142,6 +158,28 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     }
 
     return (rootItem.subItems ?? []).find(item => item.key === itemKey) ?? null;
+  }
+
+  protected getGroupCharacteristic(
+    groupCharacteristicId: string
+  ): Characteristic | undefined {
+    return this.configuration()?.rootItem?.characteristics
+      .find((characteristic) => characteristic.id === groupCharacteristicId);
+  }
+
+  protected getLeftPanelCharacteristics(
+    section: MeasurementSection
+  ): Characteristic[] {
+    const armItem = this.getItemByKey('000020000009900021');
+    const armCharacteristics = armItem?.characteristics ?? [];
+
+    if (section.title === 'ARMMASSE') {
+      return armCharacteristics.filter((characteristic) =>
+        characteristic.id.startsWith('PH_AS_FM_')
+      );
+    }
+
+    return [];
   }
 
   protected getSectionCharacteristics(itemKey: string): Characteristic[] {
