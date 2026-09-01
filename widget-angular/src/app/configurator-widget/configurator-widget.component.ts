@@ -186,7 +186,9 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
       const armCharacteristics = armItem?.characteristics ?? [];
 
       return armCharacteristics.filter((characteristic) =>
-        characteristic.id.startsWith('PH_AS_FM_')
+        characteristic.id.startsWith('PH_AS_FM_') &&
+        !characteristic.readOnly &&
+        characteristic.visible
       );
     }
 
@@ -195,7 +197,9 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
       const handCharacteristics = handItem?.characteristics ?? [];
 
       return handCharacteristics.filter((characteristic) =>
-        characteristic.id.startsWith('PH_HS_FM_')
+        characteristic.id.startsWith('PH_HS_FM_') &&
+        !characteristic.readOnly &&
+        characteristic.visible
       );
     }
 
