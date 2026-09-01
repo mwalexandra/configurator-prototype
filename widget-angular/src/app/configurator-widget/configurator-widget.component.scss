@@ -276,6 +276,15 @@
   min-width: 0;
 }
 
+.configurator-section--production .measurements-grid {
+  grid-template-columns: minmax(220px, 360px);
+}
+
+.configurator-section--production .measurements-grid
+  app-characteristic-editor:last-child {
+  grid-column: 1 / -1;
+}
+
 .widget-sidebar {
   display: grid;
   gap: 12px;

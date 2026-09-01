@@ -41,4 +41,9 @@ export class CharacteristicEditorComponent {
         value
         });
     }
+
+    
+    protected isProductionTextField(): boolean {
+        return this.characteristic().id === 'PH_AL_FT_INFOPROD';
+    }
 }

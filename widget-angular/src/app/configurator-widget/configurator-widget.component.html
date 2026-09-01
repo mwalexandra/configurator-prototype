@@ -1,10 +1,6 @@
 <div class="widget">
   <h2 class="widget__title">Konfigurator-Widget</h2>
 
-<!--  <div class="status-banner" [ngClass]="'status-banner--' + ui.uiState()">
-    {{ ui.uiStateText() }}
-  </div> -->
-
   <div class="widget-toolbar" *ngIf="configuration() as currentConfig">
     <div class="widget-toolbar__status">
       <div
@@ -132,7 +128,12 @@
           
     <div class="left-panel">
       @for (section of leftPanelSections; track section.groupCharacteristicId) {
-        <section class="configurator-section configurator-section--measurements">
+        <section
+          class="configurator-section configurator-section--measurements"
+          [class.configurator-section--production]="
+            section.title === 'INFORMATIONEN FÜR PRODUKTION'
+          "
+        >
           <h2 class="configurator-section__title">
             {{ section.title }}
           </h2>
@@ -145,20 +146,20 @@
               <app-characteristic-editor
                 [compact]="true"
                 [characteristic]="char"
-                [itemId]="getSectionItemId('000020000009900021')"
+                [itemId]="getLeftPanelItemId(section)"
                 [readOnly]="isCharacteristicReadOnly(char)"
                 [completed]="status() === 'completed'"
                 [messages]="getMessagesForCharacteristic(char.id)"
                 [hasProblem]="
                   hasCharacteristicConflict(
                     char,
-                    getSectionItemId('000020000009900021')
+                    getLeftPanelItemId(section)
                   )
                 "
                 [incomplete]="
                   isCharacteristicIncomplete(
                     char,
-                    getSectionItemId('000020000009900021')
+                    getLeftPanelItemId(section)
                   )
                 "
                 [consistent]="char.consistent"

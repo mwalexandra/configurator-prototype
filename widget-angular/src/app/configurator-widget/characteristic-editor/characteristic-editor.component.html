@@ -55,39 +55,14 @@
   </div>
 
   <ng-container [ngSwitch]="characteristic().valueType">
-    <div *ngSwitchCase="'SINGLE'" class="field-block">
-      <label class="field-label characteristic-item__field-label">Wert auswählen</label>
-      <select
-        class="select"
-        [disabled]="readOnly()"
-        [ngModel]="getSingleSelectedValueId()"
-        (ngModelChange)="emitValue($event || null)"
-      >
-        <option [ngValue]="null">-- Auswählen --</option>
-        <option 
-          *ngFor="let val of characteristic().possibleValues" 
-          [ngValue]="val.id"
-          [disabled]="val.selectable === false"
-        >
-          {{ val.name|| val.id }}
-        </option>
-      </select>
-    </div>
+    <div
+      *ngIf="isProductionTextField(); else standardCharacteristicField"
+      class="field-block"
+    >
+      <label class="field-label characteristic-item__field-label">
+        Textwert
+      </label>
 
-    <div *ngSwitchCase="'MULTI'" class="field-block">
-      <label class="field-label characteristic-item__field-label">Ausgewählte Werte</label>
-      <div class="selected-value-list" *ngIf="characteristic().values?.length; else noMultiSelection">
-        <span class="selected-value-chip" *ngFor="let val of characteristic().values">
-          {{ val.name || val.id }}
-        </span>
-      </div>
-      <ng-template #noMultiSelection>
-        <p class="no-items">Keine Werte ausgewählt.</p>
-      </ng-template>
-    </div>
-
-    <div *ngSwitchCase="'FREETEXT'" class="field-block">
-      <label class="field-label characteristic-item__field-label">Textwert</label>
       <input
         type="text"
         [disabled]="readOnly()"
@@ -96,21 +71,64 @@
       />
     </div>
 
-    <div *ngSwitchCase="'NUMERIC'" class="field-block">
-      <label class="field-label characteristic-item__field-label">Numerischer Wert</label>
-      <input
-        type="number"
-        [disabled]="readOnly()"
-        [ngModel]="characteristic().values?.[0]?.id ?? ''"
-        (blur)="emitValue($any($event.target).value || null)"
-      />
-    </div>
+    <ng-template #standardCharacteristicField>
+      <div *ngSwitchCase="'SINGLE'" class="field-block">
+        <label class="field-label characteristic-item__field-label">Wert auswählen</label>
+        <select
+          class="select"
+          [disabled]="readOnly()"
+          [ngModel]="getSingleSelectedValueId()"
+          (ngModelChange)="emitValue($event || null)"
+        >
+          <option [ngValue]="null">-- Auswählen --</option>
+          <option 
+            *ngFor="let val of characteristic().possibleValues" 
+            [ngValue]="val.id"
+            [disabled]="val.selectable === false"
+          >
+            {{ val.name|| val.id }}
+          </option>
+        </select>
+      </div>
 
-    <div *ngSwitchDefault class="field-block">
-      <span *ngIf="characteristic().values?.length" class="selected-value">
-        <span>Ausgewählt</span>
-        {{ characteristic().values[0].name || characteristic().values[0].id }}
-      </span>
-    </div>
+      <div *ngSwitchCase="'MULTI'" class="field-block">
+        <label class="field-label characteristic-item__field-label">Ausgewählte Werte</label>
+        <div class="selected-value-list" *ngIf="characteristic().values?.length; else noMultiSelection">
+          <span class="selected-value-chip" *ngFor="let val of characteristic().values">
+            {{ val.name || val.id }}
+          </span>
+        </div>
+        <ng-template #noMultiSelection>
+          <p class="no-items">Keine Werte ausgewählt.</p>
+        </ng-template>
+      </div>
+
+      <div *ngSwitchCase="'FREETEXT'" class="field-block">
+        <label class="field-label characteristic-item__field-label">Textwert</label>
+        <input
+          type="text"
+          [disabled]="readOnly()"
+          [ngModel]="characteristic().values?.[0]?.id ?? ''"
+          (blur)="emitValue($any($event.target).value || null)"
+        />
+      </div>
+
+      <div *ngSwitchCase="'NUMERIC'" class="field-block">
+        <label class="field-label characteristic-item__field-label">Numerischer Wert</label>
+        <input
+          type="number"
+          [disabled]="readOnly()"
+          [ngModel]="characteristic().values?.[0]?.id ?? ''"
+          (blur)="emitValue($any($event.target).value || null)"
+        />
+      </div>
+
+      <div *ngSwitchDefault class="field-block">
+        <span *ngIf="characteristic().values?.length" class="selected-value">
+          <span>Ausgewählt</span>
+          {{ characteristic().values[0].name || characteristic().values[0].id }}
+        </span>
+      </div>
+    </ng-template>
   </ng-container>
 </div>

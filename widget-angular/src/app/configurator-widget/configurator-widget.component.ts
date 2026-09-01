@@ -63,7 +63,13 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
   ];
 
   protected readonly leftPanelSections: MeasurementSection[] = [
-    { title: 'ARMMASSE', groupCharacteristicId: 'PHASVIMASSFELDERGEAENDERT' }
+    { 
+      title: 'ARMMASSE', 
+      groupCharacteristicId: 'PHASVIMASSFELDERGEAENDERT' 
+    },{
+      title: 'INFORMATIONEN FÜR PRODUKTION',
+      groupCharacteristicId: 'production-information'
+    }
   ];
 
   protected readonly expandedSectionTitles = signal<Set<string>>(
@@ -173,9 +179,28 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     const armItem = this.getItemByKey('000020000009900021');
     const armCharacteristics = armItem?.characteristics ?? [];
 
+    const rootCharacteristics =
+    this.configuration()?.rootItem?.characteristics ?? [];
+
     if (section.title === 'ARMMASSE') {
       return armCharacteristics.filter((characteristic) =>
         characteristic.id.startsWith('PH_AS_FM_')
+      );
+    }
+
+    if (section.title === 'INFORMATIONEN FÜR PRODUKTION') {
+      const productionCharacteristicIds = [
+        'PH_AL_FS_INFOPROD',
+        'PH_AL_FT_INFOPROD'
+      ];
+
+      const characteristicsById = new Map(
+        rootCharacteristics.map((characteristic) => [characteristic.id, characteristic])
+      );
+
+      return productionCharacteristicIds
+        .map((id) => characteristicsById.get(id))
+        .filter((characteristic): characteristic is Characteristic => characteristic !== undefined
       );
     }
 
@@ -373,4 +398,13 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
   protected firstVisibleCharacteristic(): Characteristic | null {
     return this.visibleCharacteristics()[0] ?? null;
   }
+
+  // TODO: This is a temporary solution to get the itemId for the left panel characteristics. In the future, we should refactor the code to avoid this hardcoded mapping.
+  protected getLeftPanelItemId(section: MeasurementSection): string | undefined {
+    if (section.title === 'ARMMASSE') {
+      return this.getSectionItemId('000020000009900021');
+    }
+    return this.getRootItemId();
+  }
+
 }
