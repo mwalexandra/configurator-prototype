@@ -63,12 +63,14 @@
         Textwert
       </label>
 
-      <input
-        type="text"
+      <textarea
+        rows="3"
         [disabled]="readOnly()"
+        [maxlength]="characteristic().length ?? 100"
         [ngModel]="characteristic().values?.[0]?.id ?? ''"
         (blur)="emitValue($any($event.target).value || null)"
-      />
+      ></textarea>
+      
     </div>
 
     <ng-template #standardCharacteristicField>

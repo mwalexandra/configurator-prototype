@@ -32,7 +32,7 @@ interface ConfiguratorSection {
 
 interface MeasurementSection {
   title: string;
-  groupCharacteristicId: string;
+  key: 'arm-measurements' | 'hand-measurements' | 'production-information';
 }
 
 @Component({
@@ -65,10 +65,15 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
   protected readonly leftPanelSections: MeasurementSection[] = [
     { 
       title: 'ARMMASSE', 
-      groupCharacteristicId: 'PHASVIMASSFELDERGEAENDERT' 
-    },{
+      key: 'arm-measurements' 
+    },
+    {
+      title: 'HANDMASSE',
+      key: 'hand-measurements'
+    },
+    {
       title: 'INFORMATIONEN FÜR PRODUKTION',
-      groupCharacteristicId: 'production-information'
+      key: 'production-information'
     }
   ];
 
@@ -176,32 +181,46 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
   protected getLeftPanelCharacteristics(
     section: MeasurementSection
   ): Characteristic[] {
-    const armItem = this.getItemByKey('000020000009900021');
-    const armCharacteristics = armItem?.characteristics ?? [];
+    if (section.key === 'arm-measurements') {
+      const armItem = this.getItemByKey('000020000009900021');
+      const armCharacteristics = armItem?.characteristics ?? [];
 
-    const rootCharacteristics =
-    this.configuration()?.rootItem?.characteristics ?? [];
-
-    if (section.title === 'ARMMASSE') {
       return armCharacteristics.filter((characteristic) =>
         characteristic.id.startsWith('PH_AS_FM_')
       );
     }
 
-    if (section.title === 'INFORMATIONEN FÜR PRODUKTION') {
+    if (section.key === 'hand-measurements') {
+      const handItem = this.getItemByKey('000020000009900022');
+      const handCharacteristics = handItem?.characteristics ?? [];
+
+      return handCharacteristics.filter((characteristic) =>
+        characteristic.id.startsWith('PH_HS_FM_')
+      );
+    }
+
+    if (section.key === 'production-information') {
+      const rootCharacteristics =
+        this.configuration()?.rootItem?.characteristics ?? [];
+
       const productionCharacteristicIds = [
         'PH_AL_FS_INFOPROD',
         'PH_AL_FT_INFOPROD'
       ];
 
       const characteristicsById = new Map(
-        rootCharacteristics.map((characteristic) => [characteristic.id, characteristic])
+        rootCharacteristics.map((characteristic) => [
+          characteristic.id,
+          characteristic
+        ])
       );
 
       return productionCharacteristicIds
         .map((id) => characteristicsById.get(id))
-        .filter((characteristic): characteristic is Characteristic => characteristic !== undefined
-      );
+        .filter(
+          (characteristic): characteristic is Characteristic =>
+            characteristic !== undefined
+        );
     }
 
     return [];
@@ -400,10 +419,17 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
   }
 
   // TODO: This is a temporary solution to get the itemId for the left panel characteristics. In the future, we should refactor the code to avoid this hardcoded mapping.
-  protected getLeftPanelItemId(section: MeasurementSection): string | undefined {
-    if (section.title === 'ARMMASSE') {
+  protected getLeftPanelItemId(
+    section: MeasurementSection
+  ): string | undefined {
+    if (section.key === 'arm-measurements') {
       return this.getSectionItemId('000020000009900021');
     }
+
+    if (section.key === 'hand-measurements') {
+      return this.getSectionItemId('000020000009900022');
+    }
+
     return this.getRootItemId();
   }
 

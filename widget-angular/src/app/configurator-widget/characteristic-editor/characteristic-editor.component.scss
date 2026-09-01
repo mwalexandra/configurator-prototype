@@ -197,6 +197,9 @@ input[type='number']:disabled {
 }
 
 .characteristic-item--compact {
+  display: flex;
+  flex-direction: column;
+  min-height: 4.4rem;
   min-width: 0;
   padding: 0;
   border: 0;
@@ -206,6 +209,7 @@ input[type='number']:disabled {
 .characteristic-item--compact .info-grid {
   display: block;
   margin: 0 0 0.3rem;
+  min-height: 1.2rem;
 }
 
 .characteristic-item--compact .info-grid p {

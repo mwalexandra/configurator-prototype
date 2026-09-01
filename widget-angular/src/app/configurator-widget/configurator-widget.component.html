@@ -127,7 +127,7 @@
 
           
     <div class="left-panel">
-      @for (section of leftPanelSections; track section.groupCharacteristicId) {
+      @for (section of leftPanelSections; track section.key) {
         <section
           class="configurator-section configurator-section--measurements"
           [class.configurator-section--production]="
