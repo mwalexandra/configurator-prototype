@@ -172,29 +172,35 @@
     </div>
 
     <div class="widget-sidebar">
-      <div class="card" *ngIf="subItemsForView.length > 0">
+      <div class="card" *ngIf="configuratorSections.length > 0">
         <h3 class="card__title">Unterpositionen</h3>
         <div class="card__content">
           <div class="subitems">
-            <div class="subitem-section" *ngFor="let subItem of subItemsForView">
-              <div class="subitem-section__header">
-                <h4 class="subitem-section__title">{{ subItem.key }}</h4>
+            <div class="subitem-section" *ngFor="let section of configuratorSections">
+              <div
+                class="subitem-section__header"
+                (click)="toggleSection(section.title)"
+              >
+                <h4 class="subitem-section__title">{{ section.title }}</h4>
                 <span class="subitem-section__meta">
-                  {{ subItem.characteristics.length }} Merkmale
+                  {{ getSectionCharacteristics(section.itemKey).length }} Merkmale
+                </span>
+                <span class="subitem-section__toggle">
+                  {{ isSectionExpanded(section.title) ? '⌃' : '⌄' }}
                 </span>
               </div>
 
-              <div class="subitem-section__content">
+              <div class="subitem-section__content" *ngIf="isSectionExpanded(section.title)">
                 <app-characteristic-editor
-                  *ngFor="let char of subItem.characteristics"
+                  *ngFor="let char of getSectionCharacteristics(section.itemKey)"
                   [hidden]="!char.visible"
                   [characteristic]="char"
-                  [itemId]="subItem.id"
+                  [itemId]="getSectionItemId(section.itemKey)"
                   [readOnly]="isCharacteristicReadOnly(char)"
                   [completed]="status() === 'completed'"
                   [messages]="[]"
-                  [hasProblem]="hasCharacteristicConflict(char, subItem.id)"
-                  [incomplete]="isCharacteristicIncomplete(char, subItem.id)"
+                  [hasProblem]="hasCharacteristicConflict(char, getSectionItemId(section.itemKey))"
+                  [incomplete]="isCharacteristicIncomplete(char, getSectionItemId(section.itemKey))"
                   [consistent]="char.consistent"
                   (valueChanged)="updateCharacteristic($event.characteristicId, $event.value, $event.itemId)"
                 ></app-characteristic-editor>

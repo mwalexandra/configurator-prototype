@@ -25,13 +25,10 @@ import { ConfiguratorWidgetFacade } from './configurator-widget.facade';
 import { createConfiguratorWidgetUiState } from './configurator-widget.ui-state';
 import { CharacteristicEditorComponent } from './characteristic-editor/characteristic-editor.component';
 
-// TODO: Remove this when the MVP is done and the characteristic IDs are no longer hardcoded
-// MVP characteristic IDs for demonstration purposes
-const MVP_CHARACTERISTIC_IDS = [
-  'PH_AL_VP_SEITE',
-  'PH_AL_VP_FARBE',
-  'PH_AL_VP_STEUERAUSFUEHRUNG'
-];
+interface ConfiguratorSection {
+  title: string;
+  itemKey: string;
+}
 
 @Component({
   selector: 'app-configurator-widget',
@@ -53,9 +50,20 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
   status = signal<WidgetState>('idle');
   errorMessage = signal<string | null>(null);
 
+  // Define the sections of the configurator with their corresponding item keys
+  protected readonly configuratorSections: ConfiguratorSection[] = [
+    { title: 'Produkt', itemKey: '000020000009900002' },
+    { title: 'Arm', itemKey: '000020000009900021' },
+    { title: 'Hand', itemKey: '000020000009900022' }
+  ];
+
+  protected readonly expandedSectionTitles = signal<Set<string>>(
+    new Set(['Produkt'])
+  );
+
   protected readonly visibleCharacteristics = computed(() =>
     (this.configuration()?.rootItem?.characteristics ?? []).filter(
-      char => char.visible && MVP_CHARACTERISTIC_IDS.includes(char.id)
+      char => char.visible
     )
   );
 
@@ -112,7 +120,54 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
   }
 
   protected get subItemsForView() {
-    return this.configuration()?.rootItem?.subItems ?? [];
+    const subItems = this.configuration()?.rootItem?.subItems ?? [];
+    const blockingItemIds = new Set(
+      this.facade?.blockingIssues()
+        .filter(issue => issue.level === 'subItem')
+        .map(issue => issue.itemId) ?? []
+    );
+
+    return subItems.filter(subItem => blockingItemIds.has(subItem.id));
+  }
+
+  protected getItemByKey(itemKey: string) {
+    const rootItem = this.configuration()?.rootItem;
+
+    if (!rootItem) {
+      return null;
+    }
+
+    if (rootItem.key === itemKey) {
+      return rootItem;
+    }
+
+    return (rootItem.subItems ?? []).find(item => item.key === itemKey) ?? null;
+  }
+
+  protected getSectionCharacteristics(itemKey: string): Characteristic[] {
+    return this.getItemByKey(itemKey)?.characteristics ?? [];
+  }
+
+  protected getSectionItemId(itemKey: string): string | undefined {
+    return this.getItemByKey(itemKey)?.id;
+  }
+
+  protected toggleSection(title: string): void {
+    this.expandedSectionTitles.update(current => {
+      const next = new Set(current);
+
+      if (next.has(title)) {
+        next.delete(title);
+      } else {
+        next.add(title);
+      }
+
+      return next;
+    });
+  }
+
+  protected isSectionExpanded(title: string): boolean {
+    return this.expandedSectionTitles().has(title);
   }
 
   public startConfiguration(): void {
