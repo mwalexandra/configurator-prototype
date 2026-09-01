@@ -1,5 +1,5 @@
 .devcontainer
-
+api-service-java/configurations-db
 .env
 cps-curaflow-env-setup.sh
 cps-responses
