@@ -146,13 +146,13 @@ public class SapCpsClient {
                 Map<String, Object> body = new HashMap<>();
 
                 if (value != null) {
-                        // Выбор значения
+                        // Auswahl setzen — Liste mit einem Element, das den Wert und die Auswahl enthält
                         Map<String, Object> valueInput = new HashMap<>();
                         valueInput.put("value", value);
                         valueInput.put("selected", true);
                         body.put("values", List.of(valueInput));
                 } else {
-                        // Снятие выбора — пустой список
+                        // Abwahl setzen — leere Liste, um die Auswahl zu entfernen
                         body.put("values", List.of());
                 }
 

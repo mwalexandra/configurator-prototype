@@ -103,7 +103,7 @@ public class ConfigurationService {
 
         ConfigurationResponse response = ExternalConfigurationMapper.fromSapRuntimeResponse(sapResponse);
 
-        // Получить kbId - приоритет: request.kbId > sapResponse.kbId > query productId
+        // Bekommen Sie kbId aus der SAP-Antwort, wenn sie nicht im ursprünglichen Antrag angegeben wurde
         String kbId = request.getKbId();
         if (kbId == null || kbId.isBlank()) {
             kbId = sapResponse.getKbId() != null
@@ -111,9 +111,9 @@ public class ConfigurationService {
                     : null;
         }
 
-        // Fallback: если kbId все еще пустой, попробовать получить его через productId
+        // Fallback: wenn kbId immer noch leer ist, versuchen, es über productId zu erhalten
         if ((kbId == null || kbId.isBlank()) && request.getProductId() != null && !request.getProductId().isBlank()) {
-            log.warn("kbId not available, attempting to resolve via productId={}", request.getProductId());
+            log.warn("kbId nicht verfügbar, versuche Auflösung über productId={}", request.getProductId());
             try {
                 SapCreateRequest tempRequest = new SapCreateRequest();
                 tempRequest.setProductKey(request.getProductId());
@@ -123,7 +123,7 @@ public class ConfigurationService {
                     kbId = tempResponse.getKbId().toString();
                     log.info("Resolved kbId from product: {}", kbId);
                     
-                    // Удалить временную конфигурацию
+                    // Löschen der temporären Konfiguration
                     if (tempResponse.getId() != null) {
                         try {
                             sapCpsClient.deleteConfiguration(tempResponse.getId());
@@ -140,7 +140,7 @@ public class ConfigurationService {
 
         log.info("Resolved kbId: {}", kbId);
 
-        // Подгрузить Knowledge Base если kbId доступен
+        // Bekommen Sie Knowledge Base wenn kbId verfügbar ist
         if (kbId != null && !kbId.isBlank()) {
             log.info("Fetching KB for kbId={}", kbId);
             SapKbResponse kbResponse = sapKbClient.getKnowledgeBase(kbId);
@@ -194,7 +194,7 @@ public class ConfigurationService {
                     "Configuration is read-only after snapshot restore");
         }
 
-        // Получаем ETag — если нет в кэше, делаем GET один раз
+        // Bekommen Sie ETag — wenn nicht im Cache vorhanden, führen Sie einen GET-Vorgang durch
         String etag = etagByConfigurationId.get(configId);
         if (etag == null) {
             SapGetConfigurationResult runtimeResult = sapCpsClient.getConfigurationWithEtag(configId);
@@ -216,7 +216,7 @@ public class ConfigurationService {
                 request.getValue(),
                 etag);
 
-        // После PATCH — GET с новым ETag
+        // Nach PATCH — GET mit neuem ETag
         SapGetConfigurationResult refreshed = sapCpsClient.getConfigurationWithEtag(configId);
         SapRuntimeConfigurationResponse updatedRuntime = refreshed.getBody();
 

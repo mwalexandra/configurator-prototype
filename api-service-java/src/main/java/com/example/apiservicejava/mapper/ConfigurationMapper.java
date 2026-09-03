@@ -36,14 +36,14 @@ public class ConfigurationMapper {
     }
 
     private String resolveProductId(SapRuntimeConfigurationResponse runtime, SapKbResponse kb) {
-        if (runtime.getKbKey() != null && runtime.getKbKey().getName() != null) {
-            return runtime.getKbKey().getName();
-        }
         if (runtime.getProductKey() != null) {
             return runtime.getProductKey();
         }
         if (kb != null && kb.getHeaderInfo() != null && kb.getHeaderInfo().getKey() != null) {
             return kb.getHeaderInfo().getKey().getName();
+        }
+        if (runtime.getKbKey() != null && runtime.getKbKey().getName() != null) {
+            return runtime.getKbKey().getName();
         }
         return null;
     }
