@@ -191,6 +191,27 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     return (rootItem.subItems ?? []).find(item => item.key === itemKey) ?? null;
   }
 
+  protected findCharacteristicById(id: string): Characteristic | undefined {
+    const rootItem = this.configuration()?.rootItem;
+    if (!rootItem) {
+      return undefined;
+    }
+
+    const inRoot = rootItem.characteristics.find(c => c.id === id);
+    if (inRoot) {
+      return inRoot;
+    }
+
+    for (const subItem of rootItem.subItems ?? []) {
+      const found = subItem.characteristics.find(c => c.id === id);
+      if (found) {
+        return found;
+      }
+    }
+
+    return undefined;
+  }
+
   protected getGroupCharacteristic(
     groupCharacteristicId: string
   ): Characteristic | undefined {
