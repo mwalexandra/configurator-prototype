@@ -245,12 +245,12 @@
                 <app-characteristic-editor
                   *ngFor="let char of getWhitelistedSectionCharacteristics(section)"
                   [characteristic]="char"
-                  [itemId]="getSectionItemId(section.itemKey)"
+                  [itemId]="getItemIdForCharacteristicId(char.id)"
                   [readOnly]="isCharacteristicReadOnly(char)"
                   [completed]="status() === 'completed'"
                   [messages]="[]"
-                  [hasProblem]="hasCharacteristicConflict(char, getSectionItemId(section.itemKey))"
-                  [incomplete]="isCharacteristicIncomplete(char, getSectionItemId(section.itemKey))"
+                  [hasProblem]="hasCharacteristicConflict(char, getItemIdForCharacteristicId(char.id))"
+                  [incomplete]="isCharacteristicIncomplete(char, getItemIdForCharacteristicId(char.id))"
                   [consistent]="char.consistent"
                   (valueChanged)="updateCharacteristic($event.characteristicId, $event.value, $event.itemId)"
                 ></app-characteristic-editor>
