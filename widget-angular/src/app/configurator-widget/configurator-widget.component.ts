@@ -77,6 +77,26 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     }
   ];
 
+  private static readonly PRODUKT_WHITELIST: string[] = [
+    'PH_AL_VP_LIEFERPRIO', 'PH_AL_VP_PRODUKT', 'PH_AL_VP_STEUERAUSFUEHRUNG',
+    'PH_AL_VP_AUSFARMHAND', 'PH_AL_VP_AUSFARMSTRUMPF', 'PH_AL_VP_AUSFHANDSCHUH',
+    'PH_AL_VP_FARBE', 'PH_AL_VP_SEITE'
+  ];
+
+  private static readonly ARM_WHITELIST: string[] = [
+    'PH_AS_VP_ARTABSCHL', 'PH_AS_VP_BREITEPORABSCHL', 'PH_AS_VP_KAPPE',
+    'PH_AS_VP_GURT', 'PH_AS_VP_BHBEFESTIGUNG', 'PH_AS_VP_FORMABSCHL',
+    'PH_AS_VP_SCHRAEGE', 'PH_AS_VP_SCHRAEGEABSCHL', 'PH_AS_VP_ARTANFANG',
+    'PH_AS_VP_BREITEPORANFANG', 'PH_AS_VP_HBSTK', 'PH_AS_VP_WINKEL',
+    'PH_AS_VP_ELLENBOGENKOMFORT'
+  ];
+
+  private static readonly HAND_WHITELIST: string[] = [
+    'PH_HS_VP_ARTABSCHL', 'PH_HS_VP_BREITEPORABSCHL', 'PH_HS_VP_FINGER',
+    'PH_HS_VP_DAUMEN', 'PH_HS_VP_ANATOMISCHHAND', 'PH_HS_VP_BEFESTIGUNG',
+    'PH_HS_VP_FINGERSTRUMPF'
+  ];
+
   protected readonly expandedSectionTitles = signal<Set<string>>(
     new Set(['PRODUKT'])
   );
