@@ -158,6 +158,22 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     console.log('rootItem.characteristics:', this.configuration()?.rootItem?.characteristics);
   }
 
+  // TODO to remove
+  protected logWhitelistedSections(): void {
+    console.log('configuration loaded?', !!this.configuration());
+    console.log('PH_AL_VP_STEUERAUSFUEHRUNG raw:', this.findCharacteristicById('PH_AL_VP_STEUERAUSFUEHRUNG'));
+    console.log('PH_AL_VP_SEITE raw:', this.findCharacteristicById('PH_AL_VP_SEITE'));
+
+    for (const section of this.configuratorSections) {
+      const chars = this.getWhitelistedSectionCharacteristics(section);
+      console.log(
+        `[${section.title}] visible whitelisted count:`,
+        chars.length,
+        chars.map(c => ({ id: c.id, name: c.name, readOnly: c.readOnly, visible: c.visible }))
+      );
+    }
+  }
+
   protected get blockingIssuesForView() {
     return this.facade?.blockingIssueLabels?.() ?? [];
   }
@@ -273,6 +289,31 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
 
   protected getSectionCharacteristics(itemKey: string): Characteristic[] {
     return this.getItemByKey(itemKey)?.characteristics ?? [];
+  }
+
+  protected getWhitelistedSectionCharacteristics(
+    section: ConfiguratorSection
+  ): Characteristic[] {
+    const whitelist = this.getWhitelistForSection(section.itemKey);
+
+    return whitelist
+      .map(id => this.findCharacteristicById(id))
+      .filter((characteristic): characteristic is Characteristic =>
+        characteristic !== undefined && characteristic.visible
+      );
+  }
+
+  private getWhitelistForSection(itemKey: string): string[] {
+    switch (itemKey) {
+      case '000020000009900002':
+        return ConfiguratorWidgetComponent.PRODUKT_WHITELIST;
+      case '000020000009900021':
+        return ConfiguratorWidgetComponent.ARM_WHITELIST;
+      case '000020000009900022':
+        return ConfiguratorWidgetComponent.HAND_WHITELIST;
+      default:
+        return [];
+    }
   }
 
   protected getSectionItemId(itemKey: string): string | undefined {
