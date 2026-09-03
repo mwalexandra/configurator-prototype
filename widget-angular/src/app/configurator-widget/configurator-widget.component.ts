@@ -80,7 +80,7 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
   private static readonly PRODUKT_WHITELIST: string[] = [
     'PH_AL_VP_LIEFERPRIO', 'PH_AL_VP_PRODUKT', 'PH_AL_VP_STEUERAUSFUEHRUNG',
     'PH_AL_VP_AUSFARMHAND', 'PH_AL_VP_AUSFARMSTRUMPF', 'PH_AL_VP_AUSFHANDSCHUH',
-    'PH_AL_VP_FARBE', 'PH_AL_VP_SEITE'
+    'PH_AL_VP_FARBE', 'PH_AL_VP_SEITE', 'PH_AS_VP_CCL'
   ];
 
   private static readonly ARM_WHITELIST: string[] = [
