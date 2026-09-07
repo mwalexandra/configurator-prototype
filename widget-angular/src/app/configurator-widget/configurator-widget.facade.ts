@@ -56,24 +56,6 @@ export class ConfiguratorWidgetFacade {
     }));
   });
 
-  readonly incompleteRequiredSubItemCharacteristics = computed(() => {
-    const config = this.ctx.configuration();
-    const subItems = config?.rootItem?.subItems ?? [];
-
-    return subItems.flatMap(item =>
-      (item.characteristics ?? [])
-        .filter(c => c.required && (!c.complete || !c.consistent))
-        .map(c => ({
-          itemId: item.id,
-          itemKey: item.key,
-          characteristicId: c.id,
-          complete: c.complete,
-          consistent: c.consistent,
-          values: (c.values ?? []).map(v => v.id)
-        }))
-    );
-  });
-
   readonly blockingIssues = computed(() => {
     const config = this.ctx.configuration();
     if (!config) {
