@@ -151,36 +151,6 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     }
   }
 
-  // TODO to remove 
-  protected logRootItem(): void {
-    console.log('configuration:', this.configuration());
-    console.log('rootItem:', this.configuration()?.rootItem);
-    console.log('rootItem.characteristics:', this.configuration()?.rootItem?.characteristics);
-  }
-
-  // TODO to remove
-  protected logWhitelistedSections(): void {
-    console.log('configuration loaded?', !!this.configuration());
-    console.log('PH_AL_VP_STEUERAUSFUEHRUNG raw:', this.findCharacteristicById('PH_AL_VP_STEUERAUSFUEHRUNG'));
-    console.log('PH_AL_VP_SEITE raw:', this.findCharacteristicById('PH_AL_VP_SEITE'));
-
-    for (const section of this.configuratorSections) {
-      const chars = this.getWhitelistedSectionCharacteristics(section);
-      console.log(
-        `[${section.title}] visible whitelisted count:`,
-        chars.length,
-        chars.map(c => ({ id: c.id, name: c.name, readOnly: c.readOnly, visible: c.visible }))
-      );
-    }
-  }
-
-  // TODO to remove
-  protected logMessagesDebug(): void {
-    console.log('all messages:', this.configuration()?.messages);
-    console.log('blockingIssues:', this.facade?.blockingIssues());
-    console.log('blockingIssueLabels:', this.facade?.blockingIssueLabels());
-  }
-
   protected get blockingIssuesForView() {
     return this.facade?.blockingIssueLabels?.() ?? [];
   }
@@ -422,31 +392,19 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     return this.facade?.getMessagesForCharacteristic(characteristicId) ?? [];
   }
 
-  // not used
-  protected hasCharacteristicProblem(characteristicId: string): boolean {
-    return this.ui.problemCharacteristicIds().has(characteristicId);
+  private findBlockingIssue(char: Characteristic, itemId?: string) {
+    return this.facade?.blockingIssues().find(issue =>
+      issue.characteristicId === char.id && issue.itemId === itemId
+    );
   }
 
   protected isCharacteristicIncomplete(char: Characteristic, itemId?: string): boolean {
-    return this.facade?.blockingIssues().some(issue =>
-      issue.characteristicId === char.id &&
-      issue.itemId === itemId &&
-      issue.complete === false
-    ) ?? false;
+    return this.findBlockingIssue(char, itemId)?.complete === false;
   }
 
   protected hasCharacteristicConflict(char: Characteristic, itemId?: string): boolean {
-    const issues = this.facade?.blockingIssues() ?? [];
-    const match = issues.find(issue =>
-      issue.characteristicId === char.id &&
-      issue.itemId === itemId &&
-      issue.complete === true &&
-      issue.consistent === false
-    );
-    if (match) {
-      console.log('conflict on', char.id, 'itemId', itemId, '-> messages for this char:', this.getMessagesForCharacteristic(char.id));
-    }
-    return !!match;
+    const issue = this.findBlockingIssue(char, itemId);
+    return issue?.complete === true && issue?.consistent === false;
   }
 
   protected translateMode(mode: string | undefined): string {

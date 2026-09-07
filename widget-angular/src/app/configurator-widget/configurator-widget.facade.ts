@@ -310,7 +310,7 @@ export class ConfiguratorWidgetFacade {
     const groups = this.ctx.configuration()?.groups ?? [];
     const map = new Map<string, number>();
     for (const g of groups) {
-      const ids = (g as any).characteristicIDs ?? [];
+      const ids = g.id ?? [];
       map.set(g.id, issues.filter(i => ids.includes(i.characteristicId)).length);
     }
     return map;
