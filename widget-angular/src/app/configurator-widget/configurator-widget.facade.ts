@@ -34,28 +34,6 @@ interface ConfiguratorWidgetFacadeContext {
 
 export class ConfiguratorWidgetFacade {
 
-  // Debug signal to inspect the current configuration state in a simplified format
-  readonly subItemDebug = computed(() => {
-    const config = this.ctx.configuration();
-    const subItems = config?.rootItem?.subItems ?? [];
-
-    return subItems.map(item => ({
-      id: item.id,
-      key: item.key,
-      complete: item.complete,
-      consistent: item.consistent,
-      characteristics: (item.characteristics ?? []).map(c => ({
-        id: c.id,
-        required: c.required,
-        visible: c.visible,
-        readOnly: c.readOnly,
-        complete: c.complete,
-        consistent: c.consistent,
-        values: (c.values ?? []).map(v => v.id)
-      }))
-    }));
-  });
-
   readonly blockingIssues = computed(() => {
     const config = this.ctx.configuration();
     if (!config) {
