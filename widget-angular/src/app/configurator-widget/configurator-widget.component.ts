@@ -392,6 +392,13 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     return this.facade?.getMessagesForCharacteristic(characteristicId) ?? [];
   }
 
+  protected getEffectiveHints(char: Characteristic): ConfigurationMessage[] {
+    return (this.facade?.getEffectiveHints(char) ?? []).map(hint => ({
+      ...hint,
+      characteristicId: char.id
+    }));
+  }
+
   private findBlockingIssue(char: Characteristic, itemId?: string) {
     return this.facade?.blockingIssues().find(issue =>
       issue.characteristicId === char.id && issue.itemId === itemId

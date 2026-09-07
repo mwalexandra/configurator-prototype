@@ -19,7 +19,7 @@ export class CharacteristicEditorComponent {
     itemId = input<string | undefined>();
     readOnly = input(false);
     completed = input(false);
-    messages = input<ConfigurationMessage[]>([]);
+    messages = input<{ text: string; severity: MessageSeverity }[]>([]);
     hasProblem = input(false);
     incomplete = input(false);
     consistent = input(true);

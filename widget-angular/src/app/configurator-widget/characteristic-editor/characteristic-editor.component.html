@@ -55,10 +55,6 @@
     </p>
   </div>
 
-  <p class="characteristic-message characteristic-message--error" *ngIf="!incomplete() && hasProblem()">
-    {{ severityIcon('ERROR') }} {{ getEffectiveHints() }}
-  </p>
-
   <ng-container [ngSwitch]="characteristic().valueType">
     <div
       *ngIf="isProductionTextField(); else standardCharacteristicField"
