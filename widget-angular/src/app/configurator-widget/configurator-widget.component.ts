@@ -427,13 +427,6 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     return this.ui.problemCharacteristicIds().has(characteristicId);
   }
 
-  protected hasCharacteristicBlockingIssue(characteristicId: string, itemId?: string): boolean {
-    return this.facade?.blockingIssues().some(issue =>
-      issue.characteristicId === characteristicId &&
-      issue.itemId === itemId
-    ) ?? false;
-  }
-
   protected isCharacteristicIncomplete(char: Characteristic, itemId?: string): boolean {
     return this.facade?.blockingIssues().some(issue =>
       issue.characteristicId === char.id &&
