@@ -3,7 +3,8 @@ import { Component, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   Characteristic,
-  ConfigurationMessage
+  ConfigurationMessage,
+  MessageSeverity
 } from '../../models/configuration.models';
 
 @Component({
@@ -42,7 +43,10 @@ export class CharacteristicEditorComponent {
         });
     }
 
-    
+    severityIcon(severity: MessageSeverity): string {
+        return { ERROR: '⛔', WARNING: '⚠️', INFO: 'ℹ️' }[severity] ?? '';
+    }
+
     protected isProductionTextField(): boolean {
         return this.characteristic().id === 'PH_AL_FT_INFOPROD';
     }

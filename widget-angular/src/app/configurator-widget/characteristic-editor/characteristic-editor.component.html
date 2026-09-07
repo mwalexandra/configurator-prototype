@@ -1,5 +1,6 @@
 <div
   class="characteristic-item"
+  [id]="'char-' + (itemId() ?? 'root') + '-' + characteristic().id"
   [class.characteristic-item--compact]="compact()"
   [class.characteristic-item--incomplete]="incomplete()"
   [class.characteristic-item--error]="!incomplete() && hasProblem()"
@@ -50,9 +51,13 @@
       [class.characteristic-message--warning]="msg.severity === 'WARNING'"
       *ngFor="let msg of messages()"
     >
-      {{ msg.text }}
+      {{ severityIcon(msg.severity) }} {{ msg.text }}
     </p>
   </div>
+
+  <p class="characteristic-message characteristic-message--error" *ngIf="!incomplete() && hasProblem()">
+    {{ severityIcon('ERROR') }} {{ getEffectiveHints() }}
+  </p>
 
   <ng-container [ngSwitch]="characteristic().valueType">
     <div

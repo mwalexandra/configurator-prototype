@@ -14,7 +14,9 @@ import {
   WidgetInputConfig,
   WidgetState,
   ConfigurationItem,
-  ExternalConfigurationItemPayload
+  ExternalConfigurationItemPayload,
+  Characteristic,
+  MessageSeverity
 } from '../models/configuration.models';
 import { Observable } from 'rxjs/internal/Observable';
 
@@ -330,6 +332,29 @@ export class ConfiguratorWidgetFacade {
       msg => msg.severity === 'ERROR'
     );
   }
+
+  getEffectiveHints(characteristic: Characteristic): { text: string; severity: MessageSeverity }[] {
+    const cpsMessages = this.getMessagesForCharacteristic(characteristic.id);
+    if (cpsMessages.length) return cpsMessages;
+    if (characteristic.required && !characteristic.complete) {
+      return [{ text: 'Erforderliches Feld ist nicht ausgefüllt', severity: 'ERROR' }];
+    }
+    if (!characteristic.consistent) {
+      return [{ text: 'Wert steht im Konflikt mit einer anderen Auswahl', severity: 'ERROR' }];
+    }
+    return [];
+  }
+
+  readonly errorCountByGroup = computed(() => {
+    const issues = this.blockingIssues();
+    const groups = this.ctx.configuration()?.groups ?? [];
+    const map = new Map<string, number>();
+    for (const g of groups) {
+      const ids = (g as any).characteristicIDs ?? [];
+      map.set(g.id, issues.filter(i => ids.includes(i.characteristicId)).length);
+    }
+    return map;
+  });
 
   private applyConfiguration(
     response: ConfigurationResponse,

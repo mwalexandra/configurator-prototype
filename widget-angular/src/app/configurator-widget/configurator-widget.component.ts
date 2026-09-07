@@ -174,8 +174,21 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     }
   }
 
+  // TODO to remove
+  protected logMessagesDebug(): void {
+    console.log('all messages:', this.configuration()?.messages);
+    console.log('blockingIssues:', this.facade?.blockingIssues());
+    console.log('blockingIssueLabels:', this.facade?.blockingIssueLabels());
+  }
+
   protected get blockingIssuesForView() {
     return this.facade?.blockingIssueLabels?.() ?? [];
+  }
+
+  scrollToField(itemId: string, characteristicId: string): void {
+    const el = document.getElementById(`char-${itemId}-${characteristicId}`);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    (el?.querySelector('input, select, textarea') as HTMLElement | null)?.focus();
   }
 
   protected trackBlockingIssue(index: number, issue: { itemId: string; characteristicId: string }) {
@@ -430,12 +443,17 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
   }
 
   protected hasCharacteristicConflict(char: Characteristic, itemId?: string): boolean {
-    return this.facade?.blockingIssues().some(issue =>
+    const issues = this.facade?.blockingIssues() ?? [];
+    const match = issues.find(issue =>
       issue.characteristicId === char.id &&
       issue.itemId === itemId &&
       issue.complete === true &&
       issue.consistent === false
-    ) ?? false;
+    );
+    if (match) {
+      console.log('conflict on', char.id, 'itemId', itemId, '-> messages for this char:', this.getMessagesForCharacteristic(char.id));
+    }
+    return !!match;
   }
 
   protected translateMode(mode: string | undefined): string {

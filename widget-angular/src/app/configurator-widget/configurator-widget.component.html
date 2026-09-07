@@ -91,7 +91,11 @@
   <div class="config-warning" *ngIf="blockingIssuesForView && blockingIssuesForView.length > 0">
     <p>Bitte vervollständigen Sie noch folgende Felder:</p>
     <ul>
-      <li *ngFor="let issue of blockingIssuesForView; trackBy: trackBlockingIssue">
+      <li
+        *ngFor="let issue of blockingIssuesForView; trackBy: trackBlockingIssue"
+        (click)="scrollToField(issue.itemId, issue.characteristicId)"
+        class="config-warning__item"
+      >
         {{ issue.label }}
       </li>
     </ul>
@@ -99,8 +103,6 @@
 
   <div class="card">
     <h3 class="card__title">Produktinformationen</h3>
-
-    <button type="button" (click)="logWhitelistedSections()">DEBUG: log whitelisted</button> 
 
     <div class="card__content">
       <div class="info-grid">
