@@ -85,78 +85,6 @@ public class ConfigurationService {
         response.setBackendProcessingTimeMs(System.currentTimeMillis() - start);
         return response;
     }
-
-    public ConfigurationResponse createFromExternalConfiguration(
-            ExternalConfigurationCreateRequest request
-    ) {
-        long start = System.currentTimeMillis();
-
-        log.info("createFromExternalConfiguration: request.kbId={}, request.productId={}", 
-                request.getKbId(), request.getProductId());
-
-        Map<String, Object> sapRequestBody = ExternalConfigurationMapper.toSapRequestBody(request);
-
-        SapRuntimeConfigurationResponse sapResponse =
-                sapCpsClient.createConfigurationFromExternal(sapRequestBody);
-
-        log.info("SAP CPS response: id={}, kbId={}", sapResponse.getId(), sapResponse.getKbId());
-
-        ConfigurationResponse response = ExternalConfigurationMapper.fromSapRuntimeResponse(sapResponse);
-
-        // Bekommen Sie kbId aus der SAP-Antwort, wenn sie nicht im ursprünglichen Antrag angegeben wurde
-        String kbId = request.getKbId();
-        if (kbId == null || kbId.isBlank()) {
-            kbId = sapResponse.getKbId() != null
-                    ? sapResponse.getKbId().toString()
-                    : null;
-        }
-
-        // Fallback: wenn kbId immer noch leer ist, versuchen, es über productId zu erhalten
-        if ((kbId == null || kbId.isBlank()) && request.getProductId() != null && !request.getProductId().isBlank()) {
-            log.warn("kbId nicht verfügbar, versuche Auflösung über productId={}", request.getProductId());
-            try {
-                SapCreateRequest tempRequest = new SapCreateRequest();
-                tempRequest.setProductKey(request.getProductId());
-                SapRuntimeConfigurationResponse tempResponse = sapCpsClient.createConfiguration(tempRequest);
-                
-                if (tempResponse != null && tempResponse.getKbId() != null) {
-                    kbId = tempResponse.getKbId().toString();
-                    log.info("Resolved kbId from product: {}", kbId);
-                    
-                    // Löschen der temporären Konfiguration
-                    if (tempResponse.getId() != null) {
-                        try {
-                            sapCpsClient.deleteConfiguration(tempResponse.getId());
-                            log.info("Deleted temporary configuration: {}", tempResponse.getId());
-                        } catch (Exception cleanupEx) {
-                            log.warn("Failed to cleanup temporary configuration: {}", tempResponse.getId(), cleanupEx);
-                        }
-                    }
-                }
-            } catch (Exception fallbackEx) {
-                log.error("Failed to resolve kbId via productId", fallbackEx);
-            }
-        }
-
-        log.info("Resolved kbId: {}", kbId);
-
-        // Bekommen Sie Knowledge Base wenn kbId verfügbar ist
-        if (kbId != null && !kbId.isBlank()) {
-            log.info("Fetching KB for kbId={}", kbId);
-            SapKbResponse kbResponse = sapKbClient.getKnowledgeBase(kbId);
-            log.info("KB received: {} characteristics", 
-                    kbResponse != null && kbResponse.getCharacteristics() != null 
-                        ? kbResponse.getCharacteristics().size() 
-                        : 0);
-            ExternalConfigurationMapper.enrichFromSapKb(response, kbResponse);
-            log.info("KB enrichment completed");
-        } else {
-            log.warn("No kbId available, skipping KB enrichment");
-        }
-
-        response.setBackendProcessingTimeMs(System.currentTimeMillis() - start);
-        return response;
-    }
     
     public ConfigurationResponse getConfiguration(String configId) {
         long start = System.currentTimeMillis();
@@ -302,6 +230,98 @@ public class ConfigurationService {
         }
 
         throw new IllegalArgumentException("Resume requires configurationId or snapshot");
+    }
+
+    public ConfigurationResponse createFromExternalConfiguration(
+        ExternalConfigurationCreateRequest request
+    ) {
+        long start = System.currentTimeMillis();
+
+        log.info("createFromExternalConfiguration: request.kbId={}, request.productId={}", 
+                request.getKbId(), request.getProductId());
+
+        Map<String, Object> sapRequestBody = ExternalConfigurationMapper.toSapRequestBody(request);
+
+        SapRuntimeConfigurationResponse createdRuntime =
+                sapCpsClient.createConfigurationFromExternal(sapRequestBody);
+
+        if (createdRuntime == null) {
+            throw new IllegalStateException("SAP CPS returned null body for createConfigurationFromExternal");
+        }
+
+        String configurationId = createdRuntime.getId();
+        log.info("SAP CPS external-create response: id={}, kbId={}, complete={}, consistent={}",
+                configurationId, createdRuntime.getKbId(), createdRuntime.isComplete(), createdRuntime.isConsistent());
+
+        if (configurationId == null || configurationId.isBlank()) {
+            throw new IllegalStateException("SAP CPS external create response contains no configurationId");
+        }
+
+        SapGetConfigurationResult refreshed = sapCpsClient.getConfigurationWithEtag(configurationId);
+        SapRuntimeConfigurationResponse refreshedRuntime = refreshed != null ? refreshed.getBody() : null;
+
+        if (refreshedRuntime == null) {
+            throw new IllegalStateException(
+                    "SAP CPS returned null configuration body after external create for configId=" + configurationId
+            );
+        }
+
+        if (refreshed != null && refreshed.getEtag() != null) {
+            etagByConfigurationId.put(configurationId, refreshed.getEtag());
+        }
+        readOnlyByConfigurationId.put(configurationId, false);
+
+        String kbId = refreshedRuntime.getKbId() != null
+                ? refreshedRuntime.getKbId().toString()
+                : request.getKbId();
+
+        if ((kbId == null || kbId.isBlank()) && request.getProductId() != null && !request.getProductId().isBlank()) {
+            log.warn("kbId not available, trying fallback via productId={}", request.getProductId());
+            try {
+                SapCreateRequest tempRequest = new SapCreateRequest();
+                tempRequest.setProductKey(request.getProductId());
+                SapRuntimeConfigurationResponse tempResponse = sapCpsClient.createConfiguration(tempRequest);
+
+                if (tempResponse != null && tempResponse.getKbId() != null) {
+                    kbId = tempResponse.getKbId().toString();
+                    log.info("Resolved kbId from product: {}", kbId);
+
+                    if (tempResponse.getId() != null) {
+                        try {
+                            sapCpsClient.deleteConfiguration(tempResponse.getId());
+                            log.info("Deleted temporary configuration: {}", tempResponse.getId());
+                        } catch (Exception cleanupEx) {
+                            log.warn("Failed to cleanup temporary configuration: {}", tempResponse.getId(), cleanupEx);
+                        }
+                    }
+                }
+            } catch (Exception fallbackEx) {
+                log.error("Failed to resolve kbId via productId", fallbackEx);
+            }
+        }
+
+        log.info("Resolved kbId: {}", kbId);
+
+        ConfigurationResponse response;
+        if (kbId != null && !kbId.isBlank()) {
+            SapKbResponse kbResponse = sapKbClient.getKnowledgeBase(kbId);
+            response = configurationMapper.toWidgetResponse(refreshedRuntime, kbResponse);
+        } else {
+            response = configurationMapper.toWidgetResponse(refreshedRuntime, null);
+        }
+
+        RestoreInfo restoreInfo = new RestoreInfo();
+        restoreInfo.setMode("create");
+        restoreInfo.setStatus("RESUMED");
+        restoreInfo.setStrategy("LIVECONFIGURATION");
+        restoreInfo.setLiveSessionAvailable(true);
+        restoreInfo.setSnapshotUsed(false);
+        restoreInfo.setReadOnly(false);
+        restoreInfo.setMessage("Configuration created from external snapshot");
+
+        response.setRestoreInfo(restoreInfo);
+        response.setBackendProcessingTimeMs(System.currentTimeMillis() - start);
+        return response;
     }
 
     public ConfigurationResponse completeConfiguration(String configurationId) {
