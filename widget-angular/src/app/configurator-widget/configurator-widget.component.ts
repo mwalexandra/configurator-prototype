@@ -159,8 +159,14 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
       return [];
     }
 
+    const issues = this.facade?.blockingIssues() ?? [];
+
     return this.getVisibleEditableCharacteristics(rootItem)
-      .filter(({ characteristic }) => this.hasActiveCharacteristicIssue(characteristic))
+      .filter(({ item, characteristic }) =>
+        issues.some(issue =>
+          issue.characteristicId === characteristic.id && issue.itemId === item.id
+        )
+      )
       .map(({ item, characteristic }) => ({
         level: item === rootItem ? 'root' as const : 'subItem' as const,
         itemId: item.id,
@@ -476,36 +482,33 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     }));
   }
 
-  private findBlockingIssue(char: Characteristic, itemId?: string) {
-    return this.facade?.blockingIssues().find((issue: {
+  protected isCharacteristicIncomplete(char: Characteristic, itemId?: string): boolean {
+    const issue = this.facade?.blockingIssues().find((candidate: {
       characteristicId: string;
       itemId: string;
       complete: boolean;
       consistent: boolean;
     }) =>
-      issue.characteristicId === char.id && issue.itemId === itemId
+      candidate.characteristicId === char.id && candidate.itemId === (itemId ?? this.getItemIdForCharacteristicId(char.id) ?? '')
     );
-  }
 
-  protected isCharacteristicIncomplete(char: Characteristic, itemId?: string): boolean {
-    return char.required &&
-      (!char.values?.length || !char.complete);
+    return !!issue || (char.required && (!char.values?.length || !char.complete));
   }
 
   protected hasCharacteristicConflict(char: Characteristic, itemId?: string): boolean {
-    return this.hasActiveCharacteristicIssue(char);
-  }
+    const targetItemId = itemId ?? this.getItemIdForCharacteristicId(char.id) ?? '';
+    const issue = this.facade?.blockingIssues().find((candidate: {
+      characteristicId: string;
+      itemId: string;
+      complete: boolean;
+      consistent: boolean;
+    }) =>
+      candidate.characteristicId === char.id && candidate.itemId === targetItemId
+    );
 
-  private hasActiveCharacteristicIssue(
-    characteristic: Characteristic,
-    messages: ConfigurationMessage[] = this.configuration()?.messages ?? []
-  ): boolean {
-    return (
-      characteristic.required &&
-      (!characteristic.values?.length || !characteristic.complete)
-    ) || messages.some(message =>
+    return !!issue || (this.configuration()?.messages ?? []).some(message =>
       message.severity === 'ERROR' &&
-      message.characteristicId === characteristic.id
+      message.characteristicId === char.id
     );
   }
 

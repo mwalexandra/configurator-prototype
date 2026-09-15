@@ -146,7 +146,6 @@ export class ConfiguratorWidgetFacade {
 
     this.api.resumeConfiguration(payload).subscribe({
       next: response => {
-        console.log('resumeConfiguration response', response.configurationId, 'readOnly:', response.restoreInfo?.readOnly);
         this.applyConfiguration(response);
         if (!response.restoreInfo?.readOnly) {
           this.refreshPossibleValues(response);
@@ -160,9 +159,7 @@ export class ConfiguratorWidgetFacade {
   }
 
   private refreshPossibleValues(response: ConfigurationResponse): void {
-    console.log('refreshPossibleValues STARTED', response.configurationId);
     const firstChar = response.rootItem?.characteristics?.[0];
-    console.log('firstChar:', firstChar?.id, firstChar?.values);
     if (!firstChar) return;
     const currentValue = firstChar.values?.[0]?.id ?? null;
     this.api.patchConfiguration(response.configurationId, {
@@ -171,10 +168,9 @@ export class ConfiguratorWidgetFacade {
       value: currentValue
     }).subscribe({
       next: refreshed => {
-        console.log('refreshPossibleValues SUCCESS', refreshed);
         this.applyConfiguration(refreshed);
       },
-      error: err => console.log('refreshPossibleValues FAILED', err)
+      error: () => this.emitError('CONFIG_PATCH_FAILED', 'Konfiguration konnte nicht aktualisiert werden')
     });
   }
 
@@ -186,15 +182,12 @@ export class ConfiguratorWidgetFacade {
 
     const currentConfigId = this.ctx.configId();
     const current = this.ctx.configuration();
-    console.log('guard check', { currentConfigId, hasCurrent: !!current, readOnly: current?.restoreInfo?.readOnly });
 
     if (!currentConfigId || !current || current.restoreInfo?.readOnly) {
-      console.log('blocked by guard');
       return;
     }
 
     if (this.ctx.status() === 'completed') {
-      console.log('blocked: status is completed');
       return;
     }
 
@@ -208,11 +201,9 @@ export class ConfiguratorWidgetFacade {
       value
     }).subscribe({
       next: response => {
-        console.log('patchConfiguration success', response);
         this.applyConfiguration(response);
       },
-      error: (err) => {
-        console.log('patchConfiguration FAILED', err);
+      error: () => {
         this.emitError('CONFIG_PATCH_FAILED', 'Konfiguration konnte nicht aktualisiert werden');
       }
     });
@@ -364,32 +355,6 @@ export class ConfiguratorWidgetFacade {
     }
   }
 
-  private applySnapshotFallback(snapshot: ConfigurationSnapshot): void {
-    this.ctx.configuration.set({
-      configurationId: snapshot.configurationId ?? 'snapshot-only',
-      productId: snapshot.productId,
-      kbId: snapshot.kbId,
-      complete: snapshot.complete,
-      consistent: snapshot.consistent,
-      rootItem: snapshot.rootItem,
-      groups: snapshot.groups ?? [],
-      messages: snapshot.messages ?? [],
-      restoreInfo: {
-        mode: 'resume',
-        status: 'FALLBACKAPPLIED',
-        strategy: 'READONLYSNAPSHOT',
-        liveSessionAvailable: false,
-        snapshotUsed: true,
-        readOnly: true,
-        message:
-          'Live-Konfiguration konnte nicht wiederhergestellt werden. Snapshot-Fallback wird im Nur-Lese-Modus angezeigt.'
-      }
-    });
-    this.ctx.configId.set(snapshot.configurationId ?? 'snapshot-only');
-    this.ctx.status.set('loaded');
-    this.ctx.errorMessage.set(null);
-  }
-
   private emitError(errorCode: string, message: string): void {
     this.ctx.status.set('error');
     this.ctx.errorMessage.set(message);
@@ -397,7 +362,6 @@ export class ConfiguratorWidgetFacade {
   }
 
   createFromExternalConfiguration(): void {
-    console.log('createFromExternalConfiguration CALLED');
     const current = this.ctx.configuration();
     if (!current) {
       this.emitError('CONFIG_EXTERNAL_CREATE_INVALID', 'Keine Konfiguration zum Export vorhanden');
