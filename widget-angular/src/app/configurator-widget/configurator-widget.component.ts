@@ -14,6 +14,7 @@ import { FormsModule } from '@angular/forms';
 import { ConfigurationApiService } from '../services/configuration-api.service';
 import {
   Characteristic,
+  ConfigurationItem,
   CompletedConfigurationResult,
   ConfigurationResponse,
   ConfigurationMessage,
@@ -33,6 +34,16 @@ interface ConfiguratorSection {
 interface MeasurementSection {
   title: string;
   key: 'arm-measurements' | 'hand-measurements' | 'production-information';
+}
+
+interface BlockingIssue {
+  level: 'root' | 'subItem';
+  itemId: string;
+  itemKey: string;
+  characteristicId: string;
+  complete: boolean;
+  consistent: boolean;
+  label: string;
 }
 
 @Component({
@@ -151,9 +162,31 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     }
   }
 
-  protected get blockingIssuesForView() {
-    return this.facade?.blockingIssueLabels?.() ?? [];
-  }
+  protected readonly visibleBlockingIssues = computed(() => {
+    const rootItem = this.configuration()?.rootItem;
+    const issues: BlockingIssue[] = this.facade?.blockingIssueLabels?.() ?? [];
+
+    if (!rootItem) {
+      return [];
+    }
+
+    const visibleSubItemCharacteristicIds = new Set(
+      (rootItem.subItems ?? []).flatMap((item: ConfigurationItem) => {
+        const whitelist = this.getWhitelistForItemKey(item.key);
+
+        return (item.characteristics ?? [])
+          .filter((characteristic: Characteristic) =>
+            characteristic.visible && whitelist.includes(characteristic.id)
+          )
+          .map((characteristic: Characteristic) => `${item.id}:${characteristic.id}`);
+      })
+    );
+
+    return issues.filter((issue: BlockingIssue) =>
+      issue.level === 'subItem' &&
+      visibleSubItemCharacteristicIds.has(`${issue.itemId}:${issue.characteristicId}`)
+    );
+  });
 
   scrollToField(itemId: string, characteristicId: string): void {
     const el = document.getElementById(`char-${itemId}-${characteristicId}`);
@@ -306,6 +339,10 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
   }
 
   private getWhitelistForSection(itemKey: string): string[] {
+    return this.getWhitelistForItemKey(itemKey);
+  }
+
+  private getWhitelistForItemKey(itemKey: string): string[] {
     switch (itemKey) {
       case '000020000009900002':
         return ConfiguratorWidgetComponent.PRODUKT_WHITELIST;

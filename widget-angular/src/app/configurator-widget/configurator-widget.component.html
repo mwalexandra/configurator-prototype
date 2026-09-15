@@ -88,11 +88,11 @@
     </p>
   </div>
 
-  <div class="config-warning" *ngIf="blockingIssuesForView && blockingIssuesForView.length > 0">
+  <div class="config-warning" *ngIf="visibleBlockingIssues().length > 0">
     <p>Bitte vervollständigen Sie noch folgende Felder:</p>
     <ul>
       <li
-        *ngFor="let issue of blockingIssuesForView; trackBy: trackBlockingIssue"
+        *ngFor="let issue of visibleBlockingIssues(); trackBy: trackBlockingIssue"
         (click)="scrollToField(issue.itemId, issue.characteristicId)"
         class="config-warning__item"
       >
