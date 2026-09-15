@@ -29,9 +29,12 @@ SAP CPS Configuration Widget - Bachelorarbeit Projekt
 
 ## Quick Start
 
+Tenant-Parametern in Enviroment hinzuzufügen. 
+
 ### Backend
 ```bash
 cd api-service-java
+load_cps_env           # Um die Credentials für Curaflow-CPS-Tenant zu kriegen
 ./mvnw spring-boot:run
 # Läuft auf http://localhost:8080
 ```
