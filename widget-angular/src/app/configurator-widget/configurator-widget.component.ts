@@ -36,16 +36,6 @@ interface MeasurementSection {
   key: 'arm-measurements' | 'hand-measurements' | 'production-information';
 }
 
-interface BlockingIssue {
-  level: 'root' | 'subItem';
-  itemId: string;
-  itemKey: string;
-  characteristicId: string;
-  complete: boolean;
-  consistent: boolean;
-  label: string;
-}
-
 @Component({
   selector: 'app-configurator-widget',
   standalone: true,
@@ -164,28 +154,24 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
 
   protected readonly visibleBlockingIssues = computed(() => {
     const rootItem = this.configuration()?.rootItem;
-    const issues: BlockingIssue[] = this.facade?.blockingIssueLabels?.() ?? [];
 
     if (!rootItem) {
       return [];
     }
 
-    const visibleSubItemCharacteristicIds = new Set(
-      (rootItem.subItems ?? []).flatMap((item: ConfigurationItem) => {
-        const whitelist = this.getWhitelistForItemKey(item.key);
-
-        return (item.characteristics ?? [])
-          .filter((characteristic: Characteristic) =>
-            characteristic.visible && whitelist.includes(characteristic.id)
-          )
-          .map((characteristic: Characteristic) => `${item.id}:${characteristic.id}`);
-      })
-    );
-
-    return issues.filter((issue: BlockingIssue) =>
-      issue.level === 'subItem' &&
-      visibleSubItemCharacteristicIds.has(`${issue.itemId}:${issue.characteristicId}`)
-    );
+    return this.getVisibleEditableCharacteristics(rootItem)
+      .filter(({ characteristic }) => this.hasActiveCharacteristicIssue(characteristic))
+      .map(({ item, characteristic }) => ({
+        level: item === rootItem ? 'root' as const : 'subItem' as const,
+        itemId: item.id,
+        itemKey: item.key,
+        characteristicId: characteristic.id,
+        complete: characteristic.complete,
+        consistent: characteristic.consistent,
+        label: item === rootItem
+          ? characteristic.id
+          : `${item.key}: ${characteristic.id}`
+      }));
   });
 
   scrollToField(itemId: string, characteristicId: string): void {
@@ -342,6 +328,60 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
     return this.getWhitelistForItemKey(itemKey);
   }
 
+  private getVisibleEditableCharacteristics(rootItem: ConfigurationItem): {
+    item: ConfigurationItem;
+    characteristic: Characteristic;
+  }[] {
+    const visibleCharacteristics: {
+      item: ConfigurationItem;
+      characteristic: Characteristic;
+    }[] = [];
+
+    const addVisibleCharacteristics = (
+      item: ConfigurationItem,
+      characteristics: Characteristic[]
+    ): void => {
+      characteristics
+        .filter(characteristic => characteristic.visible && !characteristic.readOnly)
+        .forEach(characteristic => visibleCharacteristics.push({ item, characteristic }));
+    };
+
+    const productionIds = new Set([
+      'PH_AL_FS_INFOPROD',
+      'PH_AL_FT_INFOPROD'
+    ]);
+    addVisibleCharacteristics(
+      rootItem,
+      (rootItem.characteristics ?? []).filter(characteristic =>
+        productionIds.has(characteristic.id)
+      )
+    );
+
+    for (const item of rootItem.subItems ?? []) {
+      const whitelist = this.getWhitelistForItemKey(item.key);
+      addVisibleCharacteristics(
+        item,
+        (item.characteristics ?? []).filter(characteristic =>
+          whitelist.includes(characteristic.id)
+        )
+      );
+
+      if (item.key === '000020000009900021') {
+        addVisibleCharacteristics(item, (item.characteristics ?? []).filter(characteristic =>
+          characteristic.id.startsWith('PH_AS_FM_')
+        ));
+      }
+
+      if (item.key === '000020000009900022') {
+        addVisibleCharacteristics(item, (item.characteristics ?? []).filter(characteristic =>
+          characteristic.id.startsWith('PH_HS_FM_')
+        ));
+      }
+    }
+
+    return visibleCharacteristics;
+  }
+
   private getWhitelistForItemKey(itemKey: string): string[] {
     switch (itemKey) {
       case '000020000009900002':
@@ -448,13 +488,25 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
   }
 
   protected isCharacteristicIncomplete(char: Characteristic, itemId?: string): boolean {
-    return this.findBlockingIssue(char, itemId)?.complete === false;
+    return char.required &&
+      (!char.values?.length || !char.complete);
   }
 
   protected hasCharacteristicConflict(char: Characteristic, itemId?: string): boolean {
-    const issue = this.findBlockingIssue(char, itemId);
-    return this.facade?.hasCharacteristicError(char.id) === true ||
-      (issue?.complete === true && issue?.consistent === false);
+    return this.hasActiveCharacteristicIssue(char);
+  }
+
+  private hasActiveCharacteristicIssue(
+    characteristic: Characteristic,
+    messages: ConfigurationMessage[] = this.configuration()?.messages ?? []
+  ): boolean {
+    return (
+      characteristic.required &&
+      (!characteristic.values?.length || !characteristic.complete)
+    ) || messages.some(message =>
+      message.severity === 'ERROR' &&
+      message.characteristicId === characteristic.id
+    );
   }
 
   protected translateMode(mode: string | undefined): string {
