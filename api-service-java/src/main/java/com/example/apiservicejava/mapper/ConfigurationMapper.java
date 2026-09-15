@@ -31,7 +31,7 @@ public class ConfigurationMapper {
         }
 
         response.setGroups(mapGroups(runtime, kb));
-        response.setMessages(mapMessages(runtime));
+        response.setMessages(mapMessages(runtime, kb));
         return response;
     }
 
@@ -277,7 +277,9 @@ public class ConfigurationMapper {
                 .collect(Collectors.toList());
     }
 
-    private List<ConfigurationMessage> mapMessages(SapRuntimeConfigurationResponse runtime) {
+    private List<ConfigurationMessage> mapMessages(
+            SapRuntimeConfigurationResponse runtime,
+            SapKbResponse kb) {
         if (runtime.getConflicts() == null || runtime.getConflicts().isEmpty()) {
             return Collections.emptyList();
         }
@@ -288,9 +290,62 @@ public class ConfigurationMapper {
                     ConfigurationMessage msg = new ConfigurationMessage();
                     msg.setSeverity("ERROR");
                     msg.setText(conflict.getMessage() != null ? conflict.getMessage() : "Configuration conflict");
-                    msg.setCharacteristicId(conflict.getId());
+                    msg.setCharacteristicId(resolveConflictCharacteristicId(conflict, runtime, kb));
                     return msg;
                 })
                 .collect(Collectors.toList());
+    }
+
+    private String resolveConflictCharacteristicId(
+            SapRuntimeConflict conflict,
+            SapRuntimeConfigurationResponse runtime,
+            SapKbResponse kb) {
+        List<SapRuntimeCharacteristic> runtimeCharacteristics = flattenCharacteristics(runtime.getRootItem());
+
+        Optional<SapRuntimeCharacteristic> exactMatch = runtimeCharacteristics.stream()
+                .filter(characteristic -> Objects.equals(characteristic.getId(), conflict.getId()))
+                .findFirst();
+        if (exactMatch.isPresent()) {
+            return exactMatch.get().getId();
+        }
+
+        Optional<SapRuntimeCharacteristic> nameMatch = runtimeCharacteristics.stream()
+                .filter(characteristic -> Objects.equals(characteristic.getId(), conflict.getName()))
+                .findFirst();
+        if (nameMatch.isPresent()) {
+            return nameMatch.get().getId();
+        }
+
+        if (kb != null && kb.getCharacteristics() != null && conflict.getName() != null) {
+            Optional<SapKbCharacteristic> kbMatch = kb.getCharacteristics().stream()
+                    .filter(Objects::nonNull)
+                    .filter(characteristic -> Objects.equals(characteristic.getName(), conflict.getName()))
+                    .findFirst();
+            if (kbMatch.isPresent() && runtimeCharacteristics.stream()
+                    .anyMatch(characteristic -> Objects.equals(characteristic.getId(), kbMatch.get().getId()))) {
+                return kbMatch.get().getId();
+            }
+        }
+
+        return conflict.getId();
+    }
+
+    private List<SapRuntimeCharacteristic> flattenCharacteristics(SapRuntimeRootItem item) {
+        if (item == null) {
+            return Collections.emptyList();
+        }
+
+        List<SapRuntimeCharacteristic> characteristics = new ArrayList<>();
+        if (item.getCharacteristics() != null) {
+            characteristics.addAll(item.getCharacteristics().stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList()));
+        }
+        if (item.getSubItems() != null) {
+            item.getSubItems().stream()
+                    .filter(Objects::nonNull)
+                    .forEach(subItem -> characteristics.addAll(flattenCharacteristics(subItem)));
+        }
+        return characteristics;
     }
 }

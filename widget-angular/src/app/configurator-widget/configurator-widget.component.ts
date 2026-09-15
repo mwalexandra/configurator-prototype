@@ -400,7 +400,12 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
   }
 
   private findBlockingIssue(char: Characteristic, itemId?: string) {
-    return this.facade?.blockingIssues().find(issue =>
+    return this.facade?.blockingIssues().find((issue: {
+      characteristicId: string;
+      itemId: string;
+      complete: boolean;
+      consistent: boolean;
+    }) =>
       issue.characteristicId === char.id && issue.itemId === itemId
     );
   }
@@ -411,7 +416,8 @@ export class ConfiguratorWidgetComponent implements OnInit, OnChanges {
 
   protected hasCharacteristicConflict(char: Characteristic, itemId?: string): boolean {
     const issue = this.findBlockingIssue(char, itemId);
-    return issue?.complete === true && issue?.consistent === false;
+    return this.facade?.hasCharacteristicError(char.id) === true ||
+      (issue?.complete === true && issue?.consistent === false);
   }
 
   protected translateMode(mode: string | undefined): string {
