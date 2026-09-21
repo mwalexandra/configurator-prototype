@@ -1,0 +1,8 @@
+spring.application.name=api-service-java
+
+# main branch profile: SAP API Business Hub Sandbox (API key)
+sap.cps.base-url=https://<sap-business-hub-cps-host>
+sap.cps.api-key=<SAP_API_KEY>
+
+# local snapshot storage
+app.configurations-db.path=configurations-db
