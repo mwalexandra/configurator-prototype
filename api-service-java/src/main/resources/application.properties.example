@@ -1,0 +1,11 @@
+spring.application.name=api-service-java
+
+# curaflow-daten branch profile: OAuth 2.0 Client Credentials via UAA
+sap.cps.base-url=${CPS_API_URL}
+
+sap.cps.uaa-url=${CPS_UAA_URL}
+sap.cps.client-id=${CPS_CLIENT_ID}
+sap.cps.client-secret=${CPS_CLIENT_SECRET}
+
+# local snapshot storage
+app.configurations-db.path=configurations-db
